@@ -449,7 +449,7 @@ async function handleProfilePictureUpload() {
         formData.append('file', file);
 
         const response = await fetch(`${API_BASE_URL}/users/profile/update`, {
-            method: 'PUT',
+            method: 'PATCH',
             credentials: 'include',
             body: formData
         });
@@ -486,7 +486,7 @@ async function handleRemoveProfilePicture() {
 
     try {
         const response = await fetch(`${API_BASE_URL}/users/profile/remove`, {
-            method: 'PUT',
+            method: 'DELETE',
             credentials: 'include'
         });
 
@@ -793,7 +793,7 @@ function createClassCard(classroom, isCreated) {
                     ${requireApproval ? '<span class="setting-badge"><i class="fas fa-user-check"></i> Approval</span>' : ''}
                 </div>` : ''}
             <div class="class-actions">
-                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}">View Class</button>
+                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}">${isCreated ? 'View Class' : 'Join Dashboard'}</button>
                 ${isCreated ? `<button class="btn btn-secondary manage-class" data-class-id="${escapeHtml(classId)}">Manage</button>` : ''}
             </div>
         </div>
@@ -804,7 +804,8 @@ function attachClassCardHandlers() {
     document.querySelectorAll('.view-class').forEach(btn => {
         btn.addEventListener('click', e => {
             const classId = e.target.dataset.classId;
-            if (classId) viewClassroom(classId);
+            const role    = e.target.dataset.role;
+            if (classId) viewClassroom(classId, role);
         });
     });
     document.querySelectorAll('.manage-class').forEach(btn => {
@@ -819,10 +820,10 @@ function attachClassCardHandlers() {
 // FIXED NAVIGATION TO PROFESSOR DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
 
-function viewClassroom(classId) {
+function viewClassroom(classId, role) {
     if (classId && classId !== 'unknown') {
-        // Navigate to professor dashboard with classroom ID as parameter
-        window.location.href = `profclass.html?id=${encodeURIComponent(classId)}`;
+        const page = role === 'student' ? 'studentclass.html' : 'profclass.html';
+        window.location.href = `${page}?id=${encodeURIComponent(classId)}`;
     } else {
         showNotification('Invalid classroom ID', 'error');
     }
