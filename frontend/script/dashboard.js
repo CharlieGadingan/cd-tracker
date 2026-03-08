@@ -10,16 +10,20 @@ const createClassBtn       = document.getElementById('createClassBtn');
 const joinClassBtn         = document.getElementById('joinClassBtn');
 const createModal          = document.getElementById('createModal');
 const joinModal            = document.getElementById('joinModal');
-const editProfileModal     = document.getElementById('editProfileModal');
+const profileModal         = document.getElementById('profileModal');
 const confirmCreate        = document.getElementById('confirmCreate');
 const confirmJoin          = document.getElementById('confirmJoin');
 const cancelCreate         = document.getElementById('cancelCreate');
 const cancelJoin           = document.getElementById('cancelJoin');
 const userIcon             = document.getElementById('userIcon');
 const profileDropdown      = document.getElementById('profileDropdown');
-const editProfileBtn       = document.getElementById('editProfileBtn');
+const viewProfileBtn       = document.getElementById('viewProfileBtn');
 const logoutBtn            = document.getElementById('logoutBtn');
-const cancelEdit           = document.getElementById('cancelEdit');
+const closeProfileModal    = document.getElementById('closeProfileModal');
+const cancelProfileModal   = document.getElementById('cancelProfileModal');
+const uploadPictureBtn     = document.getElementById('uploadPictureBtn');
+const removePictureBtn     = document.getElementById('removePictureBtn');
+const profilePictureInput  = document.getElementById('profilePictureInput');
 const saveProfileBtn       = document.getElementById('saveProfileBtn');
 
 // Form inputs — Create Class
@@ -147,7 +151,6 @@ function setupEventListeners() {
     joinClassBtn?.addEventListener('click', () => openModal(joinModal));
     cancelCreate?.addEventListener('click', () => closeModal(createModal));
     cancelJoin?.addEventListener('click', () => closeModal(joinModal));
-    cancelEdit?.addEventListener('click', () => closeModal(editProfileModal));
 
     // Form submissions
     confirmCreate?.addEventListener('click', handleCreateClass);
@@ -156,12 +159,20 @@ function setupEventListeners() {
 
     // Profile menu
     userIcon?.addEventListener('click', toggleProfileDropdown);
-    editProfileBtn?.addEventListener('click', (e) => {
+    viewProfileBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         closeProfileDropdown();
-        openEditProfile();
+        openProfileModal();
     });
     logoutBtn?.addEventListener('click', handleLogout);
+
+    // Profile modal
+    closeProfileModal?.addEventListener('click', () => closeModal(profileModal));
+    cancelProfileModal?.addEventListener('click', () => closeModal(profileModal));
+    uploadPictureBtn?.addEventListener('click', () => profilePictureInput?.click());
+    document.getElementById('profilePictureOverlay')?.addEventListener('click', () => profilePictureInput?.click());
+    profilePictureInput?.addEventListener('change', handleProfilePictureUpload);
+    removePictureBtn?.addEventListener('click', handleRemoveProfilePicture);
 
     // Create class passcode toggle
     passcodeToggle?.addEventListener('change', (e) => {
@@ -220,20 +231,23 @@ function setupEventListeners() {
 
 async function loadUserProfile() {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/profile`, {
-            method: 'GET',
-            credentials: 'include'
-        });
+        const [profileRes, authRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/users/profile`, { method: 'GET', credentials: 'include' }),
+            fetch(`${API_BASE_URL}/auth/check`, { method: 'GET', credentials: 'include' })
+        ]);
 
-        if (!response.ok) {
-            if (response.status === 401) {
+        if (!profileRes.ok) {
+            if (profileRes.status === 401) {
                 window.location.replace('index.html');
                 return;
             }
-            throw new Error(`Failed to fetch profile: ${response.status}`);
+            throw new Error(`Failed to fetch profile: ${profileRes.status}`);
         }
 
-        const data = await response.json();
+        const data = await profileRes.json();
+        const authData = authRes.ok ? await authRes.json() : {};
+        data.email = authData.email || '';
+
         currentUser = data;
         applyProfileToUI(data);
 
@@ -248,7 +262,7 @@ function applyProfileToUI(data) {
     const lastName   = data.lastName  || '';
     const fullName   = `${firstName} ${lastName}`.trim() || 'User';
     const profileUrl = data.profileUrl || '';
-    const gender     = capitalise(unwrap(data.gender));
+    const email      = data.email || '';
 
     // Header
     const userNameEl = document.getElementById('userName');
@@ -262,7 +276,7 @@ function applyProfileToUI(data) {
     if (fullNameEl) fullNameEl.textContent = fullName;
     
     const usernameEl = document.getElementById('username');
-    if (usernameEl) usernameEl.textContent = gender;
+    if (usernameEl) usernameEl.textContent = email;
 
     // Avatar
     const iconEl = document.getElementById('userIcon');
@@ -282,7 +296,7 @@ function toggleProfileDropdown(e) {
     }
 }
 
-async function openEditProfile() {
+async function openProfileModal() {
     try {
         const response = await fetch(`${API_BASE_URL}/users/profile`, {
             method: 'GET',
@@ -290,38 +304,64 @@ async function openEditProfile() {
         });
 
         if (!response.ok) throw new Error('Failed to fetch profile');
-
         const data = await response.json();
 
+        // Populate picture (left side)
+        populateProfilePicture(data);
+
+        // Populate form fields (right side)
         const firstNameEl = document.getElementById('editFirstNameInput');
-        const lastNameEl = document.getElementById('editLastNameInput');
-        const phoneEl = document.getElementById('editPhoneInput');
-        const genderEl = document.getElementById('editGenderInput');
-        const birthdayEl = document.getElementById('editBirthdayInput');
-        const bioEl = document.getElementById('editBioInput');
+        const lastNameEl  = document.getElementById('editLastNameInput');
+        const phoneEl     = document.getElementById('editPhoneInput');
+        const genderEl    = document.getElementById('editGenderInput');
+        const birthdayEl  = document.getElementById('editBirthdayInput');
+        const bioEl       = document.getElementById('editBioInput');
 
         if (firstNameEl) firstNameEl.value = data.firstName || '';
-        if (lastNameEl) lastNameEl.value = data.lastName || '';
-        if (phoneEl) phoneEl.value = unwrap(data.phoneNumber) || '';
-        if (genderEl) genderEl.value = unwrap(data.gender) || '';
-        if (birthdayEl) birthdayEl.value = unwrap(data.birthday) || '';
-        if (bioEl) bioEl.value = data.bio || '';
+        if (lastNameEl)  lastNameEl.value  = data.lastName || '';
+        if (phoneEl)     phoneEl.value     = unwrap(data.phoneNumber) || '';
+        if (genderEl)    genderEl.value    = unwrap(data.gender) || '';
+        if (birthdayEl)  birthdayEl.value  = unwrap(data.birthday) || '';
+        if (bioEl)       bioEl.value       = data.bio || '';
 
-        openModal(editProfileModal);
+        openModal(profileModal);
 
     } catch (error) {
-        console.error('Error fetching profile for edit:', error);
+        console.error('Error opening profile:', error);
         showNotification('Failed to load profile data', 'error');
+    }
+}
+
+function populateProfilePicture(data) {
+    const firstName  = data.firstName || '';
+    const lastName   = data.lastName  || '';
+    const fullName   = `${firstName} ${lastName}`.trim() || 'User';
+    const profileUrl = data.profileUrl || '';
+
+    const picEl = document.getElementById('profilePictureLarge');
+    if (picEl) {
+        if (profileUrl) {
+            picEl.innerHTML = `<img src="${escapeHtml(profileUrl)}" alt="${escapeHtml(fullName)}">`;
+            picEl.style.background = 'none';
+        } else {
+            picEl.innerHTML = `<span id="profileInitialsLarge">${getInitials(fullName)}</span>`;
+            picEl.style.background = 'linear-gradient(135deg, #1f6feb 0%, #238636 100%)';
+        }
+    }
+
+    const removeBtnEl = document.getElementById('removePictureBtn');
+    if (removeBtnEl) {
+        removeBtnEl.style.display = profileUrl ? 'flex' : 'none';
     }
 }
 
 async function handleSaveProfile() {
     const firstNameEl = document.getElementById('editFirstNameInput');
-    const lastNameEl = document.getElementById('editLastNameInput');
-    const phoneEl = document.getElementById('editPhoneInput');
-    const genderEl = document.getElementById('editGenderInput');
-    const birthdayEl = document.getElementById('editBirthdayInput');
-    const bioEl = document.getElementById('editBioInput');
+    const lastNameEl  = document.getElementById('editLastNameInput');
+    const phoneEl     = document.getElementById('editPhoneInput');
+    const genderEl    = document.getElementById('editGenderInput');
+    const birthdayEl  = document.getElementById('editBirthdayInput');
+    const bioEl       = document.getElementById('editBioInput');
 
     const firstName   = firstNameEl?.value.trim() || '';
     const lastName    = lastNameEl?.value.trim() || '';
@@ -337,7 +377,7 @@ async function handleSaveProfile() {
 
     if (saveProfileBtn) {
         saveProfileBtn.disabled    = true;
-        saveProfileBtn.textContent = 'Saving...';
+        saveProfileBtn.innerHTML   = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     }
 
     try {
@@ -355,7 +395,7 @@ async function handleSaveProfile() {
         }
 
         showNotification('Profile updated successfully!', 'success');
-        closeModal(editProfileModal);
+        closeModal(profileModal);
         await loadUserProfile();
 
     } catch (error) {
@@ -364,7 +404,7 @@ async function handleSaveProfile() {
     } finally {
         if (saveProfileBtn) {
             saveProfileBtn.disabled    = false;
-            saveProfileBtn.textContent = 'Save Changes';
+            saveProfileBtn.innerHTML   = '<i class="fas fa-check"></i> Save Changes';
         }
     }
 }
@@ -374,6 +414,97 @@ function handleLogout() {
         localStorage.clear();
         sessionStorage.clear();
         window.location.href = 'index.html';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PROFILE PICTURE UPLOAD / REMOVE
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleProfilePictureUpload() {
+    const file = profilePictureInput?.files?.[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        showNotification('File is too large. Maximum size is 5MB.', 'error');
+        profilePictureInput.value = '';
+        return;
+    }
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        showNotification('Invalid file type. Use JPEG, PNG, GIF or WebP.', 'error');
+        profilePictureInput.value = '';
+        return;
+    }
+
+    if (uploadPictureBtn) {
+        uploadPictureBtn.disabled = true;
+        uploadPictureBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE_URL}/users/profile/update`, {
+            method: 'PUT',
+            credentials: 'include',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+
+        const data = await response.json();
+
+        showNotification('Profile picture updated!', 'success');
+
+        // Refresh both the modal and the header avatar
+        await loadUserProfile();
+        if (currentUser) populateProfilePicture(currentUser);
+
+    } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        showNotification('Failed to upload profile picture', 'error');
+    } finally {
+        if (uploadPictureBtn) {
+            uploadPictureBtn.disabled = false;
+            uploadPictureBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Photo';
+        }
+        if (profilePictureInput) profilePictureInput.value = '';
+    }
+}
+
+async function handleRemoveProfilePicture() {
+    if (!confirm('Remove your profile picture?')) return;
+
+    if (removePictureBtn) {
+        removePictureBtn.disabled = true;
+        removePictureBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Removing...';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/profile/remove`, {
+            method: 'PUT',
+            credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error('Remove failed');
+
+        showNotification('Profile picture removed!', 'success');
+
+        await loadUserProfile();
+        if (currentUser) populateProfilePicture(currentUser);
+
+    } catch (error) {
+        console.error('Error removing profile picture:', error);
+        showNotification('Failed to remove profile picture', 'error');
+    } finally {
+        if (removePictureBtn) {
+            removePictureBtn.disabled = false;
+            removePictureBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Remove';
+        }
     }
 }
 
