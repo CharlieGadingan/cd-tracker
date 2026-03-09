@@ -411,9 +411,14 @@ async function handleSaveProfile() {
 
 function handleLogout() {
     if (confirm('Are you sure you want to log out?')) {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = 'index.html';
+        fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        }).finally(() => {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        });
     }
 }
 
