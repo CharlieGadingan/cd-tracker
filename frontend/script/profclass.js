@@ -116,6 +116,16 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
             document.getElementById('saveActivityBtn').addEventListener('click', handleCreateActivity);
 
+            document.getElementById('closeEditModalBtn').addEventListener('click', () => {
+                closeModal(document.getElementById('editActivityModal'));
+            });
+
+            document.getElementById('cancelEditBtn').addEventListener('click', () => {
+                closeModal(document.getElementById('editActivityModal'));
+            });
+
+            document.getElementById('saveEditActivityBtn').addEventListener('click', handleEditActivity);
+
             document.getElementById('activityFilter').addEventListener('change', (e) => {
                 filterActivityLog(e.target.value);
             });
@@ -127,9 +137,13 @@ const API_BASE_URL = 'http://localhost:8080/api';
             });
 
             window.addEventListener('click', (e) => {
-                const modal = document.getElementById('createActivityModal');
-                if (e.target === modal) {
-                    closeModal(modal);
+                const createModal = document.getElementById('createActivityModal');
+                const editModal = document.getElementById('editActivityModal');
+                if (e.target === createModal) {
+                    closeModal(createModal);
+                }
+                if (e.target === editModal) {
+                    closeModal(editModal);
                 }
             });
         }
@@ -471,7 +485,118 @@ const API_BASE_URL = 'http://localhost:8080/api';
         }
 
         function editActivity(activityId) {
-            showNotification('Edit functionality coming soon', 'info');
+            const activity = activities.find(a => a.activityId === activityId);
+            if (!activity) {
+                showNotification('Activity not found', 'error');
+                return;
+            }
+
+            document.getElementById('editActivityId').value = activity.activityId;
+            document.getElementById('editActivityTitle').value = activity.title || '';
+            document.getElementById('editActivityDescription').value = activity.description || '';
+            document.getElementById('editMaxScore').value = activity.maxScore != null ? activity.maxScore : 100;
+            document.getElementById('editActivityStatus').value = activity.status || 'DRAFT';
+
+            if (activity.dueDate) {
+                const date = new Date(activity.dueDate);
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                document.getElementById('editDueDate').value = `${yyyy}-${mm}-${dd}`;
+            } else {
+                document.getElementById('editDueDate').value = '';
+            }
+
+            // Restrict status options based on current status transitions
+            const statusSelect = document.getElementById('editActivityStatus');
+            const currentStatus = activity.status;
+            const allowedTransitions = {
+                'DRAFT': ['DRAFT', 'PUBLISHED'],
+                'PUBLISHED': ['PUBLISHED', 'CLOSED'],
+                'CLOSED': ['CLOSED', 'ARCHIVED'],
+                'ARCHIVED': []
+            };
+            const allowed = allowedTransitions[currentStatus] || [];
+            Array.from(statusSelect.options).forEach(option => {
+                option.disabled = !allowed.includes(option.value);
+            });
+
+            openModal(document.getElementById('editActivityModal'));
+        }
+
+        async function handleEditActivity() {
+            const activityId = document.getElementById('editActivityId').value;
+            const title = document.getElementById('editActivityTitle').value.trim();
+            const description = document.getElementById('editActivityDescription').value.trim();
+            const dueDate = document.getElementById('editDueDate').value;
+            const maxScoreRaw = document.getElementById('editMaxScore').value;
+            const maxScore = maxScoreRaw !== '' ? parseInt(maxScoreRaw) : null;
+            const status = document.getElementById('editActivityStatus').value;
+
+            if (!title || !status) {
+                showNotification('Title and Status are required', 'error');
+                return;
+            }
+
+            if (maxScore !== null && (Number.isNaN(maxScore) || maxScore < 0 || maxScore > 1000)) {
+                showNotification('Max score must be between 0 and 1000', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('saveEditActivityBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                const dueDateTimeString = dueDate ? `${dueDate}T23:59:00` : null;
+
+                const response = await fetch(
+                    `${API_BASE_URL}/classrooms/${classroomId}/activities/${activityId}`,
+                    {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            title,
+                            description: description || null,
+                            dueDate: dueDateTimeString,
+                            maxScore,
+                            status
+                        })
+                    }
+                );
+
+                const responseText = await response.text();
+                let payload = null;
+                if (responseText) {
+                    try {
+                        payload = JSON.parse(responseText);
+                    } catch (_) {
+                        payload = null;
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(payload?.message || payload?.error || responseText || `Server error: ${response.status}`);
+                }
+
+                if (payload?.success === false) {
+                    throw new Error(payload?.message || 'Failed to update activity');
+                }
+
+                showNotification('Activity updated successfully!', 'success');
+                closeModal(document.getElementById('editActivityModal'));
+                await loadActivities();
+
+            } catch (error) {
+                console.error('Error updating activity:', error);
+                showNotification(error.message || 'Failed to update activity', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            }
         }
 
         async function deleteActivity(activityId) {

@@ -109,6 +109,77 @@
         </div>
     </div>
 
+    <!-- Edit Activity Modal -->
+    <div class="modal" id="editActivityModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-edit"></i>
+                    Edit Activity
+                </h2>
+                <button class="close-btn" id="closeEditModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editActivityForm">
+                    <input type="hidden" id="editActivityId">
+                    <div class="form-group">
+                        <label for="editActivityTitle">
+                            <i class="fas fa-heading"></i>
+                            Activity Title
+                        </label>
+                        <input type="text" id="editActivityTitle" placeholder="e.g., System 2 - API Development" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editActivityDescription">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea id="editActivityDescription" placeholder="Describe the activity requirements..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editDueDate">
+                                <i class="fas fa-calendar-alt"></i>
+                                Due Date
+                            </label>
+                            <input type="date" id="editDueDate">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editMaxScore">
+                                <i class="fas fa-star"></i>
+                                Max Score
+                            </label>
+                            <input type="number" id="editMaxScore" min="0" max="1000" value="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editActivityStatus">
+                            <i class="fas fa-sliders-h"></i>
+                            Status
+                        </label>
+                        <select id="editActivityStatus" required>
+                            <option value="DRAFT">Draft</option>
+                            <option value="PUBLISHED">Published</option>
+                            <option value="CLOSED">Closed</option>
+                            <option value="ARCHIVED">Archived</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveEditActivityBtn">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Create Activity Modal -->
     <div class="modal" id="createActivityModal">
         <div class="modal-content">
