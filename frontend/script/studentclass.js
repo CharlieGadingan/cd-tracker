@@ -2,6 +2,41 @@ const submissionModal = document.getElementById('submissionModal');
       const submissionsModal = document.getElementById('submissionsModal');
       const modalAssignmentDetail = document.getElementById('modalAssignmentDetail');
       const githubLinkInput = document.getElementById('githubLink');
+
+      const API_BASE_URL = 'http://localhost:8080/api';
+
+      // Load student profile
+      (async function loadStudentProfile() {
+          try {
+              const response = await fetch(`${API_BASE_URL}/users/profile`, {
+                  method: 'GET',
+                  credentials: 'include'
+              });
+              if (!response.ok) {
+                  if (response.status === 401) { window.location.replace('index.html'); return; }
+                  return;
+              }
+              const data = await response.json();
+              const firstName  = data.firstName || '';
+              const lastName   = data.lastName  || '';
+              const fullName   = `${firstName} ${lastName}`.trim() || 'Student';
+              const profileUrl = data.profileUrl || '';
+              const initials   = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'ST';
+
+              const nameEl   = document.getElementById('studentName');
+              const avatarEl = document.getElementById('studentAvatar');
+              if (nameEl) nameEl.textContent = fullName;
+              if (avatarEl) {
+                  if (profileUrl) {
+                      avatarEl.innerHTML = `<img src="${profileUrl}" alt="${fullName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                  } else {
+                      avatarEl.textContent = initials;
+                  }
+              }
+          } catch (e) {
+              console.error('Error loading student profile:', e);
+          }
+      })();
       
       // Close buttons
       document.getElementById('closeModal').onclick = () => {
