@@ -58,8 +58,8 @@
       function validateFile() {
         const f = fileInput.files[0];
         if (!f) {
-          showFileError("Profile picture is required");
-          return false;
+          clearFileError();
+          return true;
         }
         if (!f.type.startsWith("image/")) {
           showFileError("Must be an image");
@@ -167,8 +167,10 @@
             }),
           );
 
-          // Part 2: "profile" — the MultipartFile
-          formData.append("profile", fileInput.files[0]);
+          // Part 2: "profile" — the MultipartFile (optional)
+          if (fileInput.files[0]) {
+            formData.append("profile", fileInput.files[0]);
+          }
 
           // Part 3: principal is handled automatically by Spring Security — nothing to append.
 
