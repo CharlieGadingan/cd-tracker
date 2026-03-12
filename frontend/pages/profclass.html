@@ -9,36 +9,26 @@
     <link rel="stylesheet" href="../css/profclass.css">
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="logo-container">
-            <div class="logo">
-                <div>
-                    <img src="../asset/git.png" alt="CodeTracker Logo" class="brand-logo">
-                </div>
-                <div class="logo-text">
-                    <h1>CodeTracker</h1>
-                    <p>GitHub Project Tracking System</p>
-                </div>
-            </div>
-        </div>
-        
-        <div style="display: flex; align-items: center;">
-            <div class="professor-user-info">
-                <div class="professor-avatar" id="professorAvatar"></div>
-                <div class="professor-details">
-                    <h3 id="professorName">Loading...</h3>
-                    <p>Professor <span class="professor-badge">Instructor</span></p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Back to Dashboard Button -->
-    <a href="dashboard.html" class="back-to-dashboard" id="backToDashboardBtn">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-    </a>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <a href="dashboard.html" class="back-btn" id="backToDashboardBtn" title="Back to Dashboard">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <span class="header-divider"></span>
+            <div class="logo">
+                <i class="fa-brands fa-github"></i>
+                <span class="logo-text">CodeTracker</span>
+            </div>
+            <span class="header-divider"></span>
+            <span class="header-label">Classroom</span>
+        </div>
+        <div class="header-right">
+            <div class="professor-avatar" id="professorAvatar"></div>
+            <span class="professor-name" id="professorName">Loading...</span>
+        </div>
+    </header>
 
     <!-- Main Layout -->
     <div class="main-layout">

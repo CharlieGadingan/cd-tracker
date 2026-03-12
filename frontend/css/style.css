@@ -1,304 +1,217 @@
-* {
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
+/* ── Reset & Base ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: #0d1117;
-  height: 100vh;
+  color: #c9d1d9;
+  min-height: 100vh;
+}
+
+/* ── Page layout — two-panel split ───────────────────────────────── */
+.login-page {
   display: flex;
-  justify-content: center;
+  min-height: 100vh;
+}
+
+/* ── Left brand panel ────────────────────────────────────────────── */
+.brand-panel {
+  flex: 1;
+  background: linear-gradient(160deg, #0d1117 0%, #161b22 100%);
+  display: flex;
   align-items: center;
-  color: white;
+  justify-content: center;
+  padding: 48px 40px;
+  border-right: 1px solid #21262d;
+}
+
+.brand-inner { max-width: 440px; }
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #58a6ff;
+  margin-bottom: 32px;
+}
+
+.brand-logo i { font-size: 28px; }
+
+.brand-heading {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #e6edf3;
+  margin-bottom: 14px;
+}
+
+.brand-sub {
+  font-size: 15px;
+  color: #8b949e;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.feature-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #c9d1d9;
+}
+
+.feature-list i { color: #3fb950; font-size: 14px; flex-shrink: 0; }
+
+/* ── Right login panel ───────────────────────────────────────────── */
+.login-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
 }
 
 .login-box {
-  width: 320px;
-  margin: 80px auto;
-  padding: 30px;
-  background: #ffffff;
+  width: 100%;
+  max-width: 380px;
+  background: #161b22;
+  border: 1px solid #30363d;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  padding: 36px 32px;
   text-align: center;
 }
 
+.login-box h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #e6edf3;
+  margin-bottom: 4px;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: #8b949e;
+  margin-bottom: 24px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
 .github-btn {
-  background: #21262d;
-  color: white;
-  border: none;
-  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 11px 16px;
+  background: #f0f6fc;
+  color: #0d1117;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
 }
+.github-btn i { font-size: 18px; }
+.github-btn:hover { background: #d1d9e0; }
 
-.github-btn i {
-  margin-right: 10px;
-  font-size: 20px;
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #484f58;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-
-.github-btn:hover {
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
   background: #30363d;
 }
 
-.email-btn {
-  background: #e2e5eb;
-  color: black;
-  border: none;
-  padding: 12px;
-  width: 100%;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.email-btn i {
-  margin-right: 10px;
-  font-size: 20px;
-}
-
-.email-btn:hover {
-  background: #8c949d;
-}
-
 .email-input {
-  background-color: #8c949d;
-  color: whitesmoke;
-  border: none;
-  padding: 12px;
   width: 100%;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
+  padding: 11px 14px;
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  font-size: 14px;
   margin-bottom: 10px;
+  transition: border-color 0.2s;
 }
+.email-input::placeholder { color: #484f58; }
+.email-input:focus { outline: none; border-color: #58a6ff; }
 
-.email-input:hover{
-  background-color: #30363d;
-}
-.underline{
-  text-decoration: underline;
-}
-.p{
-  color: gray;
-}
-
-.welcomes{
-  margin-bottom: 0px;
-}
-.comment{
-  margin-top: 0px;
-}
-.below{
-  font-size: 10px;
-}
-
-.welcome-text h1 i.fab {
-  margin-right: 15px;
-  color: #58a6ff;
-  font-size: 50px;
-  vertical-align: middle;
-}
-
-.welcome-text .subtitle {
-  font-size: 16px;
-  color: #c9d1d9;
-  max-width: 500px;
-  margin-top: 10px; /* space below h1 */
-  margin-left: 0;   /* aligns with start of h1 text, not icon */
-}
-.welcome-text {
-  position: absolute;
-  left: 60px;     /* distance from left */
-  top: 100px;      /* distance from top */
-  opacity: 0;
-  animation: slideFadeIn 1.5s ease-out forwards;
-}
-
-.welcome-text h1 {
-  font-size: 50px;
-  margin-bottom: 25px;
-  margin-top: 200px;   /* space below h1 */
-  color: #58a6ff;
-}
-
-
-.welcome-text p {
-  font-size: 16px;
-  color: #c9d1d9;
-  max-width: 320px;
-  margin-top: 0; 
-}
-
-.selection p {
+.email-btn {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  max-width: 420px;
-  margin-top: 10px;
-}
-
-.selection p i {
-  color: #3b82f6;
-  margin-top: 4px;
-}
-
-
-.selection .inf {
-  font-size: 25px;
-  margin-bottom: 25px;
-}
-/* Slide from right + fade in */
-@keyframes slideFadeIn {
-  0% {
-    transform: translate(300px, -50%);
-    opacity: 0;
-    filter: blur(4px);
-  }
-  70% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(0, -50%);
-    opacity: 1;
-    filter: blur(0);
-  }
-}
-
-
-
-/* Slide from right + fade in */
-@keyframes slideFadeIn {
-  0% {
-    transform: translate(300px, -50%);
-    opacity: 0;
-    filter: blur(4px);
-  }
-  70% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translate(0, -50%);
-    opacity: 1;
-    filter: blur(0);
-  }
-}
-
-.login-container {
-  position: relative;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: #21262d;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.email-btn i { font-size: 16px; }
+.email-btn:hover { background: #30363d; border-color: #484f58; }
+
+.below {
+  margin-top: 18px;
+  font-size: 11px;
+  color: #484f58;
+  line-height: 1.5;
 }
 
-/* This is the electric aura around the box */
-.electric-aura {
-  position: absolute;
-  width: 360px; /* slightly bigger than login-box */
-  height: 380px; /* slightly bigger than login-box */
-  border-radius: 15px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: linear-gradient(270deg, #00f, #0ff, #00f, #0ff);
-  background-size: 400% 400%;
-  filter: blur(20px);
-  animation: electricAura 3s linear infinite;
-  z-index: 0; /* behind login box */
+.underline { text-decoration: underline; cursor: pointer; }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+
+/* Tablet — stack panels */
+@media (max-width: 900px) {
+  .login-page { flex-direction: column; }
+
+  .brand-panel {
+    border-right: none;
+    border-bottom: 1px solid #21262d;
+    padding: 36px 24px;
+  }
+
+  .brand-inner { max-width: 100%; text-align: center; }
+
+  .brand-heading { font-size: 30px; }
+
+  .feature-list { align-items: center; }
+
+  .login-container { padding: 36px 24px; }
 }
 
-.login-box {
-  position: relative;
-  background: #161b22;
-  padding: 30px;
-  width: 320px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  z-index: 1; /* above aura */
-}
-
-/* animation for moving gradient (electric flow) */
-@keyframes electricAura {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* TABLETS */
-@media (max-width: 1024px) {
-
-  .welcome-text {
-    position: static;
-    text-align: center;
-    margin-bottom: 40px;
-    animation: none;
-    opacity: 1;
-  }
-
-  .welcome-text h1 {
-    margin-top: 0;
-    font-size: 40px;
-  }
-
-  .welcome-text p {
-    max-width: 100%;
-  }
-
-  body {
-    flex-direction: column;
-    padding: 20px;
-  }
-
-}
-
-
-/* MOBILE PHONES */
-@media (max-width: 768px) {
-
-  .login-box {
-    width: 90%;
-    padding: 25px;
-  }
-
-  .electric-aura {
-    width: 100%;
-    height: 100%;
-  }
-
-  .welcome-text h1 {
-    font-size: 32px;
-  }
-
-  .selection p {
-    max-width: 100%;
-  }
-
-}
-
-
-/* VERY SMALL PHONES */
+/* Small phones */
 @media (max-width: 480px) {
+  .brand-panel { padding: 28px 20px; }
+  .brand-heading { font-size: 24px; }
+  .brand-sub { font-size: 13px; }
 
-  .welcome-text h1 {
-    font-size: 26px;
-  }
+  .login-box { padding: 28px 20px; }
+  .login-box h2 { font-size: 20px; }
 
-  .welcome-text p {
-    font-size: 14px;
-  }
-
-  .github-btn,
-  .email-btn,
-  .email-input {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .below {
-    font-size: 9px;
-  }
-
+  .github-btn, .email-btn, .email-input { font-size: 13px; padding: 10px 14px; }
 }

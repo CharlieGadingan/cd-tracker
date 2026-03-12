@@ -268,9 +268,6 @@ function applyProfileToUI(data) {
     const userNameEl = document.getElementById('userName');
     if (userNameEl) userNameEl.textContent = fullName;
     
-    const welcomeEl = document.getElementById('welcomeMsg');
-    if (welcomeEl) welcomeEl.textContent = `Welcome back, ${firstName || fullName}!`;
-
     // Dropdown
     const fullNameEl = document.getElementById('fullName');
     if (fullNameEl) fullNameEl.textContent = fullName;
@@ -282,7 +279,7 @@ function applyProfileToUI(data) {
     const iconEl = document.getElementById('userIcon');
     if (iconEl) {
         if (profileUrl) {
-            iconEl.innerHTML = `<img src="${escapeHtml(profileUrl)}" alt="${escapeHtml(fullName)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            iconEl.innerHTML = `<img src="${escapeHtml(profileUrl)}" alt="${escapeHtml(fullName)}">`;
         } else {
             iconEl.textContent = getInitials(fullName);
         }

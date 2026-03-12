@@ -11,33 +11,43 @@
 
     <!-- ── Header ─────────────────────────────────────────────────────────── -->
     <header class="dashboard-header">
-        <div class="logo">
-            <i class="fa-brands fa-github"></i>
-            <div class="logo-text">
-                CodeTracker
-                <span class="subtitle">Classroom Management</span>
+        <div class="header-left">
+            <div class="logo">
+                <i class="fa-brands fa-github"></i>
+                <span class="logo-text">CodeTracker</span>
             </div>
+            <span class="header-divider"></span>
+            <span class="header-label" id="welcomeMsg">Dashboard</span>
         </div>
 
-        <div class="profile">
-            <div class="user-info">
-                <strong id="userName">Loading...</strong>
+        <div class="header-right">
+            <div class="action-buttons">
+                <button class="btn btn-compact create-class" id="createClassBtn">
+                    <i class="fas fa-plus"></i> <span class="btn-label">New Class</span>
+                </button>
+                <button class="btn btn-compact join-class" id="joinClassBtn">
+                    <i class="fas fa-link"></i> <span class="btn-label">Join</span>
+                </button>
             </div>
 
-            <div class="user-icon" id="userIcon"></div>
-
-            <!-- Profile Dropdown -->
-            <div class="profile-dropdown" id="profileDropdown">
-                <div class="profile-info">
-                    <strong id="fullName"></strong>
-                    <small id="username"></small>
+            <div class="profile">
+                <div class="user-info">
+                    <strong id="userName">Loading...</strong>
                 </div>
-                <button class="dropdown-btn" id="viewProfileBtn">
-                    <i class="fas fa-user-pen"></i> My Profile
-                </button>
-                <button class="dropdown-btn" id="logoutBtn">
-                    <i class="fas fa-right-from-bracket"></i> Logout
-                </button>
+                <div class="user-icon" id="userIcon"></div>
+
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-info">
+                        <strong id="fullName"></strong>
+                        <small id="username"></small>
+                    </div>
+                    <button class="dropdown-btn" id="viewProfileBtn">
+                        <i class="fas fa-user-pen"></i> My Profile
+                    </button>
+                    <button class="dropdown-btn" id="logoutBtn">
+                        <i class="fas fa-right-from-bracket"></i> Logout
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -45,28 +55,13 @@
     <!-- ── Main ───────────────────────────────────────────────────────────── -->
     <main class="dashboard-main">
 
-        <!-- Welcome -->
-        <div class="welcome-section">
-            <h1 id="welcomeMsg">Welcome back!</h1>
-            <p>Manage your classrooms and track student progress</p>
-
-            <div class="action-buttons">
-                <button class="btn create-class" id="createClassBtn">
-                    <i class="fas fa-plus"></i> Create New Class
-                </button>
-                <button class="btn join-class" id="joinClassBtn">
-                    <i class="fas fa-link"></i> Join Class
-                </button>
-            </div>
-        </div>
-
         <!-- Tabs -->
         <div class="tabs-container">
             <button class="tab-button active" data-tab="created">
                 My Classes <span class="tab-count">0</span>
             </button>
             <button class="tab-button" data-tab="joined">
-                Joined Classes <span class="tab-count">0</span>
+                Joined <span class="tab-count">0</span>
             </button>
         </div>
 

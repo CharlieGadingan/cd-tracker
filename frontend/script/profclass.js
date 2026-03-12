@@ -181,7 +181,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
                 const avatarEl = document.getElementById('professorAvatar');
                 if (avatarEl) {
                     if (profileUrl) {
-                        avatarEl.innerHTML = `<img src="${profileUrl}" alt="${fullName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        avatarEl.innerHTML = `<img src="${escapeHtml(profileUrl)}" alt="${escapeHtml(fullName)}">`;
                     } else {
                         avatarEl.textContent = initials;
                     }
