@@ -248,6 +248,134 @@
         </div>
     </div>
 
+    <!-- ── Manage Class Modal ─────────────────────────────────────────────── -->
+    <div class="modal" id="manageModal">
+        <div class="modal-content manage-modal-content">
+
+            <div class="manage-modal-header">
+                <div class="manage-header-title">
+                    <i class="fas fa-layer-group"></i>
+                    <span id="manageClassName">Classroom</span>
+                </div>
+                <button class="profile-modal-close" id="closeManageModal">&times;</button>
+            </div>
+
+            <div class="manage-modal-body">
+
+                <!-- Stats -->
+                <div class="manage-stats-section">
+                    <p class="manage-section-label">Overview</p>
+                    <div class="manage-stats-grid">
+                        <div class="stat-tile">
+                            <div class="stat-tile-icon students"><i class="fas fa-users"></i></div>
+                            <div class="stat-tile-data">
+                                <span class="stat-tile-value" id="statTotalStudents">—</span>
+                                <span class="stat-tile-label">Students</span>
+                            </div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="stat-tile-icon activities"><i class="fas fa-list-check"></i></div>
+                            <div class="stat-tile-data">
+                                <span class="stat-tile-value" id="statTotalActivities">—</span>
+                                <span class="stat-tile-label">Total Activities</span>
+                            </div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="stat-tile-icon active"><i class="fas fa-bolt"></i></div>
+                            <div class="stat-tile-data">
+                                <span class="stat-tile-value" id="statActiveActivities">—</span>
+                                <span class="stat-tile-label">Active Activies</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Settings -->
+                <div class="manage-edit-section">
+                    <p class="manage-section-label"><i class="fas fa-pen-to-square"></i> Class Settings</p>
+
+                    <div>
+                        <label for="manageNameInput">Class Name *</label>
+                        <input type="text" id="manageNameInput" placeholder="e.g., Computer Science 101">
+                    </div>
+
+                    <div>
+                        <label for="manageDescInput">Description</label>
+                        <textarea id="manageDescInput" placeholder="Brief description (optional)"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="manageMaxInput">Maximum Students *</label>
+                        <input type="number" id="manageMaxInput" min="1" max="100">
+                    </div>
+
+                    <div>
+                        <label class="toggle-option" for="managePasscodeToggle">
+                            <div class="toggle-info">
+                                <strong>Require Passcode</strong>
+                                <small>Students need a passcode to join</small>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="managePasscodeToggle">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                        <div id="managePasscodeSection" style="display:none; margin-top:8px;">
+                            <label for="managePasscodeInput">New Passcode</label>
+                            <input type="text" id="managePasscodeInput" placeholder="Enter a secure passcode">
+                            <span class="field-hint">Leave empty to keep the existing passcode</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="toggle-option" for="manageApprovalToggle">
+                            <div class="toggle-info">
+                                <strong>Require Approval</strong>
+                                <small>Manually approve students before they can join</small>
+                            </div>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="manageApprovalToggle">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="manage-form-actions">
+                        <button class="btn cancel" id="cancelManage">Cancel</button>
+                        <button class="btn primary" id="saveManageBtn"><i class="fas fa-check"></i> Save Changes</button>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="manage-danger-zone">
+                    <p class="manage-section-label manage-danger-label"><i class="fas fa-triangle-exclamation"></i> Danger Zone</p>
+                    <div class="danger-zone-row">
+                        <div class="danger-zone-info">
+                            <strong>Delete this classroom</strong>
+                            <small>Irreversible. All students and activity data will be permanently removed.</small>
+                        </div>
+                        <button class="btn btn-danger" id="deleteClassBtn">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </div>
+
+                    <!-- Typed confirmation (hidden until Delete is clicked) -->
+                    <div class="delete-confirm-box" id="deleteConfirmBox">
+                        <p class="delete-confirm-prompt">Type <strong id="deleteConfirmTarget"></strong> to confirm deletion:</p>
+                        <input type="text" id="deleteConfirmInput" placeholder="Type classroom name here" autocomplete="off">
+                        <div class="delete-confirm-actions">
+                            <button class="btn cancel" id="cancelDeleteBtn">Cancel</button>
+                            <button class="btn btn-danger" id="confirmDeleteBtn" disabled>
+                                <i class="fas fa-trash-alt"></i> Yes, delete permanently
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script src="../script/dashboard.js"></script>
 </body>
 </html>

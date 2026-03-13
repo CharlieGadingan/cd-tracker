@@ -15,6 +15,7 @@ const confirmCreate        = document.getElementById('confirmCreate');
 const confirmJoin          = document.getElementById('confirmJoin');
 const cancelCreate         = document.getElementById('cancelCreate');
 const cancelJoin           = document.getElementById('cancelJoin');
+const manageModal          = document.getElementById('manageModal');
 const userIcon             = document.getElementById('userIcon');
 const profileDropdown      = document.getElementById('profileDropdown');
 const viewProfileBtn       = document.getElementById('viewProfileBtn');
@@ -45,6 +46,9 @@ const joinPasscodeInput    = document.getElementById('joinPasscodeInput');
 let currentTab = 'created';
 let classroomsData = { created: [], joined: [] };
 
+// Manage modal state
+let currentManageClassId = null;
+
 // Current user
 let currentUser = null;
 
@@ -69,6 +73,50 @@ function unwrap(val) {
         return val.value ?? val.number ?? val.date ?? val.name ?? '';
     }
     return String(val);
+}
+
+function resolveClassroomId(classroom) {
+    if (!classroom || typeof classroom !== 'object') return '';
+
+    const looksLikeClassroomId = (value) => /^cl-/i.test(value);
+    const looksLikeUserId = (value) => /^usr-/i.test(value) || /^@t-/i.test(value);
+    const normalize = (candidate, requireClassPrefix = true) => {
+        const value = String(unwrap(candidate) || '').trim();
+        if (!value || value === '[object Object]') return '';
+        if (looksLikeUserId(value)) return '';
+        if (requireClassPrefix && !looksLikeClassroomId(value)) return '';
+        return value;
+    };
+
+    // Match backend contract from GetClassroomsProfessorData exactly.
+    const topCandidates = [
+        classroom.classroomId,
+        classroom.classroomID,
+        classroom.classId,
+        classroom.classroomUid,
+        classroom.classroomUUID,
+        classroom.classroomUuid
+    ];
+
+    for (const candidate of topCandidates) {
+        const value = normalize(candidate, true);
+        if (value) return value;
+    }
+
+    // Some APIs wrap classroom payloads inside `classroom`.
+    if (classroom.classroom && typeof classroom.classroom === 'object') {
+        const nestedId = resolveClassroomId(classroom.classroom);
+        if (nestedId) return nestedId;
+    }
+
+    // Fallback fields in case backend sends canonical ID as generic `id`.
+    const fallbackCandidates = [classroom.id, classroom._id, classroom.uuid];
+    for (const candidate of fallbackCandidates) {
+        const value = normalize(candidate, true);
+        if (value) return value;
+    }
+
+    return '';
 }
 
 function capitalise(str) {
@@ -132,6 +180,12 @@ function closeModal(modal) {
         if (joinPasscodeSection) joinPasscodeSection.style.display = 'none';
         if (joinPasscodeInput) joinPasscodeInput.value = '';
         if (joinPasscodeToggle) joinPasscodeToggle.checked = false;
+    } else if (modal === manageModal) {
+        const box   = document.getElementById('deleteConfirmBox');
+        const input = document.getElementById('deleteConfirmInput');
+        if (box)   box.classList.remove('visible');
+        if (input) { input.value = ''; input.classList.remove('match'); }
+        document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'true');
     }
 }
 
@@ -198,6 +252,49 @@ function setupEventListeners() {
                 joinPasscodeInput.value = '';
             }
         }
+    });
+
+    // Manage modal
+    document.getElementById('closeManageModal')?.addEventListener('click', () => closeModal(manageModal));
+    document.getElementById('cancelManage')?.addEventListener('click',      () => closeModal(manageModal));
+    document.getElementById('saveManageBtn')?.addEventListener('click',     handleUpdateClassroom);
+    // Delete — show typed-confirmation box
+    document.getElementById('deleteClassBtn')?.addEventListener('click', () => {
+        const box = document.getElementById('deleteConfirmBox');
+        const input = document.getElementById('deleteConfirmInput');
+        const target = document.getElementById('deleteConfirmTarget');
+        const classroom = classroomsData.created.find(c => String(resolveClassroomId(c)) === String(currentManageClassId));
+        if (target) target.textContent = classroom?.className || classroom?.name || 'the classroom name';
+        if (input)  input.value = '';
+        document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'true');
+        if (box) box.classList.add('visible');
+        setTimeout(() => input?.focus(), 50);
+    });
+
+    document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => {
+        const box = document.getElementById('deleteConfirmBox');
+        const input = document.getElementById('deleteConfirmInput');
+        if (box)   box.classList.remove('visible');
+        if (input) input.value = '';
+        document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'true');
+    });
+
+    document.getElementById('deleteConfirmInput')?.addEventListener('input', (e) => {
+        const classroom = classroomsData.created.find(c => String(resolveClassroomId(c)) === String(currentManageClassId));
+        const expected  = classroom?.className || classroom?.name || '';
+        const matches   = e.target.value === expected;
+        const btn = document.getElementById('confirmDeleteBtn');
+        e.target.classList.toggle('match', matches);
+        if (btn) matches ? btn.removeAttribute('disabled') : btn.setAttribute('disabled', 'true');
+    });
+
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', handleDeleteClassroom);
+
+    document.getElementById('managePasscodeToggle')?.addEventListener('change', (e) => {
+        const sec = document.getElementById('managePasscodeSection');
+        const inp = document.getElementById('managePasscodeInput');
+        if (sec) sec.style.display = e.target.checked ? 'block' : 'none';
+        if (!e.target.checked && inp) inp.value = '';
     });
 
     // Tab switching
@@ -767,8 +864,8 @@ function createClassCard(classroom, isCreated) {
     const description     = classroom.description   || classroom.desc || 'No description provided';
     const hasPasscode     = !!(classroom.hasPasscode || classroom.requiresPasscode || classroom.passcode || classroom.isPasswordProtected);
     const requireApproval = !!(classroom.requireApproval || classroom.requiresApproval || classroom.needsApproval || classroom.manualApproval);
-    const classId         = classroom.id || classroom.classroomId || classroom._id || 'unknown';
-    const className       = classroom.name || classroom.title || classroom.className || 'Unnamed Class';
+    const classId         = resolveClassroomId(classroom) || 'unknown';
+    const className       = classroom.className || classroom.name || classroom.title || 'Unnamed Class';
 
     return `
         <div class="class-card" data-class-id="${escapeHtml(classId)}">
@@ -805,14 +902,14 @@ function createClassCard(classroom, isCreated) {
 function attachClassCardHandlers() {
     document.querySelectorAll('.view-class').forEach(btn => {
         btn.addEventListener('click', e => {
-            const classId = e.target.dataset.classId;
-            const role    = e.target.dataset.role;
+            const classId = e.currentTarget.dataset.classId;
+            const role    = e.currentTarget.dataset.role;
             if (classId) viewClassroom(classId, role);
         });
     });
     document.querySelectorAll('.manage-class').forEach(btn => {
         btn.addEventListener('click', e => {
-            const classId = e.target.dataset.classId;
+            const classId = e.currentTarget.dataset.classId;
             if (classId) manageClassroom(classId);
         });
     });
@@ -833,10 +930,177 @@ function viewClassroom(classId, role) {
 
 function manageClassroom(classId) {
     if (classId && classId !== 'unknown') {
-        // Navigate to professor dashboard to manage this classroom
-        window.location.href = `profclass.html?id=${encodeURIComponent(classId)}`;
+        openManageModal(classId);
     } else {
         showNotification('Invalid classroom ID', 'error');
+    }
+}
+
+async function openManageModal(classId) {
+    currentManageClassId = classId;
+
+    const classroom = classroomsData.created.find(c => {
+        const id = resolveClassroomId(c);
+        return String(id) === String(classId);
+    });
+
+    const classNameEl = document.getElementById('manageClassName');
+    if (classNameEl) classNameEl.textContent = classroom?.className || classroom?.name || 'Classroom';
+
+    // Pre-populate form
+    const nameEl    = document.getElementById('manageNameInput');
+    const descEl    = document.getElementById('manageDescInput');
+    const maxEl     = document.getElementById('manageMaxInput');
+    const togPass   = document.getElementById('managePasscodeToggle');
+    const togAppro  = document.getElementById('manageApprovalToggle');
+    const passSecEl = document.getElementById('managePasscodeSection');
+    const passEl    = document.getElementById('managePasscodeInput');
+
+    if (classroom) {
+        if (nameEl)  nameEl.value  = classroom.className   || classroom.name || '';
+        if (descEl)  descEl.value  = classroom.description || '';
+        if (maxEl)   maxEl.value   = classroom.maxStudents  || 50;
+
+        const hasPasscode = !!(classroom.hasPasscode || classroom.requiresPasscode || classroom.passcode);
+        if (togPass)   togPass.checked  = hasPasscode;
+        if (passSecEl) passSecEl.style.display = hasPasscode ? 'block' : 'none';
+        if (passEl)    passEl.value = '';
+
+        const hasApproval = !!(classroom.requireApproval || classroom.requiresApproval);
+        if (togAppro) togAppro.checked = hasApproval;
+    }
+
+    // Reset stats to loading state
+    ['statTotalStudents', 'statTotalActivities', 'statActiveActivities'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px;color:#484f58"></i>';
+    });
+
+    openModal(manageModal);
+    await fetchClassroomStats(classId);
+}
+
+async function fetchClassroomStats(classId) {
+    try {
+        if (!classId || classId === 'unknown') {
+            throw new Error('Missing classroom ID for stats request');
+        }
+        if (!/^cl-/i.test(classId)) {
+            throw new Error(`Invalid classroom ID received: ${classId}`);
+        }
+
+        const encodedClassId = encodeURIComponent(classId);
+        const statsUrl = `${API_BASE_URL}/classrooms/${encodedClassId}/stats?classroomId=${encodedClassId}`;
+        console.debug('[stats] request', { classroomId: classId, url: statsUrl });
+
+        const response = await fetch(statsUrl, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        const data = await response.json().catch(() => null);
+        const backendMessage = data?.message || data?.data?.message || data?.error || data?.data?.error || '';
+        console.debug('[stats] response', { status: response.status, ok: response.ok, body: data });
+        if (!response.ok) {
+            const message = backendMessage || `Stats fetch failed: ${response.status}`;
+            throw new Error(message);
+        }
+        if (data?.success === false) throw new Error(backendMessage || 'Stats fetch failed');
+
+        const stats = data?.data ?? data;
+
+        const studentsEl   = document.getElementById('statTotalStudents');
+        const activitiesEl = document.getElementById('statTotalActivities');
+        const activeEl     = document.getElementById('statActiveActivities');
+
+        if (studentsEl)   studentsEl.textContent   = stats?.totalStudents         ?? '0';
+        if (activitiesEl) activitiesEl.textContent = stats?.totalActivities       ?? '0';
+        if (activeEl)     activeEl.textContent     = stats?.totalActiveActivities ?? stats?.activeActivities ?? '0';
+
+    } catch (error) {
+        console.error('Error fetching classroom stats:', error);
+        showNotification(error.message || 'Failed to load classroom stats', 'error');
+        ['statTotalStudents', 'statTotalActivities', 'statActiveActivities'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '—';
+        });
+    }
+}
+
+async function handleUpdateClassroom() {
+    const name        = document.getElementById('manageNameInput')?.value.trim()  || '';
+    const description = document.getElementById('manageDescInput')?.value.trim()  || '';
+    const maxStudents = parseInt(document.getElementById('manageMaxInput')?.value || '50');
+    const requirePass = document.getElementById('managePasscodeToggle')?.checked  || false;
+    const passcode    = requirePass ? document.getElementById('managePasscodeInput')?.value.trim() : null;
+    const requireApproval = document.getElementById('manageApprovalToggle')?.checked || false;
+
+    if (!name) return showNotification('Please enter a class name', 'error');
+    if (name.length < 3 || name.length > 100) return showNotification('Class name must be 3–100 characters', 'error');
+    if (!maxStudents || maxStudents < 1 || maxStudents > 100) return showNotification('Max students must be 1–100', 'error');
+
+    const saveBtn = document.getElementById('saveManageBtn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/classrooms/${encodeURIComponent(currentManageClassId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                name,
+                description: description || null,
+                maxStudents,
+                requireApproval,
+                passcode: passcode || null
+            })
+        });
+
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.message || `Server error: ${response.status}`);
+        if (data?.success === false) throw new Error(data.message || 'Failed to update classroom');
+
+        showNotification('Classroom updated!', 'success');
+        closeModal(manageModal);
+        await loadClasses();
+
+    } catch (error) {
+        console.error('Update classroom error:', error);
+        showNotification(error.message || 'Update failed', 'error');
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-check"></i> Save Changes'; }
+    }
+}
+
+async function handleDeleteClassroom() {
+    const box = document.getElementById('deleteConfirmBox');
+    if (box) box.classList.remove('visible');
+
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+    if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/classrooms/${encodeURIComponent(currentManageClassId)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error(data?.message || `Server error: ${response.status}`);
+        }
+
+        showNotification('Classroom deleted.', 'success');
+        closeModal(manageModal);
+        await loadClasses();
+
+    } catch (error) {
+        console.error('Delete classroom error:', error);
+        showNotification(error.message || 'Delete failed', 'error');
+    } finally {
+        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Yes, delete permanently'; }
+        const input = document.getElementById('deleteConfirmInput');
+        if (input) { input.value = ''; input.classList.remove('match'); }
     }
 }
 
