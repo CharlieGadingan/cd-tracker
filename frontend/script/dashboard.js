@@ -2,8 +2,8 @@
 // DASHBOARD.JS — Fixed with Professor Dashboard Navigation
 // ══════════════════════════════════════════════════════════════════════════════
 
-// API Configuration
-const API_BASE_URL = 'http://localhost:8080/api';
+const apiRequest = window.ApiClient?.request;
+const userApi = window.ApiClient?.user;
 
 // ── DOM Elements ────────────────────────────────────────────────────────────
 const createClassBtn       = document.getElementById('createClassBtn');
@@ -57,6 +57,11 @@ let currentUser = null;
 // ══════════════════════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (!apiRequest || !userApi) {
+        showNotification('API client is not initialized.', 'error');
+        return;
+    }
+
     loadUserProfile();
     loadClasses();
     setupEventListeners();
@@ -152,45 +157,6 @@ function showNotification(message, type = 'info') {
         n.style.animation = 'slideOut .3s ease-in';
         setTimeout(() => n.remove(), 300);
     }, 3000);
-}
-
-async function parseResponseBody(response) {
-    const text = await response.text();
-    if (!text) return null;
-
-    try {
-        return JSON.parse(text);
-    } catch (_) {
-        return text;
-    }
-}
-
-function extractErrorMessage(body, fallback) {
-    if (!body) return fallback;
-    if (typeof body === 'string') return body;
-
-    return body.message || body.error || body.data?.message || body.data?.error || fallback;
-}
-
-async function apiRequest(path, options = {}, config = {}) {
-    const { redirectOnUnauthorized = true } = config;
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-        credentials: 'include',
-        ...options
-    });
-
-    const body = await parseResponseBody(response);
-
-    if (!response.ok) {
-        if (redirectOnUnauthorized && response.status === 401) {
-            window.location.replace('index.html');
-            throw new Error('Authentication required');
-        }
-
-        throw new Error(extractErrorMessage(body, `Server error: ${response.status}`));
-    }
-
-    return body;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -367,8 +333,12 @@ function setupEventListeners() {
 
 async function loadUserProfile() {
     try {
+        if (!apiRequest || !userApi) {
+            throw new Error('API client is not initialized.');
+        }
+
         const [profileData, authData] = await Promise.all([
-            apiRequest('/users/profile', { method: 'GET' }),
+            userApi.getProfile(),
             apiRequest('/auth/check', { method: 'GET' }, { redirectOnUnauthorized: false }).catch(() => ({}))
         ]);
 
@@ -421,7 +391,11 @@ function toggleProfileDropdown(e) {
 
 async function openProfileModal() {
     try {
-        const data = await apiRequest('/users/profile', { method: 'GET' });
+        if (!userApi) {
+            throw new Error('API client is not initialized.');
+        }
+
+        const data = await userApi.getProfile();
 
         // Populate picture (left side)
         populateProfilePicture(data);
@@ -498,11 +472,11 @@ async function handleSaveProfile() {
     }
 
     try {
-        await apiRequest('/users/profile', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ firstName, lastName, phoneNumber, gender, birthday, bio })
-        });
+        if (!userApi) {
+            throw new Error('API client is not initialized.');
+        }
+
+        await userApi.updateProfile({ firstName, lastName, phoneNumber, gender, birthday, bio });
 
         showNotification('Profile updated successfully!', 'success');
         closeModal(profileModal);
@@ -521,10 +495,12 @@ async function handleSaveProfile() {
 
 function handleLogout() {
     if (confirm('Are you sure you want to log out?')) {
-        fetch(`${API_BASE_URL}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include'
-        }).finally(() => {
+        if (!apiRequest) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        apiRequest('/auth/logout', { method: 'POST' }, { redirectOnUnauthorized: false }).finally(() => {
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = 'index.html';
@@ -560,13 +536,11 @@ async function handleProfilePictureUpload() {
     }
 
     try {
-        const formData = new FormData();
-        formData.append('file', file);
+        if (!userApi) {
+            throw new Error('API client is not initialized.');
+        }
 
-        await apiRequest('/users/profile/update', {
-            method: 'PATCH',
-            body: formData
-        });
+        await userApi.updateProfilePicture(file);
 
         showNotification('Profile picture updated!', 'success');
 
@@ -595,7 +569,11 @@ async function handleRemoveProfilePicture() {
     }
 
     try {
-        await apiRequest('/users/profile/remove', { method: 'DELETE' });
+        if (!userApi) {
+            throw new Error('API client is not initialized.');
+        }
+
+        await userApi.removeProfilePicture();
 
         showNotification('Profile picture removed!', 'success');
 

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const apiRequest = window.ApiClient?.request;
         let classroomId = null;
         let currentUser = null;
         let activities = [];
@@ -10,6 +10,11 @@ const API_BASE_URL = 'http://localhost:8080/api';
         // ═══════════════════════════════════════════════════════════════════
 
         document.addEventListener('DOMContentLoaded', () => {
+            if (!apiRequest) {
+                showNotification('API client is not initialized.', 'error');
+                return;
+            }
+
             extractClassroomId();
             loadUserProfile();
             loadStudents();
@@ -81,42 +86,6 @@ const API_BASE_URL = 'http://localhost:8080/api';
             const diffTime = due - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays;
-        }
-
-        async function parseResponseBody(response) {
-            const text = await response.text();
-            if (!text) return null;
-
-            try {
-                return JSON.parse(text);
-            } catch (_) {
-                return text;
-            }
-        }
-
-        function extractErrorMessage(body, fallback) {
-            if (!body) return fallback;
-            if (typeof body === 'string') return body;
-            return body.message || body.error || body.data?.message || body.data?.error || fallback;
-        }
-
-        async function apiRequest(path, options = {}, config = {}) {
-            const { redirectOnUnauthorized = true } = config;
-            const response = await fetch(`${API_BASE_URL}${path}`, {
-                credentials: 'include',
-                ...options
-            });
-
-            const body = await parseResponseBody(response);
-            if (!response.ok) {
-                if (redirectOnUnauthorized && response.status === 401) {
-                    window.location.replace('index.html');
-                    throw new Error('Authentication required');
-                }
-                throw new Error(extractErrorMessage(body, `Server error: ${response.status}`));
-            }
-
-            return body;
         }
 
         // ═══════════════════════════════════════════════════════════════════

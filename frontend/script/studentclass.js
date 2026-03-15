@@ -3,20 +3,16 @@ const submissionModal = document.getElementById('submissionModal');
       const modalAssignmentDetail = document.getElementById('modalAssignmentDetail');
       const githubLinkInput = document.getElementById('githubLink');
 
-      const API_BASE_URL = 'http://localhost:8080/api';
+      const userApi = window.ApiClient?.user;
 
       // Load student profile
       (async function loadStudentProfile() {
           try {
-              const response = await fetch(`${API_BASE_URL}/users/profile`, {
-                  method: 'GET',
-                  credentials: 'include'
-              });
-              if (!response.ok) {
-                  if (response.status === 401) { window.location.replace('index.html'); return; }
-                  return;
-              }
-              const data = await response.json();
+            if (!userApi) {
+              throw new Error('API client is not initialized.');
+            }
+
+            const data = await userApi.getProfile();
               const firstName  = data.firstName || '';
               const lastName   = data.lastName  || '';
               const fullName   = `${firstName} ${lastName}`.trim() || 'Student';

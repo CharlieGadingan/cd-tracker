@@ -1,5 +1,4 @@
-      const API_BASE = "http://localhost:8080";
-      const ENDPOINT = "/api/users/register";
+      const userApi = window.ApiClient?.user;
 
       // ── Elements ──────────────────────────────────────────────
       const form = document.getElementById("regForm");
@@ -31,7 +30,7 @@
           return null;
         },
         gender: (v) => (v ? null : "Gender is required"),
-        bio: (v) => (v.length > 500 ? "Max 500 characters" : null),
+        bio: (v) => (v.length > 350 ? "Max 350 characters" : null),
       };
 
       function setFieldError(id, msg) {
@@ -148,8 +147,6 @@
         alertEl.className = "alert";
 
         try {
-          // ── Build the 3 parts Spring now expects ──
-          // Part 1: "data" — JSON blob of all text fields
           const dataPayload = {
             firstName: document.getElementById("firstName").value.trim(),
             lastName: document.getElementById("lastName").value.trim(),
@@ -158,54 +155,22 @@
             birthday: document.getElementById("birthday").value,
             bio: document.getElementById("bio").value.trim() || null,
           };
-
-          const formData = new FormData();
-          formData.append(
-            "data",
-            new Blob([JSON.stringify(dataPayload)], {
-              type: "application/json",
-            }),
-          );
-
-          // Part 2: "profile" — the MultipartFile (optional)
-          if (fileInput.files[0]) {
-            formData.append("profile", fileInput.files[0]);
+          if (!userApi) {
+            throw new Error("API client is not initialized.");
           }
 
-          // Part 3: principal is handled automatically by Spring Security — nothing to append.
+          const result = await userApi.register(dataPayload, fileInput.files[0]);
 
-          const res = await fetch(`${API_BASE}${ENDPOINT}`, {
-            method: "POST",
-            headers: { Accept: "application/json" },
-            credentials: "include", // sends session cookie / JWT cookie
-            body: formData,
-          });
-
-          if (res.status === 401) {
-            showAlert("error", "Session expired — please log in again.");
-            return;
-          }
-
-          const ct = res.headers.get("content-type") || "";
-          const result = ct.includes("application/json")
-            ? await res.json()
-            : { message: "Unexpected response from server" };
-
-          if (res.ok) {
+          if (result) {
             showAlert("success", result.message || "Profile completed!");
             if (result.data)
               localStorage.setItem("userData", JSON.stringify(result.data));
             setTimeout(() => {
               window.location.href = "dashboard.html";
             }, 2000);
-          } else {
-            showAlert(
-              "error",
-              result.message || "Registration failed. Try again.",
-            );
           }
         } catch (err) {
-          showAlert("error", `Network error: ${err.message}`);
+          showAlert("error", err.message || "Registration failed. Try again.");
         } finally {
           spinner.style.display = "none";
           submitBtn.disabled = false;
