@@ -154,6 +154,45 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+async function parseResponseBody(response) {
+    const text = await response.text();
+    if (!text) return null;
+
+    try {
+        return JSON.parse(text);
+    } catch (_) {
+        return text;
+    }
+}
+
+function extractErrorMessage(body, fallback) {
+    if (!body) return fallback;
+    if (typeof body === 'string') return body;
+
+    return body.message || body.error || body.data?.message || body.data?.error || fallback;
+}
+
+async function apiRequest(path, options = {}, config = {}) {
+    const { redirectOnUnauthorized = true } = config;
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        credentials: 'include',
+        ...options
+    });
+
+    const body = await parseResponseBody(response);
+
+    if (!response.ok) {
+        if (redirectOnUnauthorized && response.status === 401) {
+            window.location.replace('index.html');
+            throw new Error('Authentication required');
+        }
+
+        throw new Error(extractErrorMessage(body, `Server error: ${response.status}`));
+    }
+
+    return body;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MODAL HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -328,22 +367,12 @@ function setupEventListeners() {
 
 async function loadUserProfile() {
     try {
-        const [profileRes, authRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/users/profile`, { method: 'GET', credentials: 'include' }),
-            fetch(`${API_BASE_URL}/auth/check`, { method: 'GET', credentials: 'include' })
+        const [profileData, authData] = await Promise.all([
+            apiRequest('/users/profile', { method: 'GET' }),
+            apiRequest('/auth/check', { method: 'GET' }, { redirectOnUnauthorized: false }).catch(() => ({}))
         ]);
 
-        if (!profileRes.ok) {
-            if (profileRes.status === 401) {
-                window.location.replace('index.html');
-                return;
-            }
-            throw new Error(`Failed to fetch profile: ${profileRes.status}`);
-        }
-
-        const data = await profileRes.json();
-        const authData = authRes.ok ? await authRes.json() : {};
-        data.email = authData.email || '';
+        const data = { ...(profileData || {}), email: authData?.email || '' };
 
         currentUser = data;
         applyProfileToUI(data);
@@ -392,13 +421,7 @@ function toggleProfileDropdown(e) {
 
 async function openProfileModal() {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/profile`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch profile');
-        const data = await response.json();
+        const data = await apiRequest('/users/profile', { method: 'GET' });
 
         // Populate picture (left side)
         populateProfilePicture(data);
@@ -475,18 +498,11 @@ async function handleSaveProfile() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        await apiRequest('/users/profile', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ firstName, lastName, phoneNumber, gender, birthday, bio })
         });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to update profile');
-        }
 
         showNotification('Profile updated successfully!', 'success');
         closeModal(profileModal);
@@ -547,15 +563,10 @@ async function handleProfilePictureUpload() {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE_URL}/users/profile/update`, {
+        await apiRequest('/users/profile/update', {
             method: 'PATCH',
-            credentials: 'include',
             body: formData
         });
-
-        if (!response.ok) throw new Error('Upload failed');
-
-        const data = await response.json();
 
         showNotification('Profile picture updated!', 'success');
 
@@ -584,12 +595,7 @@ async function handleRemoveProfilePicture() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/users/profile/remove`, {
-            method: 'DELETE',
-            credentials: 'include'
-        });
-
-        if (!response.ok) throw new Error('Remove failed');
+        await apiRequest('/users/profile/remove', { method: 'DELETE' });
 
         showNotification('Profile picture removed!', 'success');
 
@@ -641,10 +647,9 @@ async function handleCreateClass() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/classrooms/create`, {
+        await apiRequest('/classrooms/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({
                 name,
                 description: description || null,
@@ -653,22 +658,6 @@ async function handleCreateClass() {
                 passcode: passcode || null
             })
         });
-
-        const responseText = await response.text();
-        let data = null;
-        if (responseText) {
-            try { data = JSON.parse(responseText); } catch (_) { data = null; }
-        }
-
-        if (!response.ok) {
-            if (response.status === 401) throw new Error('Authentication failed. Please log in again.');
-            if (response.status === 403) throw new Error('You do not have permission to create classrooms.');
-            throw new Error(data?.message || data?.error || `Server error: ${response.status}`);
-        }
-
-        if (data?.success === false) {
-            throw new Error(data.message || data.error || 'Failed to create classroom');
-        }
 
         showNotification('Classroom created successfully!', 'success');
         closeModal(createModal);
@@ -704,44 +693,15 @@ async function handleJoinClass() {
             payload.passcode = passcode;
         }
 
-        console.log('Sending join request with payload:', payload);
-
-        const response = await fetch(`${API_BASE_URL}/classrooms/join`, {
+        await apiRequest('/classrooms/join', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            credentials: 'include',
             body: JSON.stringify(payload)
         });
 
-        console.log('Response status:', response.status);
-
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-
-        let data = null;
-        try {
-            if (responseText) {
-                data = JSON.parse(responseText);
-            }
-        } catch (parseError) {
-            console.error('Failed to parse response:', parseError);
-            throw new Error(`Invalid response format from server`);
-        }
-
-        if (!response.ok) {
-            const errorMsg = data?.error || data?.message || `Server error: ${response.status}`;
-            throw new Error(errorMsg);
-        }
-
-        if (data && data.success === false) {
-            const errorMsg = data.error || data.message || 'Failed to join classroom';
-            throw new Error(errorMsg);
-        }
-
-        console.log('Successfully joined classroom:', data);
         showNotification('Successfully joined classroom!', 'success');
         closeModal(joinModal);
         await loadClasses();
@@ -765,43 +725,19 @@ async function loadClasses() {
  
     try {
         // Load created classrooms
-        const createdResponse = await fetch(`${API_BASE_URL}/classrooms/me`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        if (!createdResponse.ok) {
-            if (createdResponse.status === 401) {
-                showNotification('Authentication required. Please log in again.', 'error');
-                setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-                return;
-            }
-            throw new Error(`Failed to fetch classrooms: ${createdResponse.status}`);
-        }
-
-        const createdResult = await createdResponse.json();
-        if (createdResult.success === false) {
-            throw new Error(createdResult.message || createdResult.error || 'Failed to fetch classrooms');
-        }
+        const createdResult = await apiRequest('/classrooms/me', { method: 'GET' });
         let createdClasses = Array.isArray(createdResult) ? createdResult : createdResult.data || [];
 
         // Load joined classrooms
         let joinedClasses = [];
         try {
-            const joinedResponse = await fetch(`${API_BASE_URL}/classrooms/join`, {
-                method: 'GET',
-                credentials: 'include'
-            });
-
-            if (joinedResponse.ok) {
-                const joinedData = await joinedResponse.json();
-                joinedClasses = Array.isArray(joinedData) 
-                    ? joinedData.map(item => ({
-                        ...item.classroom,
-                        studentCount: item.studentCount
-                    }))
-                    : [];
-            }
+            const joinedData = await apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false });
+            joinedClasses = Array.isArray(joinedData)
+                ? joinedData.map(item => ({
+                    ...(item?.classroom || item || {}),
+                    studentCount: item?.studentCount ?? item?.classroom?.studentCount ?? 0
+                }))
+                : [];
         } catch (error) {
             console.warn('Failed to load joined classrooms:', error);
             joinedClasses = [];
@@ -990,23 +926,10 @@ async function fetchClassroomStats(classId) {
         }
 
         const encodedClassId = encodeURIComponent(classId);
-        const statsUrl = `${API_BASE_URL}/classrooms/${encodedClassId}/stats?classroomId=${encodedClassId}`;
+        const statsUrl = `/classrooms/${encodedClassId}/stats`;
         console.debug('[stats] request', { classroomId: classId, url: statsUrl });
 
-        const response = await fetch(statsUrl, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        const data = await response.json().catch(() => null);
-        const backendMessage = data?.message || data?.data?.message || data?.error || data?.data?.error || '';
-        console.debug('[stats] response', { status: response.status, ok: response.ok, body: data });
-        if (!response.ok) {
-            const message = backendMessage || `Stats fetch failed: ${response.status}`;
-            throw new Error(message);
-        }
-        if (data?.success === false) throw new Error(backendMessage || 'Stats fetch failed');
-
+        const data = await apiRequest(statsUrl, { method: 'GET' });
         const stats = data?.data ?? data;
 
         const studentsEl   = document.getElementById('statTotalStudents');
@@ -1043,10 +966,9 @@ async function handleUpdateClassroom() {
     if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/classrooms/${encodeURIComponent(currentManageClassId)}`, {
+        await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({
                 name,
                 description: description || null,
@@ -1055,10 +977,6 @@ async function handleUpdateClassroom() {
                 passcode: passcode || null
             })
         });
-
-        const data = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(data?.message || `Server error: ${response.status}`);
-        if (data?.success === false) throw new Error(data.message || 'Failed to update classroom');
 
         showNotification('Classroom updated!', 'success');
         closeModal(manageModal);
@@ -1080,15 +998,7 @@ async function handleDeleteClassroom() {
     if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/classrooms/${encodeURIComponent(currentManageClassId)}`, {
-            method: 'DELETE',
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            const data = await response.json().catch(() => null);
-            throw new Error(data?.message || `Server error: ${response.status}`);
-        }
+        await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}`, { method: 'DELETE' });
 
         showNotification('Classroom deleted.', 'success');
         closeModal(manageModal);

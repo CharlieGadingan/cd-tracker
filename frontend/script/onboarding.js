@@ -189,9 +189,9 @@
           const ct = res.headers.get("content-type") || "";
           const result = ct.includes("application/json")
             ? await res.json()
-            : { success: false, message: "Unexpected response from server" };
+            : { message: "Unexpected response from server" };
 
-          if (res.ok && result.success) {
+          if (res.ok) {
             showAlert("success", result.message || "Profile completed!");
             if (result.data)
               localStorage.setItem("userData", JSON.stringify(result.data));

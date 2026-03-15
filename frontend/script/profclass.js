@@ -83,6 +83,42 @@ const API_BASE_URL = 'http://localhost:8080/api';
             return diffDays;
         }
 
+        async function parseResponseBody(response) {
+            const text = await response.text();
+            if (!text) return null;
+
+            try {
+                return JSON.parse(text);
+            } catch (_) {
+                return text;
+            }
+        }
+
+        function extractErrorMessage(body, fallback) {
+            if (!body) return fallback;
+            if (typeof body === 'string') return body;
+            return body.message || body.error || body.data?.message || body.data?.error || fallback;
+        }
+
+        async function apiRequest(path, options = {}, config = {}) {
+            const { redirectOnUnauthorized = true } = config;
+            const response = await fetch(`${API_BASE_URL}${path}`, {
+                credentials: 'include',
+                ...options
+            });
+
+            const body = await parseResponseBody(response);
+            if (!response.ok) {
+                if (redirectOnUnauthorized && response.status === 401) {
+                    window.location.replace('index.html');
+                    throw new Error('Authentication required');
+                }
+                throw new Error(extractErrorMessage(body, `Server error: ${response.status}`));
+            }
+
+            return body;
+        }
+
         // ═══════════════════════════════════════════════════════════════════
         // MODAL HELPERS
         // ═══════════════════════════════════════════════════════════════════
@@ -154,20 +190,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 
         async function loadUserProfile() {
             try {
-                const response = await fetch(`${API_BASE_URL}/users/profile`, {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.replace('index.html');
-                        return;
-                    }
-                    throw new Error(`Failed to fetch profile: ${response.status}`);
-                }
-
-                const data = await response.json();
+                const data = await apiRequest('/users/profile', { method: 'GET' });
                 currentUser = data;
 
                 const firstName  = data.firstName || '';
@@ -211,35 +234,25 @@ const API_BASE_URL = 'http://localhost:8080/api';
             }
 
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/classrooms/${classroomId}/students`,
-                    {
-                        method: 'GET',
-                        credentials: 'include'
-                    }
-                );
+                const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/students`, {
+                    method: 'GET'
+                });
 
-                const result = await response.json().catch(() => null);
-
-                if (!response.ok || result?.success === false) {
-                    if (response.status === 401) {
-                        window.location.replace('index.html');
-                        return;
-                    }
-
-                    if (response.status === 404 || response.status === 405) {
-                        students = [];
-                        renderStudents();
-                        return;
-                    }
-
-                    throw new Error(result?.message || result?.error || 'Failed to load students');
+                if (Array.isArray(result)) {
+                    students = result;
+                } else if (Array.isArray(result?.data)) {
+                    students = result.data;
+                } else {
+                    students = [];
                 }
-
-                students = Array.isArray(result?.data) ? result.data : [];
                 renderStudents();
 
             } catch (error) {
+                if (String(error.message || '').includes('405') || String(error.message || '').includes('404')) {
+                    students = [];
+                    renderStudents();
+                    return;
+                }
                 console.error('Error loading students:', error);
                 students = [];
                 renderStudents();
@@ -336,41 +349,19 @@ const API_BASE_URL = 'http://localhost:8080/api';
                 // Convert date to ISO datetime string only if provided
                 const dueDateTimeString = dueDate ? `${dueDate}T23:59:00` : null;
 
-                const response = await fetch(
-                    `${API_BASE_URL}/classrooms/${classroomId}/activities`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            title,
-                            description: description || null,
-                            dueDate: dueDateTimeString,
-                            maxScore,
-                            status
-                        })
-                    }
-                );
-
-                const responseText = await response.text();
-                let payload = null;
-                if (responseText) {
-                    try {
-                        payload = JSON.parse(responseText);
-                    } catch (_) {
-                        payload = null;
-                    }
-                }
-
-                if (!response.ok) {
-                    throw new Error(payload?.message || payload?.error || `Server error: ${response.status}`);
-                }
-
-                if (payload?.success === false) {
-                    throw new Error(payload?.message || 'Failed to create activity');
-                }
+                const payload = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title,
+                        description: description || null,
+                        dueDate: dueDateTimeString,
+                        maxScore,
+                        status
+                    })
+                });
 
                 const createdActivity = payload?.data ?? payload;
                 if (createdActivity && createdActivity.activityId) {
@@ -396,29 +387,19 @@ const API_BASE_URL = 'http://localhost:8080/api';
             if (!classroomId) return;
 
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/classrooms/${classroomId}/activities`,
-                    {
-                        method: 'GET',
-                        credentials: 'include'
-                    }
-                );
-
-                const result = await response.json();
-
-                if (!response.ok || result.success === false) {
-                    if (response.status === 404 || response.status === 405) {
-                        activities = [];
-                        renderActivities();
-                        return;
-                    }
-                    throw new Error(result.error || 'Failed to load activities');
-                }
+                const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities`, {
+                    method: 'GET'
+                });
 
                 activities = Array.isArray(result.data) ? result.data : [];
                 renderActivities();
 
             } catch (error) {
+                if (String(error.message || '').includes('405') || String(error.message || '').includes('404')) {
+                    activities = [];
+                    renderActivities();
+                    return;
+                }
                 console.error('Error loading activities:', error);
                 showNotification(error.message || 'Failed to load activities', 'error');
             }
@@ -550,41 +531,19 @@ const API_BASE_URL = 'http://localhost:8080/api';
             try {
                 const dueDateTimeString = dueDate ? `${dueDate}T23:59:00` : null;
 
-                const response = await fetch(
-                    `${API_BASE_URL}/classrooms/${classroomId}/activities/${activityId}`,
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            title,
-                            description: description || null,
-                            dueDate: dueDateTimeString,
-                            maxScore,
-                            status
-                        })
-                    }
-                );
-
-                const responseText = await response.text();
-                let payload = null;
-                if (responseText) {
-                    try {
-                        payload = JSON.parse(responseText);
-                    } catch (_) {
-                        payload = null;
-                    }
-                }
-
-                if (!response.ok) {
-                    throw new Error(payload?.message || payload?.error || responseText || `Server error: ${response.status}`);
-                }
-
-                if (payload?.success === false) {
-                    throw new Error(payload?.message || 'Failed to update activity');
-                }
+                await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(activityId)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title,
+                        description: description || null,
+                        dueDate: dueDateTimeString,
+                        maxScore,
+                        status
+                    })
+                });
 
                 showNotification('Activity updated successfully!', 'success');
                 closeModal(document.getElementById('editActivityModal'));
@@ -603,19 +562,9 @@ const API_BASE_URL = 'http://localhost:8080/api';
             if (!confirm('Are you sure you want to delete this activity?')) return;
 
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/classrooms/${classroomId}/activities/${activityId}`,
-                    {
-                        method: 'DELETE',
-                        credentials: 'include'
-                    }
-                );
-
-                const result = await response.json().catch(() => null);
-
-                if (!response.ok || result?.success === false) {
-                    throw new Error(result?.message || result?.error || 'Failed to delete activity');
-                }
+                await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(activityId)}`, {
+                    method: 'DELETE'
+                });
 
                 showNotification('Activity deleted successfully', 'success');
                 await loadActivities();
