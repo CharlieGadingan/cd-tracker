@@ -9,24 +9,18 @@ const BACKEND_ORIGIN = "http://localhost:8080";
       method: "GET",
       credentials: "include",
     });
-
     const data = await response.json();
-
     if (data.authenticated == true) {
       window.location.replace("dashboard.html");
       return;
     }
-
-    // Not authenticated — stay on login page
   } catch (error) {
-    // Network error or server down — stay on login page
     console.error("Auth check failed:", error);
   }
 })();
 
 // Listen for OAuth result from popup
 window.addEventListener("message", (event) => {
-  // Only accept messages from backend (popup callback)
   if (event.origin !== BACKEND_ORIGIN) {
     console.warn("Ignored message from unexpected origin:", event.origin);
     return;
@@ -38,10 +32,8 @@ window.addEventListener("message", (event) => {
   console.log("OAuth result received:", data);
 
   if (data.registered === true) {
-    // Existing user → dashboard
     window.location.href = "dashboard.html";
   } else {
-    // New user → onboarding
     window.location.href = "onboarding.html";
   }
 });
@@ -58,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
-    // Open popup immediately (prevents popup blocking)
     const popup = window.open(
       "",
       "github-oauth",
@@ -70,8 +61,35 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Poll for manual popup close
+    let oauthCompleted = false;
+    const pollClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(pollClosed);
+        if (!oauthCompleted) {
+          console.log("OAuth popup closed by user before completing.");
+          githubBtn.disabled = false;
+          githubBtn.innerHTML = `<i class="fab fa-github"></i> Login with GitHub`;
+        }
+      }
+    }, 500);
+
+    // Mark OAuth as completed only on the expected backend OAuth result message.
+    const onOauthMessage = (event) => {
+      if (event.origin !== BACKEND_ORIGIN || event.data?.type !== "OAUTH_RESULT") {
+        return;
+      }
+
+      oauthCompleted = true;
+      clearInterval(pollClosed);
+      window.removeEventListener("message", onOauthMessage);
+    };
+    window.addEventListener("message", onOauthMessage);
+
     try {
-      // Fetch GitHub authorization URL from backend
+      githubBtn.disabled = true;
+      githubBtn.innerHTML = `<i class="fab fa-github"></i> Opening GitHub...`;
+
       const response = await fetch(`${BACKEND_URL}/github/authorize`, {
         method: "GET",
         credentials: "include",
@@ -83,11 +101,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await response.json();
       console.log("Redirecting popup to GitHub:", data.authUrl);
-
-      // Navigate popup to GitHub OAuth page
       popup.location.href = data.authUrl;
+
     } catch (error) {
       console.error("GitHub login error:", error);
+      clearInterval(pollClosed);
+      githubBtn.disabled = false;
+      githubBtn.innerHTML = `<i class="fab fa-github"></i> Login with GitHub`;
       alert("An error occurred while opening GitHub login. Please try again.");
       if (popup && !popup.closed) {
         popup.close();
@@ -104,7 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Please enter your email address.");
         return;
       }
-      // TODO: handle email login
       console.log("Continue with email:", email);
     });
   }
