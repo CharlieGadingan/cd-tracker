@@ -4,6 +4,7 @@
 
 const apiRequest = window.ApiClient?.request;
 const userApi = window.ApiClient?.user;
+const classroomApi = window.ApiClient?.classrooms;
 
 // ── DOM Elements ────────────────────────────────────────────────────────────
 const createClassBtn       = document.getElementById('createClassBtn');
@@ -1094,6 +1095,11 @@ async function handleUpdateStatus() {
 }
 
 async function handleDeleteClassroom() {
+    if (!currentManageClassId || currentManageClassId === 'unknown') {
+        showNotification('Invalid classroom ID', 'error');
+        return;
+    }
+
     const box = document.getElementById('deleteConfirmBox');
     if (box) box.classList.remove('visible');
 
@@ -1101,7 +1107,11 @@ async function handleDeleteClassroom() {
     if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; }
 
     try {
-        await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}`, { method: 'DELETE' });
+        if (classroomApi?.deleteClassroom) {
+            await classroomApi.deleteClassroom(currentManageClassId);
+        } else {
+            await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}`, { method: 'DELETE' });
+        }
 
         showNotification('Classroom deleted.', 'success');
         closeModal(manageModal);

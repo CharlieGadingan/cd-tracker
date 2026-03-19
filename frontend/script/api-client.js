@@ -96,10 +96,34 @@
     },
   };
 
+  const classrooms = {
+    closeClassroom(classroomId) {
+      if (!classroomId) {
+        throw new Error("Classroom ID is required");
+      }
+
+      return request(`/classrooms/${encodeURIComponent(classroomId)}/close`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+
+    deleteClassroom(classroomId) {
+      if (!classroomId) {
+        throw new Error("Classroom ID is required");
+      }
+
+      return request(`/classrooms/${encodeURIComponent(classroomId)}`, {
+        method: "DELETE",
+      });
+    },
+  };
+
   globalScope.ApiClient = {
     request,
     parseResponseBody,
     extractErrorMessage,
     user,
+    classrooms,
   };
 })(window);
