@@ -1057,7 +1057,6 @@ async function handleUpdateClassroom() {
 
 async function handleUpdateStatus() {
     const sourceStatus = (currentManageClassroomStatus || 'ACTIVE').toUpperCase();
-    const status = 'CLOSED';
 
     if (sourceStatus === 'CLOSED' || sourceStatus === 'ARCHIVED') {
         return showNotification('Classroom is already closed.', 'info');
@@ -1070,30 +1069,24 @@ async function handleUpdateStatus() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
 
     try {
-        await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name: document.getElementById('manageNameInput')?.value.trim() || '',
-                description: document.getElementById('manageDescInput')?.value.trim() || null,
-                maxStudents: parseInt(document.getElementById('manageMaxInput')?.value || '50'),
-                status
-            })
+        const response = await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}/close`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
         });
 
-        showNotification('Classroom status updated!', 'success');
-        currentManageClassroomStatus = status;
-        updateCurrentStatusBadge(status);
-        updateCloseStatusWarning(status);
-        syncCloseStatusAction(status);
+        showNotification('Classroom closed successfully!', 'success');
+        currentManageClassroomStatus = 'CLOSED';
+        updateCurrentStatusBadge('CLOSED');
+        updateCloseStatusWarning('CLOSED');
+        syncCloseStatusAction('CLOSED');
         closeModal(manageModal);
         await loadClasses();
 
     } catch (error) {
-        console.error('Update status error:', error);
-        showNotification(error.message || 'Failed to update status', 'error');
+        console.error('Close classroom error:', error);
+        showNotification(error.message || 'Failed to close classroom', 'error');
     } finally {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-lock"></i> Close Classroom'; }
     }
 }
 
