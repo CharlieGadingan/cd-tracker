@@ -395,6 +395,267 @@ body {
 .modal-content textarea { min-height: 60px; resize: vertical; }
 .field-hint { display: block; color: #484f58; font-size: 10px; margin-top: 3px; }
 
+/* ── Status Dropdown ──────────────────────────────────────────── */
+.status-dropdown-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.status-dropdown-input {
+    width: 100%;
+    padding: 8px 32px 8px 10px !important;
+    background: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 6px !important;
+    color: #c9d1d9 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    transition: all 0.12s !important;
+}
+
+.status-dropdown-input:hover {
+    border-color: #484f58 !important;
+}
+
+.status-dropdown-input:focus {
+    outline: none !important;
+    border-color: #58a6ff !important;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1) !important;
+}
+
+.status-dropdown-input.open {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-color: #58a6ff !important;
+}
+
+.status-dropdown-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #8b949e;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+}
+
+.status-dropdown-input.open ~ .status-dropdown-icon i {
+    transform: rotate(180deg);
+}
+
+.status-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #0d1117;
+    border: 1px solid #58a6ff;
+    border-top: none;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.15s, opacity 0.15s;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.status-dropdown-menu.open {
+    max-height: 200px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.status-option {
+    padding: 10px 10px;
+    color: #c9d1d9;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #21262d;
+}
+
+.status-option:last-child {
+    border-bottom: none;
+}
+
+.status-option:hover {
+    background: #161b22;
+}
+
+.status-option.selected {
+    background: rgba(88, 166, 255, 0.15);
+    color: #58a6ff;
+    font-weight: 500;
+}
+
+.status-option.disabled {
+    color: #484f58;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.status-label {
+    flex: 1;
+}
+
+.status-option.selected::before {
+    content: '✓';
+    color: #58a6ff;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* ── Status Management Section ────────────────────────────────────── */
+.manage-status-section {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    background:
+        linear-gradient(180deg, rgba(88, 166, 255, 0.08) 0%, rgba(88, 166, 255, 0.02) 100%),
+        #0d1117;
+}
+
+.manage-status-section .manage-section-label {
+    margin-bottom: 12px !important;
+    color: #c9d1d9;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.manage-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.manage-current-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    background: #161b22;
+}
+
+.manage-current-status.active {
+    color: #3fb950;
+    border-color: rgba(63, 185, 80, 0.55);
+    background: rgba(63, 185, 80, 0.12);
+}
+
+.manage-current-status.closed {
+    color: #f2cc60;
+    border-color: rgba(242, 204, 96, 0.55);
+    background: rgba(242, 204, 96, 0.12);
+}
+
+.manage-current-status.archived {
+    color: #8b949e;
+    border-color: rgba(139, 148, 158, 0.55);
+    background: rgba(139, 148, 158, 0.16);
+}
+
+.status-management-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.status-management-row .status-dropdown-wrapper {
+    flex: 1;
+}
+
+.status-management-row .status-dropdown-input {
+    min-height: 38px !important;
+    padding: 8px 34px 8px 12px !important;
+}
+
+.btn-status-update {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    height: 38px;
+    margin-top: 0;
+}
+
+.btn-status-update:hover {
+    background: #2ea043;
+}
+
+.btn-status-update:disabled {
+    background: #21262d;
+    color: #484f58;
+    cursor: not-allowed;
+}
+
+.btn-status-update i {
+    font-size: 11px;
+}
+
+.manage-status-close-warning {
+    display: none;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(242, 204, 96, 0.45);
+    background: rgba(242, 204, 96, 0.1);
+    color: #f2cc60;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.manage-status-close-warning.show {
+    display: block;
+}
+
+.manage-status-section .field-hint {
+    margin-top: 8px !important;
+}
+
+@media (max-width: 720px) {
+    .manage-status-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .status-management-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-status-update {
+        width: 100%;
+        justify-content: center;
+    }
+}
 /* ── Toggle ───────────────────────────────────────────────────── */
 .toggle-option {
     display: flex;

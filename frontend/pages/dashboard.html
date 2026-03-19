@@ -309,40 +309,39 @@
                         <input type="number" id="manageMaxInput" min="1" max="100">
                     </div>
 
-                    <div>
-                        <label class="toggle-option" for="managePasscodeToggle">
-                            <div class="toggle-info">
-                                <strong>Require Passcode</strong>
-                                <small>Students need a passcode to join</small>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="managePasscodeToggle">
-                                <span class="toggle-slider"></span>
-                            </div>
-                        </label>
-                        <div id="managePasscodeSection" style="display:none; margin-top:8px;">
-                            <label for="managePasscodeInput">New Passcode</label>
-                            <input type="text" id="managePasscodeInput" placeholder="Enter a secure passcode">
-                            <span class="field-hint">Leave empty to keep the existing passcode</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="toggle-option" for="manageApprovalToggle">
-                            <div class="toggle-info">
-                                <strong>Require Approval</strong>
-                                <small>Manually approve students before they can join</small>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="manageApprovalToggle">
-                                <span class="toggle-slider"></span>
-                            </div>
-                        </label>
-                    </div>
-
                     <div class="manage-form-actions">
                         <button class="btn cancel" id="cancelManage">Cancel</button>
                         <button class="btn primary" id="saveManageBtn"><i class="fas fa-check"></i> Save Changes</button>
+                    </div>
+
+                    <!-- Status Management -->
+                    <div class="manage-status-section">
+                        <div class="manage-status-header">
+                            <p class="manage-section-label"><i class="fas fa-sliders-h"></i> Classroom Status</p>
+                            <span class="manage-current-status" id="manageCurrentStatusBadge">Unknown</span>
+                        </div>
+                        <div class="status-management-row">
+                            <div class="status-dropdown-wrapper">
+                                <input type="text" id="manageStatusDropdown" class="status-dropdown-input" placeholder="Select status" readonly>
+                                <div class="status-dropdown-icon">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="status-dropdown-menu" id="manageStatusMenu">
+                                    <div class="status-option" data-value="ACTIVE">
+                                        <span class="status-label">Active</span>
+                                    </div>
+                                    <div class="status-option" data-value="CLOSED">
+                                        <span class="status-label">Closed</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-status-update" id="updateStatusBtn"><i class="fas fa-sync-alt"></i> Update Status</button>
+                        </div>
+                        <div class="manage-status-close-warning" id="manageCloseStatusWarning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            Closing this classroom prevents new classroom activity. This action should only be used when the class is finished.
+                        </div>
+                        <span class="field-hint">Use this separately from classroom details to control availability.</span>
                     </div>
                 </div>
 

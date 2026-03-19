@@ -48,6 +48,8 @@ let classroomsData = { created: [], joined: [] };
 
 // Manage modal state
 let currentManageClassId = null;
+let currentManageClassroomStatus = 'ACTIVE';
+let statusDropdownHandlersInitialized = false;
 
 // Current user
 let currentUser = null;
@@ -127,6 +129,160 @@ function resolveClassroomId(classroom) {
 function capitalise(str) {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function resolveClassroomStatus(classroom) {
+    if (!classroom || typeof classroom !== 'object') return '';
+
+    const candidates = [
+        classroom.status,
+        classroom.classroomStatus,
+        classroom.classStatus,
+        classroom.state,
+        classroom.settings?.status,
+        classroom.settings?.classroomStatus,
+        classroom.classroomSettings?.status,
+        classroom.classroomSettings?.classroomStatus
+    ];
+
+    for (const candidate of candidates) {
+        const value = String(unwrap(candidate) || '').trim().toUpperCase();
+        if (value) return value;
+    }
+
+    const nestedContainers = [
+        classroom.classroom,
+        classroom.data,
+        classroom.classroomData,
+        classroom.settings,
+        classroom.classroomSettings
+    ];
+
+    for (const nested of nestedContainers) {
+        if (nested && typeof nested === 'object') {
+            const nestedStatus = resolveClassroomStatus(nested);
+            if (nestedStatus) return nestedStatus;
+        }
+    }
+
+    return '';
+}
+
+function normalizeClassroomPayload(item) {
+    const source = item && typeof item === 'object' ? item : {};
+    const classroom = source.classroom && typeof source.classroom === 'object'
+        ? source.classroom
+        : source;
+
+    const normalized = {
+        ...source,
+        ...classroom
+    };
+
+    const resolvedStatus = resolveClassroomStatus(source) || resolveClassroomStatus(classroom);
+    if (resolvedStatus) {
+        normalized.status = resolvedStatus;
+        normalized.classroomStatus = resolvedStatus;
+    }
+
+    return normalized;
+}
+
+function getSelectedManageStatus() {
+    const input = document.getElementById('manageStatusDropdown');
+    return input ? String(input.dataset.value || '').toUpperCase() : '';
+}
+
+function updateCurrentStatusBadge(status) {
+    const badge = document.getElementById('manageCurrentStatusBadge');
+    if (!badge) return;
+
+    const normalized = String(status || 'UNKNOWN').toUpperCase();
+    badge.textContent = normalized;
+    badge.classList.remove('active', 'closed', 'archived');
+
+    if (normalized === 'ACTIVE') badge.classList.add('active');
+    if (normalized === 'CLOSED') badge.classList.add('closed');
+    if (normalized === 'ARCHIVED') badge.classList.add('archived');
+}
+
+function updateCloseStatusWarning(status) {
+    const warning = document.getElementById('manageCloseStatusWarning');
+    if (!warning) return;
+
+    const normalized = String(status || '').toUpperCase();
+    warning.classList.toggle('show', normalized === 'CLOSED');
+}
+
+function setManageStatusValue(value) {
+    const input = document.getElementById('manageStatusDropdown');
+    const menu = document.getElementById('manageStatusMenu');
+    if (!input) return;
+
+    const statusValue = String(value || '').toUpperCase();
+    input.dataset.value = statusValue;
+    input.value = statusValue.charAt(0) + statusValue.slice(1).toLowerCase();
+    updateCurrentStatusBadge(statusValue);
+    updateCloseStatusWarning(statusValue);
+    
+    if (menu) {
+        Array.from(menu.querySelectorAll('.status-option')).forEach(option => {
+            const optionValue = String(option.dataset.value || '').toUpperCase();
+            option.classList.toggle('selected', optionValue === statusValue);
+        });
+    }
+    closeStatusDropdown();
+}
+
+function openStatusDropdown() {
+    const input = document.getElementById('manageStatusDropdown');
+    const menu = document.getElementById('manageStatusMenu');
+    if (!input || !menu) return;
+    
+    input.classList.add('open');
+    menu.classList.add('open');
+}
+
+function closeStatusDropdown() {
+    const input = document.getElementById('manageStatusDropdown');
+    const menu = document.getElementById('manageStatusMenu');
+    if (!input || !menu) return;
+    
+    input.classList.remove('open');
+    menu.classList.remove('open');
+}
+
+function setupStatusDropdownHandlers() {
+    if (statusDropdownHandlersInitialized) return;
+
+    const input = document.getElementById('manageStatusDropdown');
+    const menu = document.getElementById('manageStatusMenu');
+    if (!input || !menu) return;
+
+    input.addEventListener('click', () => {
+        if (input.classList.contains('open')) {
+            closeStatusDropdown();
+        } else {
+            openStatusDropdown();
+        }
+    });
+
+    Array.from(menu.querySelectorAll('.status-option')).forEach(option => {
+        option.addEventListener('click', () => {
+            const value = String(option.dataset.value || '').toUpperCase();
+            if (!option.classList.contains('disabled')) {
+                setManageStatusValue(value);
+            }
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !menu.contains(e.target)) {
+            closeStatusDropdown();
+        }
+    });
+
+    statusDropdownHandlersInitialized = true;
 }
 
 function getInitials(name) {
@@ -263,6 +419,7 @@ function setupEventListeners() {
     document.getElementById('closeManageModal')?.addEventListener('click', () => closeModal(manageModal));
     document.getElementById('cancelManage')?.addEventListener('click',      () => closeModal(manageModal));
     document.getElementById('saveManageBtn')?.addEventListener('click',     handleUpdateClassroom);
+    document.getElementById('updateStatusBtn')?.addEventListener('click',    handleUpdateStatus);
     // Delete — show typed-confirmation box
     document.getElementById('deleteClassBtn')?.addEventListener('click', () => {
         const box = document.getElementById('deleteConfirmBox');
@@ -294,13 +451,6 @@ function setupEventListeners() {
     });
 
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', handleDeleteClassroom);
-
-    document.getElementById('managePasscodeToggle')?.addEventListener('change', (e) => {
-        const sec = document.getElementById('managePasscodeSection');
-        const inp = document.getElementById('managePasscodeInput');
-        if (sec) sec.style.display = e.target.checked ? 'block' : 'none';
-        if (!e.target.checked && inp) inp.value = '';
-    });
 
     // Tab switching
     document.addEventListener('click', (e) => {
@@ -704,7 +854,10 @@ async function loadClasses() {
     try {
         // Load created classrooms
         const createdResult = await apiRequest('/classrooms/me', { method: 'GET' });
-        let createdClasses = Array.isArray(createdResult) ? createdResult : createdResult.data || [];
+        const createdRaw = Array.isArray(createdResult) ? createdResult : createdResult.data || [];
+        const createdClasses = Array.isArray(createdRaw)
+            ? createdRaw.map(item => normalizeClassroomPayload(item))
+            : [];
 
         // Load joined classrooms
         let joinedClasses = [];
@@ -712,7 +865,7 @@ async function loadClasses() {
             const joinedData = await apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false });
             joinedClasses = Array.isArray(joinedData)
                 ? joinedData.map(item => ({
-                    ...(item?.classroom || item || {}),
+                    ...normalizeClassroomPayload(item),
                     studentCount: item?.studentCount ?? item?.classroom?.studentCount ?? 0
                 }))
                 : [];
@@ -852,6 +1005,9 @@ function manageClassroom(classId) {
 
 async function openManageModal(classId) {
     currentManageClassId = classId;
+    currentManageClassroomStatus = 'ACTIVE';
+    updateCurrentStatusBadge('UNKNOWN');
+    updateCloseStatusWarning('UNKNOWN');
 
     const classroom = classroomsData.created.find(c => {
         const id = resolveClassroomId(c);
@@ -865,23 +1021,35 @@ async function openManageModal(classId) {
     const nameEl    = document.getElementById('manageNameInput');
     const descEl    = document.getElementById('manageDescInput');
     const maxEl     = document.getElementById('manageMaxInput');
-    const togPass   = document.getElementById('managePasscodeToggle');
-    const togAppro  = document.getElementById('manageApprovalToggle');
-    const passSecEl = document.getElementById('managePasscodeSection');
-    const passEl    = document.getElementById('managePasscodeInput');
+    const menu      = document.getElementById('manageStatusMenu');
 
     if (classroom) {
         if (nameEl)  nameEl.value  = classroom.className   || classroom.name || '';
         if (descEl)  descEl.value  = classroom.description || '';
         if (maxEl)   maxEl.value   = classroom.maxStudents  || 50;
+    }
 
-        const hasPasscode = !!(classroom.hasPasscode || classroom.requiresPasscode || classroom.passcode);
-        if (togPass)   togPass.checked  = hasPasscode;
-        if (passSecEl) passSecEl.style.display = hasPasscode ? 'block' : 'none';
-        if (passEl)    passEl.value = '';
+    setupStatusDropdownHandlers();
 
-        const hasApproval = !!(classroom.requireApproval || classroom.requiresApproval);
-        if (togAppro) togAppro.checked = hasApproval;
+    if (classroom) {
+        const classroomStatus = resolveClassroomStatus(classroom) || 'ACTIVE';
+        currentManageClassroomStatus = classroomStatus;
+
+        const allowedTransitions = {
+            ACTIVE: ['ACTIVE', 'CLOSED'],
+            CLOSED: ['CLOSED'],
+            ARCHIVED: ['ARCHIVED']
+        };
+        const allowedStatuses = allowedTransitions[classroomStatus] || [classroomStatus];
+
+        if (menu) {
+            Array.from(menu.querySelectorAll('.status-option')).forEach(option => {
+                const optionStatus = String(option.dataset.value || '').toUpperCase();
+                option.classList.toggle('disabled', !allowedStatuses.includes(optionStatus));
+            });
+        }
+        setManageStatusValue(classroomStatus);
+        updateCurrentStatusBadge(classroomStatus);
     }
 
     // Reset stats to loading state
@@ -932,9 +1100,6 @@ async function handleUpdateClassroom() {
     const name        = document.getElementById('manageNameInput')?.value.trim()  || '';
     const description = document.getElementById('manageDescInput')?.value.trim()  || '';
     const maxStudents = parseInt(document.getElementById('manageMaxInput')?.value || '50');
-    const requirePass = document.getElementById('managePasscodeToggle')?.checked  || false;
-    const passcode    = requirePass ? document.getElementById('managePasscodeInput')?.value.trim() : null;
-    const requireApproval = document.getElementById('manageApprovalToggle')?.checked || false;
 
     if (!name) return showNotification('Please enter a class name', 'error');
     if (name.length < 3 || name.length > 100) return showNotification('Class name must be 3–100 characters', 'error');
@@ -951,8 +1116,7 @@ async function handleUpdateClassroom() {
                 name,
                 description: description || null,
                 maxStudents,
-                requireApproval,
-                passcode: passcode || null
+                status: (currentManageClassroomStatus || 'ACTIVE').toUpperCase()
             })
         });
 
@@ -965,6 +1129,57 @@ async function handleUpdateClassroom() {
         showNotification(error.message || 'Update failed', 'error');
     } finally {
         if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-check"></i> Save Changes'; }
+    }
+}
+
+async function handleUpdateStatus() {
+    const selectedStatus = getSelectedManageStatus();
+    const status = (selectedStatus || currentManageClassroomStatus || '').toUpperCase();
+
+    if (!status) return showNotification('Please select a classroom status', 'error');
+
+    const allowedTransitions = {
+        ACTIVE: ['ACTIVE', 'CLOSED'],
+        CLOSED: ['CLOSED'],
+        ARCHIVED: ['ARCHIVED']
+    };
+    const sourceStatus = (currentManageClassroomStatus || 'ACTIVE').toUpperCase();
+    const allowedStatuses = allowedTransitions[sourceStatus] || [sourceStatus];
+    if (!allowedStatuses.includes(status)) {
+        return showNotification('Invalid status transition for this classroom.', 'error');
+    }
+
+    if (sourceStatus !== 'CLOSED' && status === 'CLOSED') {
+        const confirmed = window.confirm('Close this classroom? Students will no longer be able to continue normal classroom activity.');
+        if (!confirmed) return;
+    }
+
+    const btn = document.getElementById('updateStatusBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
+
+    try {
+        await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: document.getElementById('manageNameInput')?.value.trim() || '',
+                description: document.getElementById('manageDescInput')?.value.trim() || null,
+                maxStudents: parseInt(document.getElementById('manageMaxInput')?.value || '50'),
+                status
+            })
+        });
+
+        showNotification('Classroom status updated!', 'success');
+        currentManageClassroomStatus = status;
+        updateCurrentStatusBadge(status);
+        closeModal(manageModal);
+        await loadClasses();
+
+    } catch (error) {
+        console.error('Update status error:', error);
+        showNotification(error.message || 'Failed to update status', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Status'; }
     }
 }
 
