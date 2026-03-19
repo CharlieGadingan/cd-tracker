@@ -310,7 +310,6 @@
                     </div>
 
                     <div class="manage-form-actions">
-                        <button class="btn cancel" id="cancelManage">Cancel</button>
                         <button class="btn primary" id="saveManageBtn"><i class="fas fa-check"></i> Save Changes</button>
                     </div>
 
@@ -321,27 +320,16 @@
                             <span class="manage-current-status" id="manageCurrentStatusBadge">Unknown</span>
                         </div>
                         <div class="status-management-row">
-                            <div class="status-dropdown-wrapper">
-                                <input type="text" id="manageStatusDropdown" class="status-dropdown-input" placeholder="Select status" readonly>
-                                <div class="status-dropdown-icon">
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="status-dropdown-menu" id="manageStatusMenu">
-                                    <div class="status-option" data-value="ACTIVE">
-                                        <span class="status-label">Active</span>
-                                    </div>
-                                    <div class="status-option" data-value="CLOSED">
-                                        <span class="status-label">Closed</span>
-                                    </div>
-                                </div>
+                            <div class="status-action-copy">
+                                <strong>Close classroom</strong>
+                                <small>This action is irreversible and should be used only after the class is finished.</small>
                             </div>
-                            <button class="btn btn-status-update" id="updateStatusBtn"><i class="fas fa-sync-alt"></i> Update Status</button>
+                            <button class="btn btn-status-update" id="updateStatusBtn"><i class="fas fa-lock"></i> Close Classroom</button>
                         </div>
                         <div class="manage-status-close-warning" id="manageCloseStatusWarning">
                             <i class="fas fa-triangle-exclamation"></i>
-                            Closing this classroom prevents new classroom activity. This action should only be used when the class is finished.
+                            Once closed, this classroom cannot be reopened from the dashboard.
                         </div>
-                        <span class="field-hint">Use this separately from classroom details to control availability.</span>
                     </div>
                 </div>
 

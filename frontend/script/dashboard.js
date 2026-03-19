@@ -49,7 +49,6 @@ let classroomsData = { created: [], joined: [] };
 // Manage modal state
 let currentManageClassId = null;
 let currentManageClassroomStatus = 'ACTIVE';
-let statusDropdownHandlersInitialized = false;
 
 // Current user
 let currentUser = null;
@@ -188,11 +187,6 @@ function normalizeClassroomPayload(item) {
     return normalized;
 }
 
-function getSelectedManageStatus() {
-    const input = document.getElementById('manageStatusDropdown');
-    return input ? String(input.dataset.value || '').toUpperCase() : '';
-}
-
 function updateCurrentStatusBadge(status) {
     const badge = document.getElementById('manageCurrentStatusBadge');
     if (!badge) return;
@@ -211,78 +205,21 @@ function updateCloseStatusWarning(status) {
     if (!warning) return;
 
     const normalized = String(status || '').toUpperCase();
-    warning.classList.toggle('show', normalized === 'CLOSED');
+    warning.classList.toggle('show', normalized !== 'CLOSED');
 }
 
-function setManageStatusValue(value) {
-    const input = document.getElementById('manageStatusDropdown');
-    const menu = document.getElementById('manageStatusMenu');
-    if (!input) return;
+function syncCloseStatusAction(status) {
+    const normalized = String(status || '').toUpperCase();
+    const button = document.getElementById('updateStatusBtn');
+    if (!button) return;
 
-    const statusValue = String(value || '').toUpperCase();
-    input.dataset.value = statusValue;
-    input.value = statusValue.charAt(0) + statusValue.slice(1).toLowerCase();
-    updateCurrentStatusBadge(statusValue);
-    updateCloseStatusWarning(statusValue);
-    
-    if (menu) {
-        Array.from(menu.querySelectorAll('.status-option')).forEach(option => {
-            const optionValue = String(option.dataset.value || '').toUpperCase();
-            option.classList.toggle('selected', optionValue === statusValue);
-        });
+    if (normalized === 'CLOSED' || normalized === 'ARCHIVED') {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-lock"></i> Classroom Closed';
+    } else {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-lock"></i> Close Classroom';
     }
-    closeStatusDropdown();
-}
-
-function openStatusDropdown() {
-    const input = document.getElementById('manageStatusDropdown');
-    const menu = document.getElementById('manageStatusMenu');
-    if (!input || !menu) return;
-    
-    input.classList.add('open');
-    menu.classList.add('open');
-}
-
-function closeStatusDropdown() {
-    const input = document.getElementById('manageStatusDropdown');
-    const menu = document.getElementById('manageStatusMenu');
-    if (!input || !menu) return;
-    
-    input.classList.remove('open');
-    menu.classList.remove('open');
-}
-
-function setupStatusDropdownHandlers() {
-    if (statusDropdownHandlersInitialized) return;
-
-    const input = document.getElementById('manageStatusDropdown');
-    const menu = document.getElementById('manageStatusMenu');
-    if (!input || !menu) return;
-
-    input.addEventListener('click', () => {
-        if (input.classList.contains('open')) {
-            closeStatusDropdown();
-        } else {
-            openStatusDropdown();
-        }
-    });
-
-    Array.from(menu.querySelectorAll('.status-option')).forEach(option => {
-        option.addEventListener('click', () => {
-            const value = String(option.dataset.value || '').toUpperCase();
-            if (!option.classList.contains('disabled')) {
-                setManageStatusValue(value);
-            }
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !menu.contains(e.target)) {
-            closeStatusDropdown();
-        }
-    });
-
-    statusDropdownHandlersInitialized = true;
 }
 
 function getInitials(name) {
@@ -1008,6 +945,7 @@ async function openManageModal(classId) {
     currentManageClassroomStatus = 'ACTIVE';
     updateCurrentStatusBadge('UNKNOWN');
     updateCloseStatusWarning('UNKNOWN');
+    syncCloseStatusAction('UNKNOWN');
 
     const classroom = classroomsData.created.find(c => {
         const id = resolveClassroomId(c);
@@ -1021,7 +959,6 @@ async function openManageModal(classId) {
     const nameEl    = document.getElementById('manageNameInput');
     const descEl    = document.getElementById('manageDescInput');
     const maxEl     = document.getElementById('manageMaxInput');
-    const menu      = document.getElementById('manageStatusMenu');
 
     if (classroom) {
         if (nameEl)  nameEl.value  = classroom.className   || classroom.name || '';
@@ -1029,27 +966,13 @@ async function openManageModal(classId) {
         if (maxEl)   maxEl.value   = classroom.maxStudents  || 50;
     }
 
-    setupStatusDropdownHandlers();
-
     if (classroom) {
         const classroomStatus = resolveClassroomStatus(classroom) || 'ACTIVE';
         currentManageClassroomStatus = classroomStatus;
 
-        const allowedTransitions = {
-            ACTIVE: ['ACTIVE', 'CLOSED'],
-            CLOSED: ['CLOSED'],
-            ARCHIVED: ['ARCHIVED']
-        };
-        const allowedStatuses = allowedTransitions[classroomStatus] || [classroomStatus];
-
-        if (menu) {
-            Array.from(menu.querySelectorAll('.status-option')).forEach(option => {
-                const optionStatus = String(option.dataset.value || '').toUpperCase();
-                option.classList.toggle('disabled', !allowedStatuses.includes(optionStatus));
-            });
-        }
-        setManageStatusValue(classroomStatus);
         updateCurrentStatusBadge(classroomStatus);
+        updateCloseStatusWarning(classroomStatus);
+        syncCloseStatusAction(classroomStatus);
     }
 
     // Reset stats to loading state
@@ -1133,26 +1056,15 @@ async function handleUpdateClassroom() {
 }
 
 async function handleUpdateStatus() {
-    const selectedStatus = getSelectedManageStatus();
-    const status = (selectedStatus || currentManageClassroomStatus || '').toUpperCase();
-
-    if (!status) return showNotification('Please select a classroom status', 'error');
-
-    const allowedTransitions = {
-        ACTIVE: ['ACTIVE', 'CLOSED'],
-        CLOSED: ['CLOSED'],
-        ARCHIVED: ['ARCHIVED']
-    };
     const sourceStatus = (currentManageClassroomStatus || 'ACTIVE').toUpperCase();
-    const allowedStatuses = allowedTransitions[sourceStatus] || [sourceStatus];
-    if (!allowedStatuses.includes(status)) {
-        return showNotification('Invalid status transition for this classroom.', 'error');
+    const status = 'CLOSED';
+
+    if (sourceStatus === 'CLOSED' || sourceStatus === 'ARCHIVED') {
+        return showNotification('Classroom is already closed.', 'info');
     }
 
-    if (sourceStatus !== 'CLOSED' && status === 'CLOSED') {
-        const confirmed = window.confirm('Close this classroom? Students will no longer be able to continue normal classroom activity.');
-        if (!confirmed) return;
-    }
+    const confirmed = window.confirm('Close this classroom? This is irreversible from the dashboard.');
+    if (!confirmed) return;
 
     const btn = document.getElementById('updateStatusBtn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...'; }
@@ -1172,6 +1084,8 @@ async function handleUpdateStatus() {
         showNotification('Classroom status updated!', 'success');
         currentManageClassroomStatus = status;
         updateCurrentStatusBadge(status);
+        updateCloseStatusWarning(status);
+        syncCloseStatusAction(status);
         closeModal(manageModal);
         await loadClasses();
 
