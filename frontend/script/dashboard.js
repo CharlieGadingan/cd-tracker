@@ -171,7 +171,9 @@ function normalizeClassroomPayload(item) {
     const source = item && typeof item === 'object' ? item : {};
     const classroom = source.classroom && typeof source.classroom === 'object'
         ? source.classroom
-        : source;
+        : source.classroomData && typeof source.classroomData === 'object'
+            ? source.classroomData
+            : source;
 
     const normalized = {
         ...source,
@@ -788,42 +790,43 @@ async function loadClasses() {
 
     container.innerHTML = '<p class="loading-message">Loading your classes...</p>';
  
+    let createdClasses = [];
+    let joinedClasses = [];
+
+    // Created and joined are loaded independently so one failing endpoint
+    // does not wipe the other tab.
     try {
-        // Load created classrooms
         const createdResult = await apiRequest('/classrooms/me', { method: 'GET' });
-        const createdRaw = Array.isArray(createdResult) ? createdResult : createdResult.data || [];
-        const createdClasses = Array.isArray(createdRaw)
+        const createdRaw = Array.isArray(createdResult) ? createdResult : createdResult?.data || [];
+        createdClasses = Array.isArray(createdRaw)
             ? createdRaw.map(item => normalizeClassroomPayload(item))
             : [];
-
-        // Load joined classrooms
-        let joinedClasses = [];
-        try {
-            const joinedData = await apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false });
-            joinedClasses = Array.isArray(joinedData)
-                ? joinedData.map(item => ({
-                    ...normalizeClassroomPayload(item),
-                    studentCount: item?.studentCount ?? item?.classroom?.studentCount ?? 0
-                }))
-                : [];
-        } catch (error) {
-            console.warn('Failed to load joined classrooms:', error);
-            joinedClasses = [];
-        }
-
-        classroomsData.created = createdClasses;
-        classroomsData.joined  = joinedClasses;
-
-        updateTabCounts();
-        renderClasses();
-
     } catch (error) {
-        console.error('ERROR in loadClasses:', error);
-        classroomsData.created = [];
-        classroomsData.joined  = [];
-        updateTabCounts();
-        renderClasses();
+        console.warn('Failed to load created classrooms:', error);
     }
+
+    try {
+        const joinedData = await apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false });
+        const joinedRaw = Array.isArray(joinedData) ? joinedData : joinedData?.data || [];
+        joinedClasses = Array.isArray(joinedRaw)
+            ? joinedRaw.map(item => ({
+                ...normalizeClassroomPayload(item),
+                studentCount:
+                    item?.studentCount ??
+                    item?.classroom?.studentCount ??
+                    item?.classroomData?.studentCount ??
+                    0
+            }))
+            : [];
+    } catch (error) {
+        console.warn('Failed to load joined classrooms:', error);
+    }
+
+    classroomsData.created = createdClasses;
+    classroomsData.joined  = joinedClasses;
+
+    updateTabCounts();
+    renderClasses();
 }
 
 function switchTab(tab) {
@@ -896,7 +899,7 @@ function createClassCard(classroom, isCreated) {
                     ${requireApproval ? '<span class="setting-badge"><i class="fas fa-user-check"></i> Approval</span>' : ''}
                 </div>` : ''}
             <div class="class-actions">
-                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}">${isCreated ? 'View Class' : 'Join Dashboard'}</button>
+                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}">${isCreated ? 'View Class' : 'Go to Class'}</button>
                 ${isCreated ? `<button class="btn btn-secondary manage-class" data-class-id="${escapeHtml(classId)}">Manage</button>` : ''}
             </div>
         </div>
