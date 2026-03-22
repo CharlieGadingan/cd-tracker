@@ -176,9 +176,11 @@ function normalizeClassroomPayload(item) {
             ? source.classroomData
             : source;
 
+    // Prefer top-level values (e.g., join payload fields like studentCount/maxStudent)
+    // over nested classroom defaults.
     const normalized = {
-        ...source,
-        ...classroom
+        ...classroom,
+        ...source
     };
 
     const resolvedStatus = resolveClassroomStatus(source) || resolveClassroomStatus(classroom);
@@ -187,7 +189,28 @@ function normalizeClassroomPayload(item) {
         normalized.classroomStatus = resolvedStatus;
     }
 
+    // Always resolve maxStudent for both created and joined classrooms
+    const resolvedMax = resolveMaxStudents({
+        ...normalized,
+        maxStudent: source.maxStudent ?? classroom.maxStudent ?? source.maxStudents ?? classroom.maxStudents,
+        maxStudents: source.maxStudents ?? classroom.maxStudents ?? source.maxStudent ?? classroom.maxStudent
+    }, 50);
+    normalized.maxStudent = resolvedMax;
+    normalized.maxStudents = resolvedMax;
+
     return normalized;
+}
+
+function resolveMaxStudents(classroom, fallback = 50) {
+    const rawValue =
+        classroom?.maxStudent ??
+        classroom?.maxStudents ??
+        classroom?.max_student ??
+        classroom?.capacity;
+
+    const value = unwrap(rawValue);
+    const parsed = Number.parseInt(String(value ?? '').trim(), 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function updateCurrentStatusBadge(status) {
@@ -810,14 +833,42 @@ async function loadClasses() {
         const joinedData = await apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false });
         const joinedRaw = Array.isArray(joinedData) ? joinedData : joinedData?.data || [];
         joinedClasses = Array.isArray(joinedRaw)
-            ? joinedRaw.map(item => ({
-                ...normalizeClassroomPayload(item),
-                studentCount:
-                    item?.studentCount ??
-                    item?.classroom?.studentCount ??
-                    item?.classroomData?.studentCount ??
-                    0
-            }))
+            ? joinedRaw.map(item => {
+                const normalized = normalizeClassroomPayload(item);
+                const resolvedMax = resolveMaxStudents({
+                    ...normalized,
+                    maxStudent:
+                        item?.maxStudent ??
+                        item?.classroom?.maxStudent ??
+                        item?.classroomData?.maxStudent ??
+                        item?.maxStudents ??
+                        item?.classroom?.maxStudents ??
+                        item?.classroomData?.maxStudents ??
+                        normalized.maxStudent ??
+                        normalized.maxStudents,
+                    maxStudents:
+                        item?.maxStudents ??
+                        item?.classroom?.maxStudents ??
+                        item?.classroomData?.maxStudents ??
+                        item?.maxStudent ??
+                        item?.classroom?.maxStudent ??
+                        item?.classroomData?.maxStudent ??
+                        normalized.maxStudents ??
+                        normalized.maxStudent
+                }, 50);
+
+                return {
+                    ...normalized,
+                    studentCount:
+                        item?.studentCount ??
+                        item?.classroom?.studentCount ??
+                        item?.classroomData?.studentCount ??
+                        normalized.studentCount ??
+                        0,
+                    maxStudent: resolvedMax,
+                    maxStudents: resolvedMax
+                };
+            })
             : [];
     } catch (error) {
         console.warn('Failed to load joined classrooms:', error);
@@ -867,7 +918,7 @@ function renderClasses() {
 
 function createClassCard(classroom, isCreated) {
     const studentCount    = classroom.studentCount  || classroom.students?.length || classroom.enrolledCount || classroom.memberCount || 0;
-    const maxStudents     = classroom.maxStudents   || classroom.capacity || 50;
+    const maxStudents     = resolveMaxStudents(classroom, 50);
     const classCode       = classroom.classCode     || classroom.code || classroom.inviteCode || classroom.id || 'N/A';
     const description     = classroom.description   || classroom.desc || 'No description provided';
     const hasPasscode     = !!(classroom.hasPasscode || classroom.requiresPasscode || classroom.passcode || classroom.isPasswordProtected);
@@ -967,7 +1018,7 @@ async function openManageModal(classId) {
     if (classroom) {
         if (nameEl)  nameEl.value  = classroom.className   || classroom.name || '';
         if (descEl)  descEl.value  = classroom.description || '';
-        if (maxEl)   maxEl.value   = classroom.maxStudents  || 50;
+        if (maxEl)   maxEl.value   = resolveMaxStudents(classroom, 50);
     }
 
     if (classroom) {
@@ -1074,7 +1125,7 @@ async function handleUpdateStatus() {
 
     try {
         const response = await apiRequest(`/classrooms/${encodeURIComponent(currentManageClassId)}/close`, {
-            method: 'POST',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' }
         });
 
