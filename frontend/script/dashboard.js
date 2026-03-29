@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// DASHBOARD.JS — Fixed with Professor Dashboard Navigation
+// DASHBOARD.JS — Fixed with Proper Refresh Token Handling
 // ══════════════════════════════════════════════════════════════════════════════
 
 const apiRequest = window.ApiClient?.request;
@@ -95,7 +95,6 @@ function resolveClassroomId(classroom) {
         return value;
     };
 
-    // Match backend contract from GetClassroomsProfessorData exactly.
     const topCandidates = [
         classroom.classroomId,
         classroom.classroomID,
@@ -110,13 +109,11 @@ function resolveClassroomId(classroom) {
         if (value) return value;
     }
 
-    // Some APIs wrap classroom payloads inside `classroom`.
     if (classroom.classroom && typeof classroom.classroom === 'object') {
         const nestedId = resolveClassroomId(classroom.classroom);
         if (nestedId) return nestedId;
     }
 
-    // Fallback fields in case backend sends canonical ID as generic `id`.
     const fallbackCandidates = [classroom.id, classroom._id, classroom.uuid];
     for (const candidate of fallbackCandidates) {
         const value = normalize(candidate, true);
@@ -441,28 +438,25 @@ function setupEventListeners() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+
 // PROFILE MANAGEMENT
 // ══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Loads the current user's profile and updates the UI.
+ */
 async function loadUserProfile() {
     try {
-        if (!apiRequest || !userApi) {
-            throw new Error('API client is not initialized.');
+        if (!userApi) {
+            showNotification('API client is not initialized.', 'error');
+            return;
         }
-
-        const [profileData, authData] = await Promise.all([
-            userApi.getProfile(),
-            apiRequest('/auth/check', { method: 'GET' }, { redirectOnUnauthorized: false }).catch(() => ({}))
-        ]);
-
-        const data = { ...(profileData || {}), email: authData?.email || '' };
-
+        const data = await userApi.getProfile();
         currentUser = data;
         applyProfileToUI(data);
-
     } catch (error) {
-        console.error('Error loading profile:', error);
-        showNotification('Failed to load profile', 'error');
+        console.error('Failed to load user profile:', error);
+        showNotification('Failed to load user profile', 'error');
     }
 }
 
@@ -473,18 +467,15 @@ function applyProfileToUI(data) {
     const profileUrl = data.profileUrl || '';
     const email      = data.email || '';
 
-    // Header
     const userNameEl = document.getElementById('userName');
     if (userNameEl) userNameEl.textContent = fullName;
     
-    // Dropdown
     const fullNameEl = document.getElementById('fullName');
     if (fullNameEl) fullNameEl.textContent = fullName;
     
     const usernameEl = document.getElementById('username');
     if (usernameEl) usernameEl.textContent = email;
 
-    // Avatar
     const iconEl = document.getElementById('userIcon');
     if (iconEl) {
         if (profileUrl) {
@@ -510,10 +501,8 @@ async function openProfileModal() {
 
         const data = await userApi.getProfile();
 
-        // Populate picture (left side)
         populateProfilePicture(data);
 
-        // Populate form fields (right side)
         const firstNameEl = document.getElementById('editFirstNameInput');
         const lastNameEl  = document.getElementById('editLastNameInput');
         const phoneEl     = document.getElementById('editPhoneInput');
@@ -532,7 +521,9 @@ async function openProfileModal() {
 
     } catch (error) {
         console.error('Error opening profile:', error);
-        showNotification('Failed to load profile data', 'error');
+        if (!error.message.includes('403') && !error.message.includes('401')) {
+            showNotification('Failed to load profile data', 'error');
+        }
     }
 }
 
@@ -629,7 +620,7 @@ async function handleProfilePictureUpload() {
     const file = profilePictureInput?.files?.[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
         showNotification('File is too large. Maximum size is 5MB.', 'error');
         profilePictureInput.value = '';
@@ -657,7 +648,6 @@ async function handleProfilePictureUpload() {
 
         showNotification('Profile picture updated!', 'success');
 
-        // Refresh both the modal and the header avatar
         await loadUserProfile();
         if (currentUser) populateProfilePicture(currentUser);
 
@@ -715,7 +705,6 @@ async function handleCreateClass() {
     const requireApproval = requireApprovalInput?.checked || false;
     const passcode        = passcodeToggle?.checked ? passcodeInput?.value.trim() : null;
 
-    // Validation
     if (!name) {
         return showNotification('Please enter a class name', 'error');
     }
@@ -974,10 +963,6 @@ function attachClassCardHandlers() {
     });
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// FIXED NAVIGATION TO PROFESSOR DASHBOARD
-// ══════════════════════════════════════════════════════════════════════════════
-
 function viewClassroom(classId, role) {
     if (classId && classId !== 'unknown') {
         const page = role === 'student' ? 'studentclass.html' : 'profclass.html';
@@ -1010,7 +995,6 @@ async function openManageModal(classId) {
     const classNameEl = document.getElementById('manageClassName');
     if (classNameEl) classNameEl.textContent = classroom?.className || classroom?.name || 'Classroom';
 
-    // Pre-populate form
     const nameEl    = document.getElementById('manageNameInput');
     const descEl    = document.getElementById('manageDescInput');
     const maxEl     = document.getElementById('manageMaxInput');
@@ -1030,7 +1014,6 @@ async function openManageModal(classId) {
         syncCloseStatusAction(classroomStatus);
     }
 
-    // Reset stats to loading state
     ['statTotalStudents', 'statTotalActivities', 'statActiveActivities'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px;color:#484f58"></i>';
@@ -1178,7 +1161,6 @@ async function handleDeleteClassroom() {
     }
 }
 
-// Add animations
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn  { from { transform:translateX(400px);opacity:0 } to { transform:translateX(0);opacity:1 } }
