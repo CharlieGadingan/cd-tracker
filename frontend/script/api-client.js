@@ -70,7 +70,7 @@
     refreshPromise = (async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/auth/refresh/${encodeURIComponent(deviceId)}`, {
-          method: "GET",
+          method: "POST",
           credentials: "include",
           headers: {
             Accept: "application/json"
@@ -274,7 +274,7 @@
     checkAndRedirectIfAuthenticated,
     logout,
     getDeviceId,
-    refreshToken,
+    refreshToken, 
     _getCookie: getCookie
   };
 })(window);
