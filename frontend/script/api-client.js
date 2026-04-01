@@ -24,12 +24,19 @@
   }
 
   function getDeviceId() {
-    const deviceId = getCookie("device_id");
-    if (!deviceId || !deviceId.trim()) {
-      console.error("Device ID missing from cookies; cannot refresh token.");
-      return null;
+    const cookieDeviceId = getCookie("device_id");
+    if (cookieDeviceId && cookieDeviceId.trim()) {
+      return cookieDeviceId.trim();
     }
-    return deviceId;
+
+    // Fallback for environments where the device cookie may not be readable.
+    const storageDeviceId = localStorage.getItem("device_id") || sessionStorage.getItem("device_id");
+    if (storageDeviceId && storageDeviceId.trim()) {
+      return storageDeviceId.trim();
+    }
+
+    console.error("Device ID missing; cannot refresh token.");
+    return null;
   }
 
   async function parseResponseBody(response) {
@@ -200,14 +207,23 @@
 
   async function logout() {
     try {
+      const deviceId = getDeviceId();
+
       localStorage.removeItem("userData");
       localStorage.removeItem("device_id");
       sessionStorage.clear();
 
       try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
+        const logoutPath = deviceId
+          ? `/auth/logout/${encodeURIComponent(deviceId)}`
+          : "/auth/logout";
+
+        await fetch(`${API_BASE_URL}${logoutPath}`, {
           method: "POST",
-          credentials: "include"
+          credentials: "include",
+          headers: {
+            Accept: "application/json"
+          }
         });
       } catch (_) {
       }

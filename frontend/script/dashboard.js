@@ -599,12 +599,12 @@ async function handleSaveProfile() {
 
 function handleLogout() {
     if (confirm('Are you sure you want to log out?')) {
-        if (!apiRequest) {
+        if (!window.ApiClient?.logout) {
             window.location.href = 'index.html';
             return;
         }
 
-        apiRequest('/auth/logout', { method: 'POST' }, { redirectOnUnauthorized: false }).finally(() => {
+        window.ApiClient.logout().finally(() => {
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = 'index.html';
