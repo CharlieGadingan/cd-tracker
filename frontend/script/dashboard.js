@@ -607,14 +607,14 @@ async function handleLogout() {
     if (!confirmed) return;
 
     if (!window.ApiClient?.logout) {
-        window.location.href = '/index.html';
+        window.location.href = '/';
         return;
     }
 
     window.ApiClient.logout().finally(() => {
         localStorage.clear();
         sessionStorage.clear();
-        window.location.href = '/index.html';
+        window.location.href = '/';
     });
 }
 
@@ -978,8 +978,8 @@ function attachClassCardHandlers() {
 function viewClassroom(classId, role) {
     if (classId && classId !== 'unknown') {
         const page = role === 'student'
-            ? '/frontend/pages/studentclass.html'
-            : '/frontend/pages/profclass.html';
+            ? '/studentclass/'
+            : '/profclass/';
         window.location.href = `${page}?id=${encodeURIComponent(classId)}`;
     } else {
         showNotification('Invalid classroom ID', 'error');

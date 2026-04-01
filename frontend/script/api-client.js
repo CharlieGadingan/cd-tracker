@@ -158,21 +158,21 @@
 
   function isOnLoginPage() {
     const path = window.location.pathname;
-    return (
-      path.includes("index.html") ||
-      path.includes("onboarding.html") ||
-      path.endsWith("/") ||
-      path === ""
-    );
+    const normalizedPath = path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path;
+
+    return normalizedPath === "" ||
+      normalizedPath === "/" ||
+      normalizedPath === "/index.html" ||
+      normalizedPath === "/onboarding";
   }
 
   function logoutAndRedirect() {
     try {
       localStorage.removeItem("userData");
       sessionStorage.clear();
-      window.location.replace("/index.html");
+      window.location.replace("/");
     } catch (_) {
-      window.location.href = "/index.html";
+      window.location.href = "/";
     }
   }
 
@@ -198,7 +198,7 @@
     try {
       const isAuthenticated = await checkAuth();
       if (isAuthenticated) {
-        window.location.replace("/frontend/pages/dashboard.html");
+        window.location.replace("/dashboard/");
       }
     } catch (error) {
       console.error("Auth check failed:", error);

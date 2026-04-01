@@ -28,9 +28,9 @@ function handleOAuthCallbackRedirect() {
   if (success === true) {
     clearOAuthQueryParamsFromUrl();
     if (registered === true) {
-      window.location.replace("/frontend/pages/dashboard.html");
+      window.location.replace("/dashboard/");
     } else {
-      window.location.replace("/frontend/pages/onboarding.html");
+      window.location.replace("/onboarding/");
     }
     return true;
   }
@@ -77,13 +77,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const refreshed = await window.ApiClient.refreshToken(deviceId);
     if (refreshed) {
-      window.location.replace("/frontend/pages/dashboard.html");
+      window.location.replace("/dashboard/");
       return;
     }
 
     const authenticated = await window.ApiClient.checkAuth();
     if (authenticated) {
-      window.location.replace("/frontend/pages/dashboard.html");
+      window.location.replace("/dashboard/");
     }
   } catch (error) {
     console.warn("Auto-redirect check failed:", error);

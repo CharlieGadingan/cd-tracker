@@ -56,7 +56,7 @@ const submissionModal = document.getElementById('submissionModal');
       // Back to Dashboard button
       document.getElementById('backToDashboardBtn').onclick = (e) => {
         e.preventDefault();
-        window.location.href = '/frontend/pages/dashboard.html';
+        window.location.href = '/dashboard/';
       };
 
       // Paste from clipboard
