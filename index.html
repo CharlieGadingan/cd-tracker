@@ -19,6 +19,22 @@
         </div>
         <h1 class="brand-heading">Track. Manage.<br>Collaborate.</h1>
         <p class="brand-sub">An all-in-one classroom management platform powered by GitHub.</p>
+        <section class="platform-note" id="platformNote" data-expanded="false">
+          <button class="note-toggle" id="platformNoteToggle" type="button" aria-expanded="false" aria-controls="platformNoteBody">
+            <span class="note-title">Why CodeTracker?</span>
+            <span class="note-state" aria-hidden="true"></span>
+          </button>
+          <div class="note-body" id="platformNoteBody" aria-hidden="true">
+            <div class="note-body-inner">
+              <p>
+                This platform encourages students to actively use version control systems, helping them build habits aligned with real-world development practices.
+              </p>
+              <p>
+                By integrating industry-standard tools, the school ensures students gain practical experience that mirrors professional workflows while helping professors and instructors monitor and track project activity more efficiently.
+              </p>
+            </div>
+          </div>
+        </section>
         <ul class="feature-list">
           <li><i class="fa-solid fa-circle-check"></i> Create and manage your own classes</li>
           <li><i class="fa-solid fa-circle-check"></i> Join classes with unique codes</li>
@@ -31,17 +47,10 @@
     <div class="login-container">
       <div class="login-box">
         <h2>Sign in</h2>
-        <p class="login-sub">Welcome back — let's get started.</p>
+        <p class="login-sub">Welcome! — let's get started.</p>
 
         <button id="githubLogin" class="github-btn">
           <i class="fab fa-github"></i> Login with GitHub
-        </button>
-
-        <div class="divider"><span>or</span></div>
-
-        <input type="email" class="email-input" placeholder="Enter your email">
-        <button id="emailbLogin" class="email-btn">
-          <i class="fa-regular fa-envelope"></i> Continue with Email
         </button>
 
         <p class="below">By continuing, you acknowledge our <span class="underline">Privacy Policy</span> and agree to occasional product updates.</p>

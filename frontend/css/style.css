@@ -6,6 +6,7 @@ body {
   background: #0d1117;
   color: #c9d1d9;
   min-height: 100vh;
+  font-size: 17px;
 }
 
 /* ── Page layout — two-panel split ───────────────────────────────── */
@@ -21,37 +22,139 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 40px;
+  padding: 64px 56px;
   border-right: 1px solid #21262d;
 }
 
-.brand-inner { max-width: 440px; }
+.brand-inner { max-width: 560px; }
 
 .brand-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
   color: #58a6ff;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
-.brand-logo i { font-size: 28px; }
+.brand-logo i { font-size: 34px; }
 
 .brand-heading {
-  font-size: 40px;
+  font-size: 56px;
   font-weight: 800;
   line-height: 1.15;
   color: #e6edf3;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .brand-sub {
-  font-size: 15px;
+  font-size: 18px;
   color: #8b949e;
   line-height: 1.6;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
+}
+
+.platform-note {
+  background: rgba(88, 166, 255, 0.08);
+  border: 1px solid rgba(88, 166, 255, 0.28);
+  border-radius: 10px;
+  padding: 0;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.note-toggle {
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  user-select: none;
+  text-align: left;
+}
+
+.note-toggle:hover {
+  background: rgba(88, 166, 255, 0.06);
+}
+
+.note-toggle:focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: -2px;
+}
+
+.note-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.note-state::after {
+  content: "Show";
+  font-size: 14px;
+  font-weight: 600;
+  color: #58a6ff;
+}
+
+.note-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid #58a6ff;
+  border-bottom: 2px solid #58a6ff;
+  transform: rotate(45deg) translateY(-1px);
+  transition: transform 0.28s ease;
+}
+
+.platform-note[data-expanded="true"] .note-state::after {
+  content: "Hide";
+}
+
+.platform-note[data-expanded="true"] .note-state::before {
+  transform: rotate(225deg) translateY(-1px);
+}
+
+.note-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease;
+}
+
+.note-body-inner {
+  overflow: hidden;
+  padding: 0 16px 0;
+  border-top: 1px solid rgba(88, 166, 255, 0.2);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.28s ease, padding 0.28s ease;
+}
+
+.platform-note[data-expanded="true"] .note-body-inner {
+  opacity: 1;
+  transform: translateY(0);
+  padding: 0 16px 14px;
+}
+
+.note-body-inner p {
+  font-size: 18px;
+  line-height: 1.65;
+  color: #c9d1d9;
+}
+
+.note-body-inner p + p {
+  margin-top: 10px;
 }
 
 .feature-list {
@@ -65,11 +168,11 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 17px;
   color: #c9d1d9;
 }
 
-.feature-list i { color: #3fb950; font-size: 14px; flex-shrink: 0; }
+.feature-list i { color: #3fb950; font-size: 16px; flex-shrink: 0; }
 
 /* ── Right login panel ───────────────────────────────────────────── */
 .login-container {
@@ -77,30 +180,30 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 32px;
+  padding: 64px 40px;
 }
 
 .login-box {
   width: 100%;
-  max-width: 380px;
+  max-width: 520px;
   background: #161b22;
   border: 1px solid #30363d;
-  border-radius: 12px;
-  padding: 36px 32px;
+  border-radius: 14px;
+  padding: 50px 44px;
   text-align: center;
 }
 
 .login-box h2 {
-  font-size: 22px;
+  font-size: 34px;
   font-weight: 700;
   color: #e6edf3;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .login-sub {
-  font-size: 13px;
+  font-size: 17px;
   color: #8b949e;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────── */
@@ -110,73 +213,22 @@ body {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 11px 16px;
+  padding: 16px 20px;
   background: #f0f6fc;
   color: #0d1117;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
-.github-btn i { font-size: 18px; }
+.github-btn i { font-size: 22px; }
 .github-btn:hover { background: #d1d9e0; }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 18px 0;
-  color: #484f58;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: #30363d;
-}
-
-.email-input {
-  width: 100%;
-  padding: 11px 14px;
-  background: #0d1117;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 10px;
-  transition: border-color 0.2s;
-}
-.email-input::placeholder { color: #484f58; }
-.email-input:focus { outline: none; border-color: #58a6ff; }
-
-.email-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 11px 16px;
-  background: #21262d;
-  color: #c9d1d9;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-.email-btn i { font-size: 16px; }
-.email-btn:hover { background: #30363d; border-color: #484f58; }
-
 .below {
-  margin-top: 18px;
-  font-size: 11px;
+  margin-top: 24px;
+  font-size: 14px;
   color: #484f58;
   line-height: 1.5;
 }
@@ -192,26 +244,43 @@ body {
   .brand-panel {
     border-right: none;
     border-bottom: 1px solid #21262d;
-    padding: 36px 24px;
+    padding: 46px 28px;
   }
 
   .brand-inner { max-width: 100%; text-align: center; }
 
-  .brand-heading { font-size: 30px; }
+  .brand-heading { font-size: 40px; }
 
   .feature-list { align-items: center; }
 
-  .login-container { padding: 36px 24px; }
+  .platform-note {
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 620px;
+  }
+
+  .login-container { padding: 42px 28px; }
+
+  .login-box {
+    max-width: 560px;
+    padding: 44px 36px;
+  }
+
+  .login-box h2 { font-size: 30px; }
+
+  .login-sub { font-size: 16px; }
 }
 
 /* Small phones */
 @media (max-width: 480px) {
   .brand-panel { padding: 28px 20px; }
-  .brand-heading { font-size: 24px; }
-  .brand-sub { font-size: 13px; }
+  .brand-heading { font-size: 30px; }
+  .brand-sub { font-size: 15px; }
+  .platform-note p { font-size: 13px; }
 
-  .login-box { padding: 28px 20px; }
-  .login-box h2 { font-size: 20px; }
+  .login-box { padding: 34px 22px; }
+  .login-box h2 { font-size: 25px; }
 
-  .github-btn, .email-btn, .email-input { font-size: 13px; padding: 10px 14px; }
+  .github-btn { font-size: 15px; padding: 12px 14px; }
 }

@@ -92,12 +92,48 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   const githubBtn = document.getElementById("githubLogin");
-  if (!githubBtn) return;
+  if (githubBtn) {
+    githubBtn.addEventListener("click", () => {
+      console.log("GitHub login clicked");
 
-  githubBtn.addEventListener("click", () => {
-    console.log("GitHub login clicked");
+      githubBtn.disabled = true;
+      window.location.assign(`${BACKEND_URL}/github/authorize`);
+    });
+  }
 
-    githubBtn.disabled = true;
-    window.location.assign(`${BACKEND_URL}/github/authorize`);
+  const note = document.getElementById("platformNote");
+  const noteToggle = document.getElementById("platformNoteToggle");
+  const noteBody = document.getElementById("platformNoteBody");
+
+  if (!note || !noteToggle || !noteBody) return;
+
+  noteBody.style.maxHeight = "0px";
+
+  noteToggle.addEventListener("click", () => {
+    const isExpanded = note.getAttribute("data-expanded") === "true";
+
+    if (isExpanded) {
+      noteBody.style.maxHeight = `${noteBody.scrollHeight}px`;
+      requestAnimationFrame(() => {
+        note.setAttribute("data-expanded", "false");
+        noteToggle.setAttribute("aria-expanded", "false");
+        noteBody.setAttribute("aria-hidden", "true");
+        noteBody.style.maxHeight = "0px";
+      });
+      return;
+    }
+
+    note.setAttribute("data-expanded", "true");
+    noteToggle.setAttribute("aria-expanded", "true");
+    noteBody.setAttribute("aria-hidden", "false");
+    noteBody.style.maxHeight = `${noteBody.scrollHeight}px`;
+  });
+
+  noteBody.addEventListener("transitionend", (event) => {
+    if (event.propertyName !== "max-height") return;
+    const isExpanded = note.getAttribute("data-expanded") === "true";
+    if (isExpanded) {
+      noteBody.style.maxHeight = "none";
+    }
   });
 });
