@@ -40,7 +40,7 @@ function handleOAuthCallbackRedirect() {
       ? error.trim()
       : "GitHub sign in failed. Please try again.";
     clearOAuthQueryParamsFromUrl();
-    window.AppDialog.alert(message, { title: "Sign In Failed" });
+    console.warn("GitHub OAuth sign-in failed:", message);
     return true;
   }
 
