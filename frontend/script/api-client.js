@@ -170,9 +170,9 @@
     try {
       localStorage.removeItem("userData");
       sessionStorage.clear();
-      window.location.replace("index.html");
+      window.location.replace("/index.html");
     } catch (_) {
-      window.location.href = "index.html";
+      window.location.href = "/index.html";
     }
   }
 
@@ -198,7 +198,7 @@
     try {
       const isAuthenticated = await checkAuth();
       if (isAuthenticated) {
-        window.location.replace("dashboard.html");
+        window.location.replace("/frontend/pages/dashboard.html");
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -248,6 +248,209 @@
     return formData;
   }
 
+  const dialogState = {
+    queue: Promise.resolve(),
+    mounted: false,
+    overlay: null,
+    title: null,
+    message: null,
+    cancelBtn: null,
+    confirmBtn: null
+  };
+
+  function mountDialog() {
+    if (dialogState.mounted || !document?.body) return;
+
+    const style = document.createElement("style");
+    style.id = "ct-dialog-style";
+    style.textContent = `
+      .ct-dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(1, 4, 9, 0.72);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 9999;
+      }
+      .ct-dialog-overlay[hidden] {
+        display: none;
+      }
+      .ct-dialog-box {
+        width: min(480px, 100%);
+        background: #161b22;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+        border: 1px solid #30363d;
+        padding: 18px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      }
+      .ct-dialog-title {
+        margin: 0 0 10px;
+        color: #e6edf3;
+        font-size: 18px;
+        line-height: 1.3;
+      }
+      .ct-dialog-message {
+        margin: 0;
+        color: #8b949e;
+        font-size: 14px;
+        line-height: 1.55;
+        white-space: pre-line;
+      }
+      .ct-dialog-actions {
+        margin-top: 18px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      .ct-dialog-btn {
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 9px 14px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .ct-dialog-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .ct-dialog-btn-cancel {
+        background: #21262d;
+        color: #c9d1d9;
+      }
+      .ct-dialog-btn-cancel:hover {
+        background: #30363d;
+        border-color: #484f58;
+      }
+      .ct-dialog-btn-confirm {
+        background: #1f6feb;
+        border-color: #1f6feb;
+        color: #ffffff;
+      }
+      .ct-dialog-btn-confirm:hover {
+        background: #388bfd;
+        border-color: #388bfd;
+      }
+      .ct-dialog-btn-confirm.ct-danger {
+        background: #da3633;
+        border-color: #da3633;
+      }
+      .ct-dialog-btn-confirm.ct-danger:hover {
+        background: #f85149;
+        border-color: #f85149;
+      }
+    `;
+
+    const overlay = document.createElement("div");
+    overlay.className = "ct-dialog-overlay";
+    overlay.hidden = true;
+    overlay.innerHTML = `
+      <div class="ct-dialog-box" role="dialog" aria-modal="true" aria-live="polite">
+        <h3 class="ct-dialog-title"></h3>
+        <p class="ct-dialog-message"></p>
+        <div class="ct-dialog-actions">
+          <button type="button" class="ct-dialog-btn ct-dialog-btn-cancel">Cancel</button>
+          <button type="button" class="ct-dialog-btn ct-dialog-btn-confirm">OK</button>
+        </div>
+      </div>
+    `;
+
+    document.head.appendChild(style);
+    document.body.appendChild(overlay);
+
+    dialogState.overlay = overlay;
+    dialogState.title = overlay.querySelector(".ct-dialog-title");
+    dialogState.message = overlay.querySelector(".ct-dialog-message");
+    dialogState.cancelBtn = overlay.querySelector(".ct-dialog-btn-cancel");
+    dialogState.confirmBtn = overlay.querySelector(".ct-dialog-btn-confirm");
+    dialogState.mounted = true;
+  }
+
+  function queueDialog(task) {
+    dialogState.queue = dialogState.queue.then(task, task);
+    return dialogState.queue;
+  }
+
+  function openDialog({ title, message, confirmText, cancelText, mode, danger }) {
+    return queueDialog(() => new Promise((resolve) => {
+      mountDialog();
+      if (!dialogState.mounted) {
+        resolve(mode === "confirm" ? false : undefined);
+        return;
+      }
+
+      const { overlay, title: titleEl, message: messageEl, cancelBtn, confirmBtn } = dialogState;
+      titleEl.textContent = title;
+      messageEl.textContent = message;
+      cancelBtn.textContent = cancelText;
+      confirmBtn.textContent = confirmText;
+      cancelBtn.hidden = mode !== "confirm";
+      confirmBtn.classList.toggle("ct-danger", Boolean(danger));
+      overlay.hidden = false;
+
+      const activeBefore = document.activeElement;
+
+      const close = (result) => {
+        overlay.hidden = true;
+        overlay.removeEventListener("click", onOverlayClick);
+        document.removeEventListener("keydown", onKeyDown);
+        cancelBtn.removeEventListener("click", onCancel);
+        confirmBtn.removeEventListener("click", onConfirm);
+        if (activeBefore && typeof activeBefore.focus === "function") {
+          activeBefore.focus();
+        }
+        resolve(result);
+      };
+
+      const onConfirm = () => close(mode === "confirm" ? true : undefined);
+      const onCancel = () => close(false);
+      const onOverlayClick = (event) => {
+        if (event.target === overlay) {
+          close(mode === "confirm" ? false : undefined);
+        }
+      };
+      const onKeyDown = (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          close(mode === "confirm" ? false : undefined);
+        }
+      };
+
+      overlay.addEventListener("click", onOverlayClick);
+      document.addEventListener("keydown", onKeyDown);
+      cancelBtn.addEventListener("click", onCancel);
+      confirmBtn.addEventListener("click", onConfirm);
+      confirmBtn.focus();
+    }));
+  }
+
+  const dialog = {
+    alert(message, options = {}) {
+      return openDialog({
+        mode: "alert",
+        title: options.title || "Notice",
+        message: String(message || ""),
+        confirmText: options.confirmText || "OK",
+        cancelText: "Cancel",
+        danger: options.danger
+      });
+    },
+
+    confirm(message, options = {}) {
+      return openDialog({
+        mode: "confirm",
+        title: options.title || "Confirm",
+        message: String(message || ""),
+        confirmText: options.confirmText || "Confirm",
+        cancelText: options.cancelText || "Cancel",
+        danger: options.danger
+      });
+    }
+  };
+
   const user = {
     register(payload, profileFile) {
       return request("/users/register", {
@@ -293,4 +496,6 @@
     refreshToken, 
     _getCookie: getCookie
   };
+
+  globalScope.AppDialog = dialog;
 })(window);

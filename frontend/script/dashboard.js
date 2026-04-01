@@ -597,19 +597,25 @@ async function handleSaveProfile() {
     }
 }
 
-function handleLogout() {
-    if (confirm('Are you sure you want to log out?')) {
-        if (!window.ApiClient?.logout) {
-            window.location.href = 'index.html';
-            return;
-        }
+async function handleLogout() {
+    const confirmed = await window.AppDialog.confirm('Are you sure you want to log out?', {
+        title: 'Log Out',
+        confirmText: 'Log Out',
+        danger: true
+    });
 
-        window.ApiClient.logout().finally(() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = 'index.html';
-        });
+    if (!confirmed) return;
+
+    if (!window.ApiClient?.logout) {
+        window.location.href = '/index.html';
+        return;
     }
+
+    window.ApiClient.logout().finally(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/index.html';
+    });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -664,7 +670,13 @@ async function handleProfilePictureUpload() {
 }
 
 async function handleRemoveProfilePicture() {
-    if (!confirm('Remove your profile picture?')) return;
+    const confirmed = await window.AppDialog.confirm('Remove your profile picture?', {
+        title: 'Remove Profile Picture',
+        confirmText: 'Remove',
+        danger: true
+    });
+
+    if (!confirmed) return;
 
     if (removePictureBtn) {
         removePictureBtn.disabled = true;
@@ -965,7 +977,9 @@ function attachClassCardHandlers() {
 
 function viewClassroom(classId, role) {
     if (classId && classId !== 'unknown') {
-        const page = role === 'student' ? 'studentclass.html' : 'profclass.html';
+        const page = role === 'student'
+            ? '/frontend/pages/studentclass.html'
+            : '/frontend/pages/profclass.html';
         window.location.href = `${page}?id=${encodeURIComponent(classId)}`;
     } else {
         showNotification('Invalid classroom ID', 'error');
@@ -1100,7 +1114,11 @@ async function handleUpdateStatus() {
         return showNotification('Classroom is already closed.', 'info');
     }
 
-    const confirmed = window.confirm('Close this classroom? This is irreversible from the dashboard.');
+    const confirmed = await window.AppDialog.confirm('Close this classroom? This is irreversible from the dashboard.', {
+        title: 'Close Classroom',
+        confirmText: 'Close Classroom',
+        danger: true
+    });
     if (!confirmed) return;
 
     const btn = document.getElementById('updateStatusBtn');

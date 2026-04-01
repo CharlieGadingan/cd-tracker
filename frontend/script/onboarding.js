@@ -166,7 +166,7 @@
             if (result.data)
               localStorage.setItem("userData", JSON.stringify(result.data));
             setTimeout(() => {
-              window.location.href = "dashboard.html";
+              window.location.href = "/frontend/pages/dashboard.html";
             }, 2000);
           }
         } catch (err) {

@@ -1,31 +1,92 @@
 // GitHub OAuth Configuration
 const BACKEND_URL = "http://localhost:8080/api/oauth";
-const BACKEND_ORIGIN = "http://localhost:8080";
 
-// Check if user is already authenticated on page load
-document.addEventListener("DOMContentLoaded", () => {
-  if (window.ApiClient && typeof window.ApiClient.checkAndRedirectIfAuthenticated === "function") {
-    window.ApiClient.checkAndRedirectIfAuthenticated();
+function clearOAuthQueryParamsFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("oauth");
+  url.searchParams.delete("success");
+  url.searchParams.delete("registered");
+  url.searchParams.delete("error");
+  window.history.replaceState({}, document.title, url.toString());
+}
+
+function parseBooleanParam(value) {
+  if (typeof value !== "string") return null;
+  if (value.toLowerCase() === "true") return true;
+  if (value.toLowerCase() === "false") return false;
+  return null;
+}
+
+function handleOAuthCallbackRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("oauth") !== "github") return false;
+
+  const success = parseBooleanParam(params.get("success"));
+  const registered = parseBooleanParam(params.get("registered"));
+  const error = params.get("error");
+
+  if (success === true) {
+    clearOAuthQueryParamsFromUrl();
+    if (registered === true) {
+      window.location.replace("/frontend/pages/dashboard.html");
+    } else {
+      window.location.replace("/frontend/pages/onboarding.html");
+    }
+    return true;
   }
-});
 
-// Listen for OAuth result from popup
-window.addEventListener("message", (event) => {
-  // Only accept messages from backend (popup callback)
-  if (event.origin !== BACKEND_ORIGIN) {
-    console.warn("Ignored message from unexpected origin:", event.origin);
+  if (success === false) {
+    const message = (typeof error === "string" && error.trim())
+      ? error.trim()
+      : "GitHub sign in failed. Please try again.";
+    clearOAuthQueryParamsFromUrl();
+    window.AppDialog.alert(message, { title: "Sign In Failed" });
+    return true;
+  }
+
+  return false;
+}
+
+function getDeviceIdForAutoRedirect() {
+  if (window.ApiClient?._getCookie) {
+    const cookieDeviceId = window.ApiClient._getCookie("device_id");
+    if (cookieDeviceId && cookieDeviceId.trim()) {
+      return cookieDeviceId.trim();
+    }
+  }
+
+  const storageDeviceId = localStorage.getItem("device_id") || sessionStorage.getItem("device_id");
+  if (storageDeviceId && storageDeviceId.trim()) {
+    return storageDeviceId.trim();
+  }
+
+  return null;
+}
+
+// Check if user is already authenticated on page load.
+document.addEventListener("DOMContentLoaded", async () => {
+  if (handleOAuthCallbackRedirect()) {
     return;
   }
 
-  const data = event.data;
-  if (!data || data.type !== "OAUTH_RESULT") return;
+  if (!window.ApiClient) return;
 
-  console.log("OAuth result received:", data);
+  const deviceId = getDeviceIdForAutoRedirect();
+  if (!deviceId) return;
 
-  if (data.registered === true) {
-    window.location.href = "dashboard.html";
-  } else {
-    window.location.href = "onboarding.html";
+  try {
+    const refreshed = await window.ApiClient.refreshToken(deviceId);
+    if (refreshed) {
+      window.location.replace("/frontend/pages/dashboard.html");
+      return;
+    }
+
+    const authenticated = await window.ApiClient.checkAuth();
+    if (authenticated) {
+      window.location.replace("/frontend/pages/dashboard.html");
+    }
+  } catch (error) {
+    console.warn("Auto-redirect check failed:", error);
   }
 });
 
@@ -33,44 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const githubBtn = document.getElementById("githubLogin");
   if (!githubBtn) return;
 
-  githubBtn.addEventListener("click", async () => {
+  githubBtn.addEventListener("click", () => {
     console.log("GitHub login clicked");
 
-    const width = 400;
-    const height = 500;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
-
-    const popup = window.open(
-      "",
-      "github-oauth",
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-
-    if (!popup) {
-      alert("Please allow popups for this site to login with GitHub");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/github/authorize`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch GitHub auth URL");
-      }
-
-      const data = await response.json();
-      console.log("Redirecting popup to GitHub:", data.authUrl);
-      popup.location.href = data.authUrl;
-    } catch (error) {
-      console.error("GitHub login error:", error);
-      alert("An error occurred while opening GitHub login. Please try again.");
-      if (popup && !popup.closed) {
-        popup.close();
-      }
-    }
+    githubBtn.disabled = true;
+    window.location.assign(`${BACKEND_URL}/github/authorize`);
   });
 });

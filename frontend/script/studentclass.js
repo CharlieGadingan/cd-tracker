@@ -56,7 +56,7 @@ const submissionModal = document.getElementById('submissionModal');
       // Back to Dashboard button
       document.getElementById('backToDashboardBtn').onclick = (e) => {
         e.preventDefault();
-        window.location.href = 'dashboard.html';
+        window.location.href = '/frontend/pages/dashboard.html';
       };
 
       // Paste from clipboard
@@ -65,23 +65,29 @@ const submissionModal = document.getElementById('submissionModal');
           const text = await navigator.clipboard.readText();
           githubLinkInput.value = text;
         } catch (err) {
-          alert('Unable to paste from clipboard. Please paste manually.');
+          await window.AppDialog.alert('Unable to paste from clipboard. Please paste manually.', {
+            title: 'Clipboard Error'
+          });
         }
       };
 
       // Submit button
-      document.getElementById('submitAssignmentBtn').onclick = () => {
+      document.getElementById('submitAssignmentBtn').onclick = async () => {
         const githubLink = githubLinkInput.value;
         const note = document.getElementById('submissionNote').value;
         
         if (!githubLink) {
-          alert('Please enter a GitHub repository link');
+          await window.AppDialog.alert('Please enter a GitHub repository link', {
+            title: 'Missing Link'
+          });
           return;
         }
 
         // Validate GitHub URL
         if (!githubLink.includes('github.com')) {
-          alert('Please enter a valid GitHub repository URL');
+          await window.AppDialog.alert('Please enter a valid GitHub repository URL', {
+            title: 'Invalid Link'
+          });
           return;
         }
 
@@ -92,7 +98,9 @@ const submissionModal = document.getElementById('submissionModal');
           note
         });
 
-        alert('Assignment submitted successfully!');
+        await window.AppDialog.alert('Assignment submitted successfully!', {
+          title: 'Success'
+        });
         submissionModal.style.display = 'none';
         
         // Clear form
@@ -158,7 +166,9 @@ const submissionModal = document.getElementById('submissionModal');
             submissionModal.style.display = 'block';
           } else {
             // For submissions, just show info (could be expanded later)
-            alert(`Viewing submission: ${title}\n\n${description}`);
+            window.AppDialog.alert(`Viewing submission: ${title}\n\n${description}`, {
+              title: 'Submission Details'
+            });
           }
         });
       });

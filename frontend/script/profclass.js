@@ -31,7 +31,7 @@ const apiRequest = window.ApiClient?.request;
             classroomId = params.get('id');
             if (!classroomId) {
                 showNotification('Classroom ID not found in URL', 'error');
-                setTimeout(() => window.location.href = 'dashboard.html', 2000);
+                setTimeout(() => window.location.href = '/frontend/pages/dashboard.html', 2000);
             }
         }
 
@@ -138,7 +138,7 @@ const apiRequest = window.ApiClient?.request;
             document.getElementById('backToDashboardBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 // Navigate back to main dashboard
-                window.location.href = 'dashboard.html';
+                window.location.href = '/frontend/pages/dashboard.html';
             });
 
             window.addEventListener('click', (e) => {
@@ -260,7 +260,7 @@ const apiRequest = window.ApiClient?.request;
                     : 'No recent activity';
 
                 const studentId = student.studentUserId || '';
-                const analyticsUrl = `studentclass.html?classroomId=${encodeURIComponent(classroomId)}&studentId=${encodeURIComponent(studentId)}`;
+                const analyticsUrl = `/frontend/pages/studentclass.html?classroomId=${encodeURIComponent(classroomId)}&studentId=${encodeURIComponent(studentId)}`;
 
                 return `
                     <a class="student-card-link" href="${analyticsUrl}">
@@ -528,7 +528,13 @@ const apiRequest = window.ApiClient?.request;
         }
 
         async function deleteActivity(activityId) {
-            if (!confirm('Are you sure you want to delete this activity?')) return;
+            const confirmed = await window.AppDialog.confirm('Are you sure you want to delete this activity?', {
+                title: 'Delete Activity',
+                confirmText: 'Delete',
+                danger: true
+            });
+
+            if (!confirmed) return;
 
             try {
                 await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(activityId)}`, {
