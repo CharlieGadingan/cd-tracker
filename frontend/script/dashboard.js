@@ -58,20 +58,128 @@ let currentUser = null;
 // INITIALIZATION
 // ══════════════════════════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (!apiRequest || !userApi) {
         showNotification('API client is not initialized.', 'error');
+        return;
+    }
+
+    // ── Check if user is initialized (completed onboarding) ──────
+    try {
+        const profile = await userApi.getProfile();
+        // If user doesn't have firstName, they haven't completed onboarding yet
+        if (!profile || !profile.firstName) {
+            window.location.replace("/onboarding/");
+            return;
+        }
+    } catch (error) {
+        // If profile fetch fails, redirect to onboarding
+        console.error('Unable to verify user initialization:', error);
+        window.location.replace("/onboarding/");
         return;
     }
 
     loadUserProfile();
     loadClasses();
     setupEventListeners();
+
+    // ── Tutorial Modal ─────────────────────────────────────────────
+const viewTutorialsBtn = document.getElementById('viewTutorialsBtn');
+const tutorialModal = document.getElementById('tutorialModal');
+const closeTutorialModal = document.getElementById('closeTutorialModal');
+const closeHelpBtn = document.getElementById("closeHelpModal");
+const createClassHelpModal = document.getElementById("createClassHelpModal");
+const joinClassHelpModal = document.getElementById("joinClassHelpModal");
+const preview = document.getElementById("imagePreview");
+const previewImg = document.getElementById("previewImg");
+const closePreview = document.getElementById("closePreview");
+
+// select ALL tutorial images
+document.querySelectorAll(".tutorial-step-img").forEach(img => {
+    img.addEventListener("click", () => {
+        preview.style.display = "flex";
+        previewImg.src = img.src;
+    });
 });
+
+// close button
+closePreview.addEventListener("click", () => {
+    preview.style.display = "none";
+});
+
+// click outside image = close
+preview.addEventListener("click", (e) => {
+    if (e.target === preview) {
+        preview.style.display = "none";
+    }
+});
+function resetHelpModal() {
+    const content = helpModal.querySelector(".modal-content");
+    if (content) content.scrollTop = 0;
+}
+
+closeHelpBtn.addEventListener("click", () => {
+    helpModal.style.display = "none";
+    resetHelpModal();
+});
+// Open Tutorial Modal
+viewTutorialsBtn.addEventListener('click', () => {
+    tutorialModal.style.display = 'flex';
+resetHelpModal();
+    
+});
+
+// Close Tutorial Modal
+closeTutorialModal.addEventListener('click', () => {
+    tutorialModal.style.display = 'none';
+});
+
+helpModal.addEventListener("click", (e) => {
+    if (e.target === helpModal) {
+        resetHelpModal();   // reset scroll first
+        helpModal.style.display = "none";
+    }
+});
+// Optional: close if clicking outside the modal content
+window.addEventListener('click', (e) => {
+    if (e.target === tutorialModal) {
+        tutorialModal.style.display = 'none';
+    }
+});
+
+// OPEN
+document.getElementById("gitTutorialCard").onclick = () => {
+    helpModal.style.display = "flex";
+};
+
+document.getElementById("createClassTutorialCard").onclick = () => {
+    document.getElementById("createClassHelpModal").style.display = "flex";
+};
+
+document.getElementById("joinClassTutorialCard").onclick = () => {
+    document.getElementById("joinClassHelpModal").style.display = "flex";
+};
+
+// CLOSE
+document.getElementById("closeHelpModal").onclick = () => {
+    helpModal.style.display = "none";
+};
+
+document.getElementById("closeCreateClassHelp").onclick = () => {
+    document.getElementById("createClassHelpModal").style.display = "none";
+};
+
+document.getElementById("closeJoinClassHelp").onclick = () => {
+    document.getElementById("joinClassHelpModal").style.display = "none";
+};
+
+});
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // UTILITY FUNCTIONS
 // ══════════════════════════════════════════════════════════════════════════════
+
 
 function unwrap(val) {
     if (!val) return '';
@@ -437,6 +545,10 @@ function setupEventListeners() {
     });
 }
 
+    document.getElementById("gitTutorialCard").onclick = function () {
+    document.getElementById("helpModal").style.display = "flex";
+};
+
 // ══════════════════════════════════════════════════════════════════════════════
 
 // PROFILE MANAGEMENT
@@ -467,6 +579,7 @@ function applyProfileToUI(data) {
     const profileUrl = data.profileUrl || '';
     const email      = data.email || '';
 
+
     const userNameEl = document.getElementById('userName');
     if (userNameEl) userNameEl.textContent = fullName;
     
@@ -494,14 +607,15 @@ function toggleProfileDropdown(e) {
 }
 
 async function openProfileModal() {
+    openModal(profileModal); // 👈 OPEN IMMEDIATELY
+
     try {
-        if (!userApi) {
-            throw new Error('API client is not initialized.');
-        }
+        if (!userApi) throw new Error('API client not ready');
 
         const data = await userApi.getProfile();
 
         populateProfilePicture(data);
+
 
         const firstNameEl = document.getElementById('editFirstNameInput');
         const lastNameEl  = document.getElementById('editLastNameInput');
@@ -524,6 +638,7 @@ async function openProfileModal() {
         if (!error.message.includes('403') && !error.message.includes('401')) {
             showNotification('Failed to load profile data', 'error');
         }
+
     }
 }
 

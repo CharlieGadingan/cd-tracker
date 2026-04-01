@@ -321,7 +321,7 @@ body {
 .setting-badge i { color: #484f58; font-size: 9px; }
 
 .class-actions {
-    display: flex;
+    display: flex;  
     gap: 6px;
     margin-top: 10px;
     padding-top: 10px;

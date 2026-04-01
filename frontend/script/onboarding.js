@@ -1,5 +1,23 @@
       const userApi = window.ApiClient?.user;
 
+      // ── Check if user is already initialized ──────────────────
+      async function checkAndRedirectIfInitialized() {
+        try {
+          if (!userApi) return;
+          const profile = await userApi.getProfile();
+          // If profile exists and user has firstName (indicating they completed onboarding)
+          if (profile && profile.firstName) {
+            window.location.replace("/dashboard/");
+          }
+        } catch (error) {
+          // User not authenticated or error occurred, allow onboarding to proceed
+          console.log("No existing profile found, allowing onboarding to proceed");
+        }
+      }
+
+      // Run check immediately
+      checkAndRedirectIfInitialized();
+
       // ── Elements ──────────────────────────────────────────────
       const form = document.getElementById("regForm");
       const submitBtn = document.getElementById("submitBtn");
