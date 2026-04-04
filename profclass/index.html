@@ -99,6 +99,32 @@
         </div>
     </div>
 
+    <!-- Needs Repository Submission Modal -->
+    <div class="modal" id="unsubmittedModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-user-clock"></i>
+                    Needs Repository Submission
+                </h2>
+                <button class="close-btn" id="closeUnsubmittedModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="unsubmitted-modal-title" id="unsubmittedModalTitle">Activity</div>
+                <div class="unsubmitted-subtitle" id="unsubmittedSubtitle">Loading...</div>
+                <div class="unsubmitted-list" id="unsubmittedList">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading students who need repository submission...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeUnsubmittedBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Activity Modal -->
     <div class="modal" id="editActivityModal">
         <div class="modal-content">

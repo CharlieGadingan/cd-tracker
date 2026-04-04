@@ -17,7 +17,17 @@ function parseBooleanParam(value) {
   return null;
 }
 
-function handleOAuthCallbackRedirect() {
+async function redirectAuthenticatedSession() {
+  if (!window.ApiClient?.checkSessionState) return false;
+
+  const sessionState = await window.ApiClient.checkSessionState();
+  if (!sessionState.authenticated) return false;
+
+  window.location.replace(sessionState.fullyInitialized ? "/dashboard/" : "/onboarding/");
+  return true;
+}
+
+async function handleOAuthCallbackRedirect() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("oauth") !== "github") return false;
 
@@ -27,11 +37,7 @@ function handleOAuthCallbackRedirect() {
 
   if (success === true) {
     clearOAuthQueryParamsFromUrl();
-    if (registered === true) {
-      window.location.replace("/dashboard/");
-    } else {
-      window.location.replace("/onboarding/");
-    }
+    await redirectAuthenticatedSession();
     return true;
   }
 
@@ -65,7 +71,7 @@ function getDeviceIdForAutoRedirect() {
 
 // Check if user is already authenticated on page load.
 document.addEventListener("DOMContentLoaded", async () => {
-  if (handleOAuthCallbackRedirect()) {
+  if (await handleOAuthCallbackRedirect()) {
     return;
   }
 
@@ -77,14 +83,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     const refreshed = await window.ApiClient.refreshToken(deviceId);
     if (refreshed) {
-      window.location.replace("/dashboard/");
+      await redirectAuthenticatedSession();
       return;
     }
 
-    const authenticated = await window.ApiClient.checkAuth();
-    if (authenticated) {
-      window.location.replace("/dashboard/");
-    }
+    await redirectAuthenticatedSession();
   } catch (error) {
     console.warn("Auto-redirect check failed:", error);
   }
