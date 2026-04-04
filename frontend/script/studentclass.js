@@ -1,185 +1,684 @@
-const submissionModal = document.getElementById('submissionModal');
-      const submissionsModal = document.getElementById('submissionsModal');
-      const modalAssignmentDetail = document.getElementById('modalAssignmentDetail');
-      const githubLinkInput = document.getElementById('githubLink');
+(function () {
+  const apiClient = window.ApiClient;
 
-      const userApi = window.ApiClient?.user;
+  const submissionModal = document.getElementById('submissionModal');
+  const modalAssignmentDetail = document.getElementById('modalAssignmentDetail');
+  const githubLinkInput = document.getElementById('githubLink');
+  const submissionModeSelect = document.getElementById('submissionMode');
+  const assignmentsList = document.getElementById('assignmentsList');
+  const assignmentCount = document.getElementById('assignmentCount');
+  const pendingCount = document.getElementById('pendingCount');
+  const activityStatusFilter = document.getElementById('activityStatusFilter');
+  const submitAssignmentBtn = document.getElementById('submitAssignmentBtn');
 
-      // Load student profile
-      (async function loadStudentProfile() {
-          try {
-            if (!userApi) {
-              throw new Error('API client is not initialized.');
-            }
+  const params = new URLSearchParams(window.location.search);
+  const classroomId = params.get('classroomId') || params.get('id') || '';
+  const studentId = params.get('studentId') || '';
+  const storageKey = `studentclass.submissions.${classroomId || 'default'}.${studentId || 'all'}`;
 
-            const data = await userApi.getProfile();
-              const firstName  = data.firstName || '';
-              const lastName   = data.lastName  || '';
-              const fullName   = `${firstName} ${lastName}`.trim() || 'Student';
-              const profileUrl = data.profileUrl || '';
-              const initials   = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'ST';
+  const state = {
+    activities: [],
+    submissions: loadSavedSubmissions(),
+    currentStudentId: String(studentId || '').trim(),
+    currentStudentUsername: '',
+    needsSubmissionByActivityId: {},
+    needsSubmissionLoaded: false,
+    currentActivity: null,
+    filters: {
+      status: 'ALL'
+    }
+  };
 
-              const nameEl   = document.getElementById('studentName');
-              const avatarEl = document.getElementById('studentAvatar');
-              if (nameEl) nameEl.textContent = fullName;
-              if (avatarEl) {
-                  if (profileUrl) {
-                      avatarEl.innerHTML = `<img src="${profileUrl}" alt="${fullName}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-                  } else {
-                      avatarEl.textContent = initials;
-                  }
-              }
-          } catch (e) {
-              console.error('Error loading student profile:', e);
-          }
-      })();
-      
-      // Close buttons
-      document.getElementById('closeModal').onclick = () => {
-        submissionModal.style.display = 'none';
-      };
-      
-      document.getElementById('closeSubmissionsModal').onclick = () => {
-        submissionsModal.style.display = 'none';
-      };
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
 
-      document.getElementById('cancelSubmitBtn').onclick = () => {
-        submissionModal.style.display = 'none';
-      };
-      
-      // View All Submissions button
-      document.getElementById('viewAllSubmissionsBtn').onclick = (e) => {
-        e.preventDefault();
-        submissionsModal.style.display = 'block';
-      };
-      
-      // Back to Dashboard button
-      document.getElementById('backToDashboardBtn').onclick = (e) => {
-        e.preventDefault();
+  function formatDate(value) {
+    if (!value) return '';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  }
+
+  function getDaysLeft(value) {
+    if (!value) return null;
+
+    const dueDate = new Date(value);
+    if (Number.isNaN(dueDate.getTime())) return null;
+
+    const diffMs = dueDate.setHours(23, 59, 59, 999) - Date.now();
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }
+
+  function getActivityId(activity) {
+    return activity?.activityId || activity?.id || activity?.activityID || '';
+  }
+
+  function getActivityTitle(activity) {
+    return activity?.title || activity?.name || 'Untitled activity';
+  }
+
+  function getActivityDescription(activity) {
+    return activity?.description || activity?.details || '';
+  }
+
+  function getActivityStatus(activity) {
+    return String(activity?.status || '').trim().toUpperCase();
+  }
+
+  function isNeedsRepositorySubmission(activityId) {
+    const normalizedId = String(activityId || '');
+
+    if (state.needsSubmissionLoaded && Object.prototype.hasOwnProperty.call(state.needsSubmissionByActivityId, normalizedId)) {
+      return !!state.needsSubmissionByActivityId[normalizedId];
+    }
+
+    const submission = state.submissions.find(item => String(item.activityId || '') === normalizedId && item.repositoryUrl);
+    return !submission;
+  }
+
+  function getActivitySubmissionState(activityId) {
+    return isNeedsRepositorySubmission(activityId) ? 'NOT_SUBMITTED' : 'SUBMITTED';
+  }
+
+  async function refreshNeedsRepositorySubmission() {
+    if (!apiClient?.request || !classroomId || state.activities.length === 0) {
+      state.needsSubmissionByActivityId = {};
+      state.needsSubmissionLoaded = false;
+      return;
+    }
+
+    const activityIds = state.activities
+      .map(activity => String(getActivityId(activity) || '').trim())
+      .filter(Boolean);
+
+    if (activityIds.length === 0) {
+      state.needsSubmissionByActivityId = {};
+      state.needsSubmissionLoaded = false;
+      return;
+    }
+
+    try {
+      const response = await apiClient.request(`/classrooms/${encodeURIComponent(classroomId)}/activities/unsubmitted`, {
+        method: 'GET'
+      }, {
+        redirectOnUnauthorized: false
+      });
+
+      const unsubmittedList = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : [];
+
+      const unsubmittedActivityIds = new Set(
+        unsubmittedList
+          .map(activity => String(activity?.activityId || activity?.id || '').trim())
+          .filter(Boolean)
+      );
+
+      const map = {};
+      activityIds.forEach(activityId => {
+        map[activityId] = unsubmittedActivityIds.has(activityId);
+      });
+
+      state.needsSubmissionByActivityId = map;
+      state.needsSubmissionLoaded = true;
+    } catch (error) {
+      console.error('Failed to load unsubmitted activities:', error);
+      state.needsSubmissionByActivityId = {};
+      state.needsSubmissionLoaded = false;
+    }
+  }
+
+  function getPendingActivities() {
+    return state.activities.filter(activity => getActivitySubmissionState(getActivityId(activity)) === 'NOT_SUBMITTED');
+  }
+
+  function matchesActivityFilters(activity) {
+    const status = getActivityStatus(activity);
+    const statusFilter = state.filters.status;
+
+    if (statusFilter === 'NEEDS_SUBMISSION') {
+      return isNeedsRepositorySubmission(getActivityId(activity));
+    }
+
+    const statusMatches = statusFilter === 'ALL' || status === statusFilter;
+    return statusMatches;
+  }
+
+  function getStatusBadgeClass(activity) {
+    const status = getActivityStatus(activity);
+    const daysLeft = getDaysLeft(activity?.dueDate);
+
+    if (status === 'ARCHIVED' || status === 'CLOSED') {
+      return 'expired';
+    }
+
+    if (typeof daysLeft === 'number' && daysLeft <= 7) {
+      return 'due-soon';
+    }
+
+    return 'due-later';
+  }
+
+  function getStatusLabel(activity) {
+    const status = getActivityStatus(activity);
+    const dueDate = formatDate(activity?.dueDate);
+    const daysLeft = getDaysLeft(activity?.dueDate);
+
+    if (status) {
+      return status;
+    }
+
+    if (daysLeft === null) {
+      return 'Active';
+    }
+
+    if (daysLeft < 0) {
+      return 'Overdue';
+    }
+
+    return dueDate ? `Due ${dueDate}` : 'Active';
+  }
+
+  function loadSavedSubmissions() {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error('Error loading saved submissions:', error);
+      return [];
+    }
+  }
+
+  function saveSubmissions() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(state.submissions));
+    } catch (error) {
+      console.error('Error saving submissions:', error);
+    }
+  }
+
+  function setStudentProfile(data) {
+    const firstName = data.firstName || '';
+    const lastName = data.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim() || 'Student';
+    const profileUrl = data.profileUrl || '';
+    const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'ST';
+
+    const nameEl = document.getElementById('studentName');
+    const avatarEl = document.getElementById('studentAvatar');
+
+    if (nameEl) nameEl.textContent = fullName;
+    if (avatarEl) {
+      if (profileUrl) {
+        avatarEl.innerHTML = `<img src="${escapeHtml(profileUrl)}" alt="${escapeHtml(fullName)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        avatarEl.textContent = initials;
+      }
+    }
+  }
+
+  function renderEmptyState(message, description, iconClass = 'fas fa-inbox') {
+    return `
+      <div class="empty-state">
+        <i class="${iconClass}"></i>
+        <h4>${escapeHtml(message)}</h4>
+        <p>${escapeHtml(description)}</p>
+      </div>
+    `;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function setSubmitButtonState(mode) {
+    if (!submitAssignmentBtn) return;
+
+    submitAssignmentBtn.classList.remove('is-loading', 'is-success', 'is-error');
+
+    if (mode === 'loading') {
+      submitAssignmentBtn.disabled = true;
+      submitAssignmentBtn.setAttribute('aria-busy', 'true');
+      submitAssignmentBtn.classList.add('is-loading');
+      submitAssignmentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+      return;
+    }
+
+    if (mode === 'success') {
+      submitAssignmentBtn.disabled = true;
+      submitAssignmentBtn.setAttribute('aria-busy', 'false');
+      submitAssignmentBtn.classList.add('is-success');
+      submitAssignmentBtn.innerHTML = '<i class="fas fa-check"></i> Submitted!';
+      return;
+    }
+
+    if (mode === 'error') {
+      submitAssignmentBtn.disabled = false;
+      submitAssignmentBtn.setAttribute('aria-busy', 'false');
+      submitAssignmentBtn.classList.add('is-error');
+      submitAssignmentBtn.innerHTML = '<i class="fas fa-triangle-exclamation"></i> Try Again';
+      return;
+    }
+
+    submitAssignmentBtn.disabled = false;
+    submitAssignmentBtn.setAttribute('aria-busy', 'false');
+    submitAssignmentBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Assignment';
+  }
+
+  function renderActivities() {
+    if (!assignmentsList) return;
+
+    if (!classroomId) {
+      assignmentsList.innerHTML = renderEmptyState(
+        'Missing classroom id',
+        'Open this page from a classroom to load its activities.',
+        'fas fa-link'
+      );
+      return;
+    }
+
+    const filteredActivities = state.activities.filter(matchesActivityFilters);
+
+    if (assignmentCount) {
+      assignmentCount.textContent = String(filteredActivities.length);
+    }
+    if (pendingCount) {
+      pendingCount.textContent = String(getPendingActivities().length);
+    }
+
+    if (filteredActivities.length === 0) {
+      const isNeedsFilter = state.filters.status === 'NEEDS_SUBMISSION';
+      assignmentsList.innerHTML = renderEmptyState(
+        isNeedsFilter ? 'No assignments need repository submission' : 'No activities match the filter',
+        isNeedsFilter
+          ? 'Every assignment in this classroom already has a repository attached, or data is still loading.'
+          : 'Try a different status filter.',
+        isNeedsFilter ? 'fas fa-code-branch' : 'fas fa-tasks'
+      );
+      return;
+    }
+
+    assignmentsList.innerHTML = filteredActivities.map(activity => {
+      const activityId = getActivityId(activity);
+      const title = escapeHtml(getActivityTitle(activity));
+      const description = getActivityDescription(activity);
+      const dueDate = formatDate(activity?.dueDate);
+      const daysLeft = getDaysLeft(activity?.dueDate);
+      const badgeClass = getStatusBadgeClass(activity);
+      const statusLabel = escapeHtml(getStatusLabel(activity));
+      const statusIcon = badgeClass === 'expired' ? 'fas fa-hourglass-end' : 'fas fa-clock';
+      const points = activity?.maxScore != null ? `<span class="points"><i class="fas fa-star"></i> ${escapeHtml(activity.maxScore)} points</span>` : '';
+      const needsSubmission = isNeedsRepositorySubmission(activityId);
+      const submissionBadge = needsSubmission
+        ? '<span class="assignment-repo-badge"><i class="fas fa-code-branch"></i> Needs repository submission</span>'
+        : '<span class="assignment-repo-badge submitted"><i class="fas fa-check"></i> Repository submitted</span>';
+      const dueLabel = dueDate
+        ? `<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${daysLeft != null && daysLeft <= 7 ? 'urgent' : 'normal'}">${daysLeft != null ? (daysLeft > 0 ? `${daysLeft} days left` : 'Overdue') : dueDate}</span></span>`
+        : '<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left normal">No due date</span></span>';
+      const submissionAction = needsSubmission
+        ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repository</button>`
+        : '<span class="repo-submitted-pill"><i class="fas fa-check"></i> Repository submitted</span>';
+
+      return `
+        <div class="assignment ${needsSubmission ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(activityId)}">
+          <div class="assignment-header">
+            <div class="assignment-title-wrap">
+              <div class="assignment-title">
+                <i class="fas fa-project-diagram"></i>
+                ${title}
+              </div>
+              <div class="assignment-subtitle">
+                ${submissionBadge}
+              </div>
+            </div>
+            <div class="assignment-status ${badgeClass}">
+              <i class="${statusIcon}"></i>
+              ${statusLabel}
+            </div>
+          </div>
+          ${description ? `<div class="assignment-desc">${escapeHtml(description)}</div>` : ''}
+          <div class="assignment-meta">
+            ${dueLabel}
+            ${points}
+            ${submissionAction}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function setModalAssignment(activity) {
+    if (!modalAssignmentDetail) return;
+
+    const title = getActivityTitle(activity);
+    const description = getActivityDescription(activity);
+    const dueDate = formatDate(activity?.dueDate);
+    const points = activity?.maxScore != null ? activity.maxScore : 'Not set';
+    const status = getActivityStatus(activity) || 'ACTIVE';
+
+    modalAssignmentDetail.innerHTML = `
+      <div class="assignment-detail-item">
+        <i class="fas fa-tasks"></i>
+        <div><strong>${escapeHtml(title)}</strong></div>
+      </div>
+      ${description ? `
+        <div class="assignment-detail-item">
+          <i class="fas fa-align-left"></i>
+          <div>${escapeHtml(description)}</div>
+        </div>
+      ` : ''}
+      <div class="assignment-detail-item">
+        <i class="fas fa-calendar-alt"></i>
+        <div><strong>Due:</strong> ${escapeHtml(dueDate || 'No due date')}</div>
+      </div>
+      <div class="assignment-detail-item">
+        <i class="fas fa-star"></i>
+        <div><strong>Points:</strong> ${escapeHtml(points)}</div>
+      </div>
+      <div class="assignment-detail-item">
+        <i class="fas fa-signal"></i>
+        <div><strong>Status:</strong> ${escapeHtml(status)}</div>
+      </div>
+    `;
+  }
+
+  function openSubmissionModal(activityId) {
+    const activity = state.activities.find(item => getActivityId(item) === activityId);
+
+    if (!activity) {
+      window.AppDialog.alert('Activity not found.', { title: 'Missing Activity' });
+      return;
+    }
+
+    state.currentActivity = activity;
+    setModalAssignment(activity);
+    if (submissionModeSelect) submissionModeSelect.value = 'existing';
+    applySubmissionMode('existing');
+    submissionModal.style.display = 'block';
+  }
+
+  function closeSubmissionModal() {
+    submissionModal.style.display = 'none';
+    setSubmitButtonState('idle');
+  }
+
+
+
+
+  function clearSubmissionForm() {
+    if (githubLinkInput) githubLinkInput.value = '';
+    const repoNameInput = document.getElementById('repositoryName');
+    if (repoNameInput) repoNameInput.value = '';
+    const noteInput = document.getElementById('submissionNote');
+    if (noteInput) noteInput.value = '';
+    if (submissionModeSelect) submissionModeSelect.value = 'existing';
+    applySubmissionMode('existing');
+  }
+
+  function applySubmissionMode(mode) {
+    const isNew = mode === 'new';
+    const existingRepoGroup = document.getElementById('existingRepoGroup');
+    const newRepoGroup = document.getElementById('newRepoGroup');
+    const repoNameInput = document.getElementById('repositoryName');
+
+    if (existingRepoGroup) existingRepoGroup.style.display = isNew ? 'none' : 'block';
+    if (newRepoGroup) newRepoGroup.style.display = isNew ? 'block' : 'none';
+    if (githubLinkInput) {
+      githubLinkInput.required = !isNew;
+      if (isNew) githubLinkInput.value = '';
+    }
+    if (repoNameInput) {
+      repoNameInput.required = isNew;
+      if (!isNew) repoNameInput.value = '';
+    }
+  }
+
+  function buildLocalSubmission(payload, activity, repositoryUrl, mode) {
+    const modeLabel = mode === 'new' ? 'New repository' : 'Existing repository';
+
+    return {
+      id: payload?.submissionId || payload?.id || `${getActivityId(activity)}-${Date.now()}`,
+      activityId: getActivityId(activity),
+      title: getActivityTitle(activity),
+      repositoryUrl,
+      mode,
+      modeLabel,
+      result: 'passed',
+      resultLabel: 'Submitted',
+      submittedAt: new Date().toISOString()
+    };
+  }
+
+  async function loadStudentProfile() {
+    try {
+      if (!apiClient?.request) {
+        throw new Error('API client is not initialized.');
+      }
+
+      const data = await apiClient.request('/users/profile', {
+        method: 'GET'
+      }, {
+        redirectOnUnauthorized: false
+      });
+
+      state.currentStudentId = String(data?.userId || data?.id || data?.studentId || state.currentStudentId || '').trim();
+      state.currentStudentUsername = String(data?.username || data?.githubUsername || data?.login || '').trim();
+      setStudentProfile(data);
+
+      await refreshNeedsRepositorySubmission();
+      renderActivities();
+    } catch (error) {
+      console.error('Error loading student profile:', error);
+    }
+  }
+
+  async function loadActivities() {
+    if (!apiClient?.request || !classroomId) {
+      renderActivities();
+      return;
+    }
+
+    try {
+      const result = await apiClient.request(`/classrooms/${encodeURIComponent(classroomId)}/activities/student`, {
+        method: 'GET'
+      }, {
+        redirectOnUnauthorized: false
+      });
+
+      const activities = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+      state.activities = activities;
+
+      await refreshNeedsRepositorySubmission();
+      renderActivities();
+    } catch (error) {
+      console.error('Error loading activities:', error);
+      state.activities = [];
+      state.needsSubmissionByActivityId = {};
+      state.needsSubmissionLoaded = false;
+      renderActivities();
+    }
+  }
+
+  async function submitAssignment() {
+    const activity = state.currentActivity;
+    const submissionMode = submissionModeSelect?.value === 'new' ? 'new' : 'existing';
+    const submissionNote = document.getElementById('submissionNote')?.value.trim() || '';
+
+    if (!activity) {
+      await window.AppDialog.alert('Select an activity first.', { title: 'Missing Activity' });
+      return;
+    }
+
+    let repositoryUrl = '';
+    if (submissionMode === 'existing') {
+      repositoryUrl = githubLinkInput?.value.trim() || '';
+      if (!repositoryUrl) {
+        await window.AppDialog.alert('Please enter a GitHub repository link.', { title: 'Missing Link' });
+        return;
+      }
+      if (!repositoryUrl.includes('github.com')) {
+        await window.AppDialog.alert('Please enter a valid GitHub repository URL.', { title: 'Invalid Link' });
+        return;
+      }
+    } else {
+      // For new repository - backend handles URL construction
+      const repoName = document.getElementById('repositoryName')?.value.trim() || '';
+      if (!repoName) {
+        await window.AppDialog.alert('Please enter a repository name.', { title: 'Missing Name' });
+        return;
+      }
+      repositoryUrl = repoName;
+    }
+
+    if (!classroomId) {
+      await window.AppDialog.alert('Missing classroom id in the page URL.', { title: 'Missing Classroom' });
+      return;
+    }
+
+    const endpoint = `/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(getActivityId(activity))}/submit/${submissionMode}`;
+
+    setSubmitButtonState('loading');
+
+    try {
+      const requestBody = submissionMode === 'new'
+        ? { repositoryName: repositoryUrl }
+        : { repositoryUrl };
+
+      const response = await apiClient.request(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      }, {
+        redirectOnUnauthorized: false
+      });
+
+      const submitted = response?.data ?? response;
+      const record = buildLocalSubmission(submitted, activity, repositoryUrl, submissionMode);
+
+      if (submissionNote) {
+        record.note = submissionNote;
+      }
+
+      state.submissions = [record, ...state.submissions];
+      saveSubmissions();
+
+      await refreshNeedsRepositorySubmission();
+      renderActivities();
+      setSubmitButtonState('success');
+      await sleep(700);
+      closeSubmissionModal();
+      clearSubmissionForm();
+
+      await window.AppDialog.alert('Assignment submitted successfully.', {
+        title: 'Success'
+      });
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      setSubmitButtonState('error');
+      await window.AppDialog.alert(error.message || 'Failed to submit assignment.', {
+        title: 'Submission Failed'
+      });
+      await sleep(1200);
+      setSubmitButtonState('idle');
+    }
+  }
+
+  function attachEventHandlers() {
+    const closeModalBtn = document.getElementById('closeModal');
+    const cancelSubmitBtn = document.getElementById('cancelSubmitBtn');
+    const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+    const pasteGithubBtn = document.getElementById('pasteGithubBtn');
+    setSubmitButtonState('idle');
+    const existingRepoGroup = document.getElementById('existingRepoGroup');
+    const newRepoGroup = document.getElementById('newRepoGroup');
+
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeSubmissionModal);
+    if (cancelSubmitBtn) cancelSubmitBtn.addEventListener('click', closeSubmissionModal);
+
+    if (submissionModeSelect) {
+      submissionModeSelect.addEventListener('change', event => {
+        applySubmissionMode(event.target.value === 'new' ? 'new' : 'existing');
+      });
+
+      applySubmissionMode(submissionModeSelect.value === 'new' ? 'new' : 'existing');
+    }
+
+    if (backToDashboardBtn) {
+      backToDashboardBtn.addEventListener('click', event => {
+        event.preventDefault();
         window.location.href = '/dashboard/';
-      };
+      });
+    }
 
-      // Paste from clipboard
-      document.getElementById('pasteGithubBtn').onclick = async () => {
+    if (pasteGithubBtn) {
+      pasteGithubBtn.addEventListener('click', async () => {
         try {
           const text = await navigator.clipboard.readText();
           githubLinkInput.value = text;
-        } catch (err) {
+        } catch (error) {
           await window.AppDialog.alert('Unable to paste from clipboard. Please paste manually.', {
             title: 'Clipboard Error'
           });
         }
-      };
-
-      // Submit button
-      document.getElementById('submitAssignmentBtn').onclick = async () => {
-        const githubLink = githubLinkInput.value;
-        const note = document.getElementById('submissionNote').value;
-        
-        if (!githubLink) {
-          await window.AppDialog.alert('Please enter a GitHub repository link', {
-            title: 'Missing Link'
-          });
-          return;
-        }
-
-        // Validate GitHub URL
-        if (!githubLink.includes('github.com')) {
-          await window.AppDialog.alert('Please enter a valid GitHub repository URL', {
-            title: 'Invalid Link'
-          });
-          return;
-        }
-
-        // Here you would send the data to your backend
-        console.log('Submitting:', {
-          assignment: currentAssignment,
-          githubLink,
-          note
-        });
-
-        await window.AppDialog.alert('Assignment submitted successfully!', {
-          title: 'Success'
-        });
-        submissionModal.style.display = 'none';
-        
-        // Clear form
-        githubLinkInput.value = '';
-        document.getElementById('submissionNote').value = '';
-      };
-
-      // Close modals when clicking outside
-      window.onclick = (e) => {
-        if (e.target === submissionModal) {
-          submissionModal.style.display = 'none';
-        }
-        if (e.target === submissionsModal) {
-          submissionsModal.style.display = 'none';
-        }
-      };
-
-      // Store current assignment
-      let currentAssignment = null;
-
-      // Add click handlers to all assignments and submissions
-      document.querySelectorAll('.assignment, .submission-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-          e.preventDefault();
-          
-          // Get assignment details
-          const title = item.querySelector('.assignment-title, .submission-title').innerText;
-          const description = item.querySelector('.assignment-desc, .submission-content').innerText;
-          const status = item.querySelector('.assignment-status, .submission-badge')?.innerText || 'Active';
-          
-          // Check if it's an assignment (not a submission)
-          const isAssignment = item.classList.contains('assignment');
-          
-          if (isAssignment) {
-            // For active assignments, show submission modal
-            const dueDate = item.querySelector('.assignment-status').innerText;
-            
-            modalAssignmentDetail.innerHTML = `
-              <div class="assignment-detail-item">
-                <i class="fas fa-tasks"></i>
-                <div><strong>${title.split('\n')[0]}</strong></div>
-              </div>
-              <div class="assignment-detail-item">
-                <i class="fas fa-align-left"></i>
-                <div>${item.querySelector('.assignment-desc').innerText}</div>
-              </div>
-              <div class="assignment-detail-item">
-                <i class="fas fa-calendar-alt"></i>
-                <div><strong>Due:</strong> ${dueDate}</div>
-              </div>
-              <div class="assignment-detail-item">
-                <i class="fas fa-star"></i>
-                <div><strong>Points:</strong> ${item.querySelector('.points').innerText}</div>
-              </div>
-            `;
-            
-            currentAssignment = {
-              id: item.dataset.assignmentId,
-              title: title,
-              description: description
-            };
-            
-            submissionModal.style.display = 'block';
-          } else {
-            // For submissions, just show info (could be expanded later)
-            window.AppDialog.alert(`Viewing submission: ${title}\n\n${description}`, {
-              title: 'Submission Details'
-            });
-          }
-        });
       });
+    }
 
-      // Simulate due date checking
-      function checkDueDates() {
-        const today = new Date('2026-03-05');
-        console.log('Today\'s date:', today.toDateString());
-        console.log('Active assignments are those with due dates after today');
-        console.log('Expired assignments have been moved to Recent Submissions');
-      }
+    if (submitAssignmentBtn) {
+      submitAssignmentBtn.addEventListener('click', submitAssignment);
+    }
 
-      // Run on page load
-      checkDueDates();
+    if (activityStatusFilter) {
+      activityStatusFilter.addEventListener('change', event => {
+        state.filters.status = event.target.value || 'ALL';
+        renderActivities();
+      });
+    }
+
+    if (assignmentsList) {
+      assignmentsList.addEventListener('click', event => {
+        const actionButton = event.target.closest('[data-submit-activity-id]');
+        if (!actionButton) return;
+
+        const activityId = actionButton.getAttribute('data-submit-activity-id');
+        if (!activityId) return;
+
+        openSubmissionModal(String(activityId));
+      });
+    }
+
+
+    window.addEventListener('click', event => {
+      if (event.target === submissionModal) closeSubmissionModal();
+    });
+  }
+
+  function init() {
+    attachEventHandlers();
+    renderActivities();
+    loadStudentProfile();
+    loadActivities();
+
+    if (!classroomId) {
+      console.warn('studentclass loaded without a classroomId query parameter');
+    }
+  }
+
+  init();
+})();

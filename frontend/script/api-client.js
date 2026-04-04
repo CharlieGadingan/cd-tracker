@@ -61,6 +61,12 @@
 
   let isRefreshing = false;
   let refreshPromise = null;
+  let lastRefreshSucceededAt = 0;
+  const REFRESH_COOLDOWN_MS = 10000;
+
+  function isAuthEndpoint(path) {
+    return String(path || "").startsWith("/auth/");
+  }
 
   async function refreshToken(deviceId) {
     if (!deviceId || !deviceId.trim()) {
@@ -91,6 +97,7 @@
           return false;
         }
 
+        lastRefreshSucceededAt = Date.now();
         console.log("JWT token refreshed successfully");
         return true;
       } catch (error) {
@@ -125,20 +132,25 @@
 
     let { response, body } = await makeRequest();
 
-    if (response.status === 401 && !retried) {
+    if (response.status === 401 && !retried && retryOnRefresh && !isAuthEndpoint(path)) {
       retried = true;
 
-      const deviceId = getDeviceId();
-      if (!deviceId) {
-        logoutAndRedirect();
-        throw new Error("Missing device ID");
-      }
+      // Prevent refresh storm when backend keeps returning 401 after a recent successful refresh.
+      if (Date.now() - lastRefreshSucceededAt < REFRESH_COOLDOWN_MS) {
+        console.warn(`Skipping refresh for ${path}; refreshed too recently.`);
+      } else {
+        const deviceId = getDeviceId();
+        if (!deviceId) {
+          logoutAndRedirect();
+          throw new Error("Missing device ID");
+        }
 
-      console.log(`Received 401 on ${path}, attempting token refresh`);
-      const refreshed = await refreshToken(deviceId);
+        console.log(`Received 401 on ${path}, attempting token refresh`);
+        const refreshed = await refreshToken(deviceId);
 
-      if (refreshed && retryOnRefresh) {
-        ({ response, body } = await makeRequest());
+        if (refreshed) {
+          ({ response, body } = await makeRequest());
+        }
       }
     }
 
@@ -176,7 +188,7 @@
     }
   }
 
-  async function checkAuth() {
+  async function checkSessionState() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/check`, {
         method: "GET",
@@ -187,18 +199,31 @@
       });
 
       const data = await parseResponseBody(response);
-      return data?.authenticated === true;
+      return {
+        authenticated: data?.authenticated === true,
+        fullyInitialized: data?.fullyInitialized === true,
+        data
+      };
     } catch (error) {
       console.error("Auth check error:", error);
-      return false;
+      return {
+        authenticated: false,
+        fullyInitialized: false,
+        data: null
+      };
     }
+  }
+
+  async function checkAuth() {
+    const sessionState = await checkSessionState();
+    return sessionState.authenticated;
   }
 
   async function checkAndRedirectIfAuthenticated() {
     try {
-      const isAuthenticated = await checkAuth();
-      if (isAuthenticated) {
-        window.location.replace("/dashboard/");
+      const sessionState = await checkSessionState();
+      if (sessionState.authenticated) {
+        window.location.replace(sessionState.fullyInitialized ? "/dashboard/" : "/onboarding/");
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -494,6 +519,7 @@
     logout,
     getDeviceId,
     refreshToken, 
+    checkSessionState,
     _getCookie: getCookie
   };
 

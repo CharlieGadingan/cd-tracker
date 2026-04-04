@@ -64,22 +64,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // ── Check if user is initialized (completed onboarding) ──────
-    try {
-        const profile = await userApi.getProfile();
-        // If user doesn't have firstName, they haven't completed onboarding yet
-        if (!profile || !profile.firstName) {
-            window.location.replace("/onboarding/");
+    if (window.ApiClient?.checkSessionState) {
+        const sessionState = await window.ApiClient.checkSessionState();
+        if (!sessionState.authenticated) {
+            window.location.replace('/');
             return;
         }
-    } catch (error) {
-        // If profile fetch fails, redirect to onboarding
-        console.error('Unable to verify user initialization:', error);
-        window.location.replace("/onboarding/");
-        return;
+
+        if (!sessionState.fullyInitialized) {
+            window.location.replace('/onboarding/');
+            return;
+        }
     }
 
-    loadUserProfile();
+    const profile = await loadUserProfile();
+    if (profile && !isProfileInitialized(profile)) {
+        showNotification('Your profile looks incomplete. You can update it from your profile modal.', 'warning');
+    }
+
     loadClasses();
     setupEventListeners();
 
@@ -561,15 +563,28 @@ async function loadUserProfile() {
     try {
         if (!userApi) {
             showNotification('API client is not initialized.', 'error');
-            return;
+            return null;
         }
         const data = await userApi.getProfile();
         currentUser = data;
         applyProfileToUI(data);
+        return data;
     } catch (error) {
         console.error('Failed to load user profile:', error);
         showNotification('Failed to load user profile', 'error');
+        return null;
     }
+}
+
+function isProfileInitialized(profile) {
+    if (!profile || typeof profile !== 'object') return false;
+
+    const hasName = Boolean(String(profile.firstName || '').trim()) || Boolean(String(profile.lastName || '').trim());
+    const hasPhone = Boolean(String(unwrap(profile.phoneNumber) || '').trim());
+    const hasGender = Boolean(String(unwrap(profile.gender) || '').trim());
+    const hasBirthday = Boolean(String(unwrap(profile.birthday) || '').trim());
+
+    return hasName || (hasPhone && hasGender && hasBirthday);
 }
 
 function applyProfileToUI(data) {
@@ -630,8 +645,6 @@ async function openProfileModal() {
         if (genderEl)    genderEl.value    = unwrap(data.gender) || '';
         if (birthdayEl)  birthdayEl.value  = unwrap(data.birthday) || '';
         if (bioEl)       bioEl.value       = data.bio || '';
-
-        openModal(profileModal);
 
     } catch (error) {
         console.error('Error opening profile:', error);

@@ -47,248 +47,39 @@
         Today's Date: <strong>March 5, 2026</strong>
       </div>
 
-      <!-- Main Dashboard Grid - Two Columns -->
+      <!-- Main Dashboard Grid -->
       <div class="dashboard-grid">
-        <!-- LEFT COLUMN - Active Assignments (Wider) -->
         <div class="assignments-column">
-          <!-- Active Assignments Section -->
-          <div class="section-header">
-            <h3 class="section-title">
-              <i class="fas fa-tasks"></i>
-              Active Assignments
-            </h3>
-            <a href="#" class="section-link">
-              View all <i class="fas fa-arrow-right"></i>
-            </a>
-          </div>
-
-          <!-- Assignment 1 - Due in 9 days (Still Active) -->
-          <div class="assignment" data-assignment-id="system1" data-type="assignment">
-            <div class="assignment-header">
-              <div class="assignment-title">
-                <i class="fas fa-project-diagram"></i>
-                System 1 - E-Commerce Platform
-              </div>
-              <div class="assignment-status due-later">
-                <i class="fas fa-clock"></i>
-                Due Mar 14, 2026
-              </div>
-            </div>
-            
-            <div class="assignment-desc">
-              Build a full-stack e-commerce platform with user authentication, product catalog, shopping cart, and payment integration.
-            </div>
-
-            <div class="assignment-meta">
-              <span class="assignment-due">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="days-left normal">9 days left</span>
-              </span>
-              <span class="in-progress">
-                <i class="fas fa-check-circle"></i>
-                In Progress
-              </span>
-              <span class="points">
-                <i class="fas fa-star"></i>
-                100 points
-              </span>
-            </div>
-          </div>
-
-          <!-- Assignment 2 - Due in 23 days (Still Active) -->
-          <div class="assignment" data-assignment-id="db-project" data-type="assignment">
-            <div class="assignment-header">
-              <div class="assignment-title">
-                <i class="fas fa-database"></i>
-                Database Design Project
-              </div>
-              <div class="assignment-status due-later">
-                <i class="fas fa-clock"></i>
-                Due Mar 28, 2026
-              </div>
-            </div>
-            
-            <div class="assignment-desc">
-              Design and implement a normalized database schema for a library management system.
-            </div>
-
-            <div class="assignment-meta">
-              <span class="assignment-due">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="days-left normal">23 days left</span>
-              </span>
-              <span class="in-progress">
-                <i class="fas fa-check-circle"></i>
-                Not Started
-              </span>
-              <span class="points">
-                <i class="fas fa-star"></i>
-                50 points
-              </span>
-            </div>
-          </div>
-
-          <!-- Assignment 3 - Due in 45 days (Still Active) -->
-          <div class="assignment" data-assignment-id="mobile-app" data-type="assignment">
-            <div class="assignment-header">
-              <div class="assignment-title">
-                <i class="fas fa-mobile-alt"></i>
-                Mobile App Development
-              </div>
-              <div class="assignment-status due-later">
-                <i class="fas fa-clock"></i>
-                Due Apr 19, 2026
-              </div>
-            </div>
-            
-            <div class="assignment-desc">
-              Create a React Native mobile application for task management with push notifications and offline support.
-            </div>
-
-            <div class="assignment-meta">
-              <span class="assignment-due">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="days-left normal">45 days left</span>
-              </span>
-              <span class="in-progress">
-                <i class="fas fa-check-circle"></i>
-                Not Started
-              </span>
-              <span class="points">
-                <i class="fas fa-star"></i>
-                150 points
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT COLUMN - Recent Submissions & Expired Assignments -->
-        <div class="submissions-column">
-          <!-- Recent Submissions Card -->
-          <div class="card">
-            <div class="card-header">
-              <h3>
-                <i class="fas fa-paper-plane"></i>
-                Recent Submissions
+          <div class="section-header assignments-header">
+            <div>
+              <h3 class="section-title">
+                <i class="fas fa-tasks"></i>
+                Classroom Assignments
               </h3>
-              <div class="subtitle">Your submitted assignments and results</div>
+              <p class="section-subtitle">Assignments that need your attention, including repository submission status.</p>
             </div>
-            
-            <div class="card-body">
-              <div class="submissions-list">
-                <!-- Submission 1 - Passed -->
-                <div class="submission-item" data-id="sub1" data-type="submission" data-status="passed">
-                  <div class="submission-avatar passed-bg">
-                    <i class="fas fa-check"></i>
-                  </div>
-                  <div class="submission-content">
-                    <div class="submission-title">
-                      <i class="fas fa-project-diagram"></i>
-                      System 1 - E-Commerce Platform
-                      <span class="submission-badge badge-passed">
-                        <i class="fas fa-check-circle"></i> Passed
-                      </span>
-                    </div>
-                    <div class="submission-details">
-                      <span class="submission-score passed">
-                        <i class="fas fa-star"></i>
-                        Score: 92/100
-                      </span>
-                      <span class="submission-time">
-                        <i class="far fa-clock"></i>
-                        2 days ago
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Submission 2 - Missed -->
-                <div class="submission-item" data-id="sub2" data-type="submission" data-status="missed">
-                  <div class="submission-avatar missed-bg">
-                    <i class="fas fa-times"></i>
-                  </div>
-                  <div class="submission-content">
-                    <div class="submission-title">
-                      <i class="fas fa-database"></i>
-                      Database Design Project
-                      <span class="submission-badge badge-missed">
-                        <i class="fas fa-times-circle"></i> Missed
-                      </span>
-                    </div>
-                    <div class="submission-details">
-                      <span class="submission-score missed">
-                        <i class="fas fa-star"></i>
-                        Score: 45/100
-                      </span>
-                      <span class="submission-time">
-                        <i class="far fa-clock"></i>
-                        1 week ago
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Submission 3 - Passed with honors -->
-                <div class="submission-item" data-id="sub3" data-type="submission" data-status="passed">
-                  <div class="submission-avatar passed-bg">
-                    <i class="fas fa-check"></i>
-                  </div>
-                  <div class="submission-content">
-                    <div class="submission-title">
-                      <i class="fas fa-code"></i>
-                      Module 3: API Development
-                      <span class="submission-badge badge-passed">
-                        <i class="fas fa-check-circle"></i> Passed
-                      </span>
-                    </div>
-                    <div class="submission-details">
-                      <span class="submission-score passed">
-                        <i class="fas fa-star"></i>
-                        Score: 98/100
-                      </span>
-                      <span class="submission-time">
-                        <i class="far fa-clock"></i>
-                        2 weeks ago
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Expired Assignment that moved to Submissions -->
-                <div class="submission-item" data-id="sub4" data-type="submission" data-status="expired">
-                  <div class="submission-avatar expired-bg">
-                    <i class="fas fa-hourglass-end"></i>
-                  </div>
-                  <div class="submission-content">
-                    <div class="submission-title">
-                      <i class="fas fa-code-branch"></i>
-                      Legacy Code Refactoring
-                      <span class="submission-badge badge-expired">
-                        <i class="fas fa-hourglass-end"></i> Expired
-                      </span>
-                    </div>
-                    <div class="submission-details">
-                      <span class="submission-score warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Due Date Passed
-                      </span>
-                      <span class="submission-time">
-                        <i class="far fa-clock"></i>
-                        Due was Mar 1, 2026
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="view-all-container">
-                <a href="#" class="btn full-width-btn" id="viewAllSubmissionsBtn">
-                  <i class="fas fa-history"></i>
-                  View All Submissions
-                </a>
-              </div>
+            <div class="assignment-filters">
+              <select id="activityStatusFilter" aria-label="Filter activities by status">
+                <option value="ALL">All assignments</option>
+                <option value="PUBLISHED">Published</option>
+                <option value="CLOSED">Closed</option>
+                <option value="NEEDS_SUBMISSION">Needs repository submission</option>
+              </select>
             </div>
           </div>
+
+          <div class="assignment-summary-row">
+            <div class="summary-chip">
+              <i class="fas fa-list-check"></i>
+              Showing: <strong id="assignmentCount">0</strong>
+            </div>
+            <div class="summary-chip pending">
+              <i class="fas fa-code-branch"></i>
+              Needs repository submission: <strong id="pendingCount">0</strong>
+            </div>
+          </div>
+
+          <div id="assignmentsList"></div>
         </div>
       </div>
     </div>
@@ -311,20 +102,49 @@
 
           <form id="submissionForm">
             <div class="form-group">
-              <label for="githubLink">
-                <i class="fab fa-github"></i>
-                GitHub Repository Link
+              <label for="submissionMode">
+                <i class="fas fa-code-branch"></i>
+                Submission Type
               </label>
-              <div class="github-input-group">
+              <select id="submissionMode">
+                <option value="existing">Submit existing repository</option>
+                <option value="new">Create and submit new repository</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="repoInputGroup">
+              <!-- For existing repos -->
+              <div id="existingRepoGroup" class="repo-input-variant">
+                <label for="githubLink">
+                  <i class="fab fa-github"></i>
+                  GitHub Repository Link
+                </label>
+                <div class="github-input-group">
+                  <input
+                    type="url"
+                    id="githubLink"
+                    placeholder="https://github.com/username/repository"
+                    required
+                  />
+                  <button type="button" id="pasteGithubBtn" title="Paste from clipboard">
+                    <i class="fas fa-paste"></i>
+                  </button>
+                </div>
+              </div>
+              <!-- For new repos -->
+              <div id="newRepoGroup" class="repo-input-variant" style="display: none;">
+                <label for="repositoryName">
+                  <i class="fas fa-folder-plus"></i>
+                  Repository Name
+                </label>
                 <input
-                  type="url"
-                  id="githubLink"
-                  placeholder="https://github.com/username/repository"
+                  type="text"
+                  id="repositoryName"
+                  placeholder="my-awesome-project"
+                  pattern="[a-zA-Z0-9_\\-]+"
+                  title="Repository name can contain letters, numbers, hyphens, and underscores"
                   required
                 />
-                <button type="button" id="pasteGithubBtn" title="Paste from clipboard">
-                  <i class="fas fa-paste"></i>
-                </button>
               </div>
             </div>
 
@@ -348,105 +168,6 @@
             <i class="fas fa-paper-plane"></i>
             Submit Assignment
           </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- View All Submissions Modal -->
-    <div class="modal" id="submissionsModal">
-      <div class="modal-content large-modal">
-        <div class="modal-header">
-          <h2>
-            <i class="fas fa-history"></i>
-            All Submissions History
-          </h2>
-          <span class="close-btn" id="closeSubmissionsModal">&times;</span>
-        </div>
-
-        <div class="all-submissions-list">
-          <div class="submission-item">
-            <div class="submission-avatar passed-bg">
-              <i class="fas fa-check"></i>
-            </div>
-            <div class="submission-content">
-              <div class="submission-title">
-                <i class="fas fa-project-diagram"></i>
-                System 1 Final Version
-                <span class="submission-badge badge-passed">Passed</span>
-              </div>
-              <div class="submission-details">
-                <span class="submission-score passed">
-                  <i class="fas fa-star"></i> 95/100
-                </span>
-                <span class="submission-time">
-                  <i class="far fa-clock"></i> Just now
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="submission-item">
-            <div class="submission-avatar passed-bg">
-              <i class="fas fa-check"></i>
-            </div>
-            <div class="submission-content">
-              <div class="submission-title">
-                <i class="fas fa-project-diagram"></i>
-                System 1 Initial Draft
-                <span class="submission-badge badge-passed">Passed</span>
-              </div>
-              <div class="submission-details">
-                <span class="submission-score passed">
-                  <i class="fas fa-star"></i> 88/100
-                </span>
-                <span class="submission-time">
-                  <i class="far fa-clock"></i> 3 days ago
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="submission-item">
-            <div class="submission-avatar missed-bg">
-              <i class="fas fa-times"></i>
-            </div>
-            <div class="submission-content">
-              <div class="submission-title">
-                <i class="fas fa-database"></i>
-                Database Design - ER Diagram
-                <span class="submission-badge badge-missed">Missed</span>
-              </div>
-              <div class="submission-details">
-                <span class="submission-score missed">
-                  <i class="fas fa-star"></i> 45/100
-                </span>
-                <span class="submission-time">
-                  <i class="far fa-clock"></i> 1 week ago
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="submission-item">
-            <div class="submission-avatar expired-bg">
-              <i class="fas fa-hourglass-end"></i>
-            </div>
-            <div class="submission-content">
-              <div class="submission-title">
-                <i class="fas fa-code-branch"></i>
-                Legacy Code Refactoring
-                <span class="submission-badge badge-expired">Expired</span>
-              </div>
-              <div class="submission-details">
-                <span class="submission-score warning">
-                  <i class="fas fa-exclamation-triangle"></i> No Submission
-                </span>
-                <span class="submission-time">
-                  <i class="far fa-clock"></i> Due: Mar 1, 2026
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
