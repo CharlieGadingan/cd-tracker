@@ -699,14 +699,14 @@ async function handleSaveProfile() {
 function handleLogout() {
     if (confirm('Are you sure you want to log out?')) {
         if (!apiRequest) {
-            window.location.href = 'index.html';
+            window.location.href = '/';
             return;
         }
 
         apiRequest('/auth/logout', { method: 'POST' }, { redirectOnUnauthorized: false }).finally(() => {
             localStorage.clear();
             sessionStorage.clear();
-            window.location.href = 'index.html';
+            window.location.href = '/';
         });
     }
 }
@@ -1070,7 +1070,7 @@ function attachClassCardHandlers() {
 
 function viewClassroom(classId, role) {
     if (classId && classId !== 'unknown') {
-        const page = role === 'student' ? 'studentclass.html' : 'profclass.html';
+        const page = role === 'student' ? '/studentclass/' : '/profclass/';
         window.location.href = `${page}?id=${encodeURIComponent(classId)}`;
     } else {
         showNotification('Invalid classroom ID', 'error');

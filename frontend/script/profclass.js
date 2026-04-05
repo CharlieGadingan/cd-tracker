@@ -64,7 +64,7 @@ const apiRequest = window.ApiClient?.request;
     // ✅ LOGOUT
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            window.location.href = 'login.html';
+            window.location.href = '/';
         });
     }
 
@@ -82,7 +82,7 @@ const apiRequest = window.ApiClient?.request;
             classroomId = params.get('id');
             if (!classroomId) {
                 showNotification('Classroom ID not found in URL', 'error');
-                setTimeout(() => window.location.href = 'dashboard.html', 2000);
+                setTimeout(() => window.location.href = '/dashboard/', 2000);
             }
         }
 
@@ -186,11 +186,14 @@ const apiRequest = window.ApiClient?.request;
                 filterActivityLog(e.target.value);
             });
 
-            document.getElementById('backToDashboardBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                // Navigate back to main dashboard
-                window.location.href = 'dashboard.html';
-            });
+            const backBtn = document.getElementById('backToDashboardBtn') || document.getElementById('backDashboardBtn');
+            if (backBtn) {
+                backBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Navigate back to main dashboard
+                    window.location.href = '/dashboard/';
+                });
+            }
 
             window.addEventListener('click', (e) => {
                 const createModal = document.getElementById('createActivityModal');
@@ -311,7 +314,7 @@ const apiRequest = window.ApiClient?.request;
                     : 'No recent activity';
 
                 const studentId = student.studentUserId || '';
-                const analyticsUrl = `studentclass.html?classroomId=${encodeURIComponent(classroomId)}&studentId=${encodeURIComponent(studentId)}`;
+                const analyticsUrl = `/studentclass/?classroomId=${encodeURIComponent(classroomId)}&studentId=${encodeURIComponent(studentId)}`;
 
                 return `
                     <a class="student-card-link" href="${analyticsUrl}">
