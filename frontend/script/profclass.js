@@ -4,35 +4,85 @@ const apiRequest = window.ApiClient?.request;
         let activities = [];
         let students = [];
         let activityLog = [];
-        let currentUnsubmittedActivityId = null;
 
         // ═══════════════════════════════════════════════════════════════════
         // INITIALIZATION
         // ═══════════════════════════════════════════════════════════════════
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!apiRequest) {
-                showNotification('API client is not initialized.', 'error');
-                return;
-            }
+        // ─── Professor Dropdown Toggle ──────────────────────────────
+            document.addEventListener('DOMContentLoaded', () => {
+    const profProfile = document.getElementById('professorProfile');
+    const profDropdown = document.getElementById('professorDropdown');
+    const viewProfileBtn = document.getElementById('viewProfProfileBtn');
+    const logoutBtn = document.getElementById('profLogoutBtn');
 
-            extractClassroomId();
-            loadUserProfile();
-            loadStudents();
-            loadActivities();
-            setupEventListeners();
+    const profileModal = document.getElementById("profileModal");
+    const closeProfileBtn = document.getElementById("closeProfileModal");
+    const cancelProfileBtn = document.getElementById("cancelProfileModal");
+
+    // ✅ DROPDOWN TOGGLE
+    if (profProfile && profDropdown) {
+        profProfile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profDropdown.classList.toggle('active');
         });
+
+        window.addEventListener('click', () => {
+            profDropdown.classList.remove('active');
+        });
+    }
+
+    // ✅ OPEN PROFILE MODAL
+    if (viewProfileBtn) {
+        viewProfileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profDropdown.classList.remove('active');
+            profileModal.style.display = "flex";
+        });
+    }
+
+    // ✅ CLOSE MODAL
+    if (closeProfileBtn) {
+        closeProfileBtn.onclick = () => {
+            profileModal.style.display = "none";
+        };
+    }
+
+    if (cancelProfileBtn) {
+        cancelProfileBtn.onclick = () => {
+            profileModal.style.display = "none";
+        };
+    }
+
+    // ✅ CLICK OUTSIDE CLOSE
+    window.addEventListener("click", (e) => {
+        if (e.target === profileModal) {
+            profileModal.style.display = "none";
+        }
+    });
+
+    // ✅ LOGOUT
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            window.location.href = 'login.html';
+        });
+    }
+
+    setupEventListeners();
+});
 
         // ═══════════════════════════════════════════════════════════════════
         // UTILITY FUNCTIONS
         // ═══════════════════════════════════════════════════════════════════
+        // ─── PROFESSOR DROPDOWN TOGGLE ───
+       
 
         function extractClassroomId() {
             const params = new URLSearchParams(window.location.search);
             classroomId = params.get('id');
             if (!classroomId) {
                 showNotification('Classroom ID not found in URL', 'error');
-                setTimeout(() => window.location.href = '/dashboard/', 2000);
+                setTimeout(() => window.location.href = 'dashboard.html', 2000);
             }
         }
 
@@ -57,40 +107,6 @@ const apiRequest = window.ApiClient?.request;
             const div = document.createElement('div');
             div.textContent = text ?? '';
             return div.innerHTML;
-        }
-
-        function getActivityId(activity) {
-            return String(activity?.activityId || activity?.id || activity?.activityID || '').trim();
-        }
-
-        function getActivityTitle(activity) {
-            return String(activity?.title || activity?.name || 'Untitled activity').trim() || 'Untitled activity';
-        }
-
-        function normalizeUnsubmittedStudent(entry) {
-            const firstName = String(entry?.firstName || entry?.studentFirstName || '').trim();
-            const lastName = String(entry?.lastName || entry?.studentLastName || '').trim();
-            const fullName = String(entry?.fullName || entry?.studentName || '').trim();
-            const username = String(entry?.username || entry?.githubUsername || '').trim();
-            const profileUrl = String(entry?.profileUrl || entry?.avatarUrl || '').trim();
-            const userId = String(entry?.studentId || entry?.userId || entry?.id || '').trim();
-
-            const displayName = fullName || `${firstName} ${lastName}`.trim() || username || 'Student';
-            const initials = displayName
-                .split(' ')
-                .filter(Boolean)
-                .map(part => part.charAt(0))
-                .join('')
-                .slice(0, 2)
-                .toUpperCase() || 'ST';
-
-            return {
-                userId,
-                displayName,
-                username,
-                profileUrl,
-                initials
-            };
         }
 
         function timeAgo(dateString) {
@@ -166,19 +182,6 @@ const apiRequest = window.ApiClient?.request;
 
             document.getElementById('saveEditActivityBtn').addEventListener('click', handleEditActivity);
 
-            const closeUnsubmittedModalBtn = document.getElementById('closeUnsubmittedModalBtn');
-            const closeUnsubmittedBtn = document.getElementById('closeUnsubmittedBtn');
-            if (closeUnsubmittedModalBtn) {
-                closeUnsubmittedModalBtn.addEventListener('click', () => {
-                    closeModal(document.getElementById('unsubmittedModal'));
-                });
-            }
-            if (closeUnsubmittedBtn) {
-                closeUnsubmittedBtn.addEventListener('click', () => {
-                    closeModal(document.getElementById('unsubmittedModal'));
-                });
-            }
-
             document.getElementById('activityFilter').addEventListener('change', (e) => {
                 filterActivityLog(e.target.value);
             });
@@ -186,21 +189,17 @@ const apiRequest = window.ApiClient?.request;
             document.getElementById('backToDashboardBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 // Navigate back to main dashboard
-                window.location.href = '/dashboard/';
+                window.location.href = 'dashboard.html';
             });
 
             window.addEventListener('click', (e) => {
                 const createModal = document.getElementById('createActivityModal');
                 const editModal = document.getElementById('editActivityModal');
-                const unsubmittedModal = document.getElementById('unsubmittedModal');
                 if (e.target === createModal) {
                     closeModal(createModal);
                 }
                 if (e.target === editModal) {
                     closeModal(editModal);
-                }
-                if (e.target === unsubmittedModal) {
-                    closeModal(unsubmittedModal);
                 }
             });
         }
@@ -312,7 +311,7 @@ const apiRequest = window.ApiClient?.request;
                     : 'No recent activity';
 
                 const studentId = student.studentUserId || '';
-                const analyticsUrl = `/studentclass/?classroomId=${encodeURIComponent(classroomId)}&studentId=${encodeURIComponent(studentId)}`;
+                const analyticsUrl = `studentclass.html?classroomId=${encodeURIComponent(classroomId)}&studentId=${encodeURIComponent(studentId)}`;
 
                 return `
                     <a class="student-card-link" href="${analyticsUrl}">
@@ -408,12 +407,11 @@ const apiRequest = window.ApiClient?.request;
             if (!classroomId) return;
 
             try {
-                const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/owner`, {
+                const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities`, {
                     method: 'GET'
                 });
 
-                const payload = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
-                activities = payload;
+                activities = Array.isArray(result.data) ? result.data : [];
                 renderActivities();
 
             } catch (error) {
@@ -444,28 +442,24 @@ const apiRequest = window.ApiClient?.request;
                 const hasDueDate = !!activity.dueDate;
                 const daysLeft = hasDueDate ? getDaysLeft(activity.dueDate) : null;
                 const formattedDueDate = hasDueDate ? formatDate(activity.dueDate) : null;
-                const activityId = getActivityId(activity);
                 
                 return `
                     <div class="assignment-card">
                         <div class="assignment-header">
                             <div class="assignment-title">
                                 <i class="fas fa-tasks"></i>
-                                ${escapeHtml(getActivityTitle(activity))}
+                                ${activity.title}
                             </div>
                             <div class="assignment-actions">
-                                <button class="action-btn" onclick="showUnsubmittedStudents('${escapeHtml(activityId)}')" title="Needs Repository Submission">
-                                    <i class="fas fa-user-clock"></i>
-                                </button>
-                                <button class="action-btn" onclick="editActivity('${escapeHtml(activityId)}')">
+                                <button class="action-btn" onclick="editActivity('${activity.activityId}')">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="action-btn" onclick="deleteActivity('${escapeHtml(activityId)}')">
+                                <button class="action-btn" onclick="deleteActivity('${activity.activityId}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
-                        ${activity.description ? `<div class="assignment-desc">${escapeHtml(activity.description)}</div>` : ''}
+                        ${activity.description ? `<div class="assignment-desc">${activity.description}</div>` : ''}
                         <div class="assignment-meta">
                             ${hasDueDate ? `
                             <span>
@@ -483,117 +477,12 @@ const apiRequest = window.ApiClient?.request;
                             ${activity.maxScore != null ? `
                             <span class="points">
                                 <i class="fas fa-star"></i>
-                                ${escapeHtml(activity.maxScore)} points
+                                ${activity.maxScore} points
                             </span>` : ''}
                         </div>
                     </div>
                 `;
             }).join('');
-        }
-
-        function renderUnsubmittedList(items) {
-            const unsubmittedList = document.getElementById('unsubmittedList');
-            if (!unsubmittedList) return;
-
-            if (!Array.isArray(items) || items.length === 0) {
-                unsubmittedList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-check-circle"></i>
-                        <p>No students currently need repository submission.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            unsubmittedList.innerHTML = items.map(student => {
-                const name = escapeHtml(student.displayName);
-                const username = student.username ? `<div class="unsubmitted-username">@${escapeHtml(student.username)}</div>` : '';
-
-                return `
-                    <div class="unsubmitted-item" data-student-id="${escapeHtml(student.userId)}">
-                        <div class="unsubmitted-avatar">${student.profileUrl ? `<img src="${escapeHtml(student.profileUrl)}" alt="${name}">` : escapeHtml(student.initials)}</div>
-                        <div class="unsubmitted-info">
-                            <div class="unsubmitted-name">${name}</div>
-                            ${username}
-                        </div>
-                        <div class="unsubmitted-state">
-                            <i class="fas fa-hourglass-half"></i>
-                            Needs repository submission
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function showUnsubmittedStudents(activityId) {
-            if (!classroomId || !activityId) {
-                showNotification('Classroom or activity ID is missing', 'error');
-                return;
-            }
-
-            currentUnsubmittedActivityId = activityId;
-            const activity = activities.find(item => getActivityId(item) === activityId);
-            const modal = document.getElementById('unsubmittedModal');
-            const title = document.getElementById('unsubmittedModalTitle');
-            const subtitle = document.getElementById('unsubmittedSubtitle');
-            const list = document.getElementById('unsubmittedList');
-
-            if (!modal || !title || !subtitle || !list) return;
-
-            title.textContent = getActivityTitle(activity);
-            subtitle.textContent = 'Loading students who need repository submission...';
-            list.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Checking who needs repository submission...</p>
-                </div>
-            `;
-            openModal(modal);
-
-            try {
-                const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/unsubmitted`, {
-                    method: 'GET'
-                });
-
-                if (currentUnsubmittedActivityId !== activityId) return;
-
-                const rawItems = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
-                const normalized = rawItems
-                    .filter(item => {
-                        const hasStudentShape = item && (
-                            item.studentId || item.userId || item.firstName || item.lastName || item.fullName || item.username
-                        );
-                        return !!hasStudentShape;
-                    })
-                    .map(normalizeUnsubmittedStudent);
-
-                if (normalized.length === 0 && rawItems.length > 0) {
-                    subtitle.textContent = 'This backend currently returns activity-level unsubmitted data, not per-student entries.';
-                    list.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-circle-info"></i>
-                            <p>Per-student repository submission details are unavailable from this endpoint.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                subtitle.textContent = normalized.length > 0
-                    ? `${normalized.length} student${normalized.length === 1 ? '' : 's'} need repository submission`
-                    : 'No students need repository submission';
-                renderUnsubmittedList(normalized);
-            } catch (error) {
-                if (currentUnsubmittedActivityId !== activityId) return;
-
-                console.error('Error loading unsubmitted repositories:', error);
-                subtitle.textContent = 'Could not load students who need repository submission';
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        <p>${escapeHtml(error.message || 'Failed to load students who need repository submission')}</p>
-                    </div>
-                `;
-            }
         }
 
         function editActivity(activityId) {
@@ -690,13 +579,7 @@ const apiRequest = window.ApiClient?.request;
         }
 
         async function deleteActivity(activityId) {
-            const confirmed = await window.AppDialog.confirm('Are you sure you want to delete this activity?', {
-                title: 'Delete Activity',
-                confirmText: 'Delete',
-                danger: true
-            });
-
-            if (!confirmed) return;
+            if (!confirm('Are you sure you want to delete this activity?')) return;
 
             try {
                 await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(activityId)}`, {
@@ -716,6 +599,4 @@ const apiRequest = window.ApiClient?.request;
             // Implement filtering logic if needed
         }
 
-        window.showUnsubmittedStudents = showUnsubmittedStudents;
-        window.editActivity = editActivity;
-        window.deleteActivity = deleteActivity;
+            

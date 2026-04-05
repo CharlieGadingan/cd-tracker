@@ -211,15 +211,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 16px 20px;
+
+  margin: 0 auto;   /* 👈 THIS centers the button */
+
+  gap: 6px;
+  width: 80%;
+  padding: 8px 12px;
   background: #f0f6fc;
   color: #0d1117;
   border: none;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
 }

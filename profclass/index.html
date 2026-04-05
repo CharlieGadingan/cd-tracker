@@ -13,10 +13,11 @@
     <!-- Header -->
     <header class="header">
         <div class="header-left">
-            <a href="/dashboard/" class="back-btn" id="backToDashboardBtn" title="Back to Dashboard">
-                <i class="fas fa-arrow-left"></i>
-            </a>
+                <!-- <a href="dashboard.html" class="back-btn" id="backToDashboardBtn" title="Back to Dashboard">
+                    <i class="fas fa-arrow-left"></i>
+                </a> -->
             <span class="header-divider"></span>
+
             <div class="logo">
                 <i class="fa-brands fa-github"></i>
                 <span class="logo-text">CodeTracker</span>
@@ -25,16 +26,40 @@
             <span class="header-label">Classroom</span>
         </div>
         <div class="header-right">
-            <div class="professor-avatar" id="professorAvatar"></div>
-            <span class="professor-name" id="professorName">Loading...</span>
+
+    <div class="professor-profile" id="professorProfile">
+        <span class="professor-name" id="professorName">Loading...</span>
+        <div class="professor-avatar" id="professorAvatar"></div>
+
+        <!-- Dropdown -->
+        <div class="professor-dropdown" id="professorDropdown">
+            <div class="dropdown-info">
+                <strong id="profFullName">Prof. John Doe</strong>
+                <small id="profUsername">@jdoe</small>
+            </div>
+            <button class="dropdown-btn" id="viewProfProfileBtn">
+                <i class="fas fa-user-pen"></i> My Profile
+            </button>
+            <button class="dropdown-btn" id="profLogoutBtn">
+                <i class="fas fa-right-from-bracket"></i> Logout
+            </button>
+
         </div>
+    </div>
+</div>
     </header>
+    <!-- Back Navigation -->
 
     <!-- Main Layout -->
     <div class="main-layout">
         <!-- Left Column -->
         <div class="left-column">
-            <!-- Active Assignments -->
+            <div class="back-to-dashboard">
+    <a href="dashboard.html" id="backDashboardBtn">
+        <i class="fas fa-arrow-left"></i>
+        Back to Dashboard
+    </a>
+</div>
             <div class="section">
                 <div class="section-header">
                     <h2 class="section-title">
@@ -95,32 +120,6 @@
                         <p>No activity yet</p>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Needs Repository Submission Modal -->
-    <div class="modal" id="unsubmittedModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>
-                    <i class="fas fa-user-clock"></i>
-                    Needs Repository Submission
-                </h2>
-                <button class="close-btn" id="closeUnsubmittedModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="unsubmitted-modal-title" id="unsubmittedModalTitle">Activity</div>
-                <div class="unsubmitted-subtitle" id="unsubmittedSubtitle">Loading...</div>
-                <div class="unsubmitted-list" id="unsubmittedList">
-                    <div class="empty-state">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading students who need repository submission...</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="closeUnsubmittedBtn">Close</button>
             </div>
         </div>
     </div>
@@ -265,7 +264,81 @@
         </div>
     </div>
 
-    <script src="/frontend/script/api-client.js"></script>
-    <script src="/frontend/script/profclass.js"></script>
+    <div class="modal" id="profileModal">
+        <div class="modal-content profile-modal-content">
+            <div class="profile-modal-header">
+                <h2><i class="fas fa-id-card"></i> My Profile</h2>
+                <button class="profile-modal-close" id="closeProfileModal">&times;</button>
+            </div>
+
+            <div class="profile-modal-body">
+                <!-- Left: Profile Picture -->
+                <div class="profile-picture-section">
+                    <div class="profile-picture-wrapper">
+                        <div class="profile-picture-large" id="profilePictureLarge">
+                            <span id="profileInitialsLarge"></span>
+                        </div>
+                        <div class="profile-picture-overlay" id="profilePictureOverlay">
+                            <i class="fas fa-camera"></i>
+                            <span>Change</span>
+                        </div>
+                    </div>
+                    <input type="file" id="profilePictureInput" accept="image/*" style="display:none;">
+                    <div class="profile-picture-actions">
+                        <button class="btn-profile-action btn-upload" id="uploadPictureBtn">
+                            <i class="fas fa-upload"></i> Upload Photo
+                        </button>
+                        <button class="btn-profile-action btn-remove" id="removePictureBtn">
+                            <i class="fas fa-trash-alt"></i> Remove
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Editable Personal Information -->
+                <div class="profile-info-section">
+                    <div class="profile-form">
+                        <div class="profile-form-row">
+                            <div class="profile-form-group">
+                                <label for="editFirstNameInput"><i class="fas fa-user"></i> First Name</label>
+                                <input type="text" id="editFirstNameInput" placeholder="First name" required>
+                            </div>
+                            <div class="profile-form-group">
+                                <label for="editLastNameInput"><i class="fas fa-user"></i> Last Name</label>
+                                <input type="text" id="editLastNameInput" placeholder="Last name" required>
+                            </div>
+                        </div>
+                        <div class="profile-form-row">
+                            <div class="profile-form-group">
+                                <label for="editPhoneInput"><i class="fas fa-phone"></i> Phone</label>
+                                <input type="text" id="editPhoneInput" placeholder="+639171234567" required>
+                            </div>
+                            <div class="profile-form-group">
+                                <label for="editGenderInput"><i class="fas fa-venus-mars"></i> Gender</label>
+                                <select id="editGenderInput" required>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="profile-form-group">
+                            <label for="editBirthdayInput"><i class="fas fa-cake-candles"></i> Birthday</label>
+                            <input type="date" id="editBirthdayInput" required>
+                        </div>
+                        <div class="profile-form-group">
+                            <label for="editBioInput"><i class="fas fa-quote-left"></i> Bio</label>
+                            <textarea id="editBioInput" placeholder="Tell something about yourself..."></textarea>
+                        </div>
+                        <div class="profile-form-actions">
+                            <button class="btn cancel" id="cancelProfileModal">Cancel</button>
+                            <button class="btn primary" id="saveProfileBtn"><i class="fas fa-check"></i> Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </body>
+    <script src="/frontend/script/profclass.js"></script>
 </html>

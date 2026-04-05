@@ -363,7 +363,159 @@
             </div>
         </div>
     </div>
+   <div class="modal" id="tutorialModal">
+    <div class="modal-content profile-modal-content">
 
+        <div class="profile-modal-header">
+            <h2><i class="fas fa-book"></i>Guides/Tutorials</h2>
+            <button class="profile-modal-close" id="closeTutorialModal">&times;</button>
+        </div>
+        
+        <div class="tutorial-container">
+            <div class="tutorial-card" id="gitTutorialCard">
+    <img src="/frontend/asset/gitbash.png">
+    <h4>Git Bash Tutorial</h4>
+    <p>Click to learn step-by-step</p>
+</div>
+
+<div class="tutorial-card" id="createClassTutorialCard">
+    <i class="fas fa-plus-circle tutorial-icon"></i>
+    <h4>Create Classroom</h4>
+    <p>Learn how to create a class</p>
+</div>
+
+<div class="tutorial-card" id="joinClassTutorialCard">
+    <i class="fas fa-sign-in-alt tutorial-icon"></i>
+    <h4>Join Classroom</h4>
+    <p>Learn how to join a class</p>
+</div>
+        </div>     
+    </div>
+    </div>
+    
+<div class="modal" id="helpModal">
+    <div class="modal-content">
+        <div class="profile-modal-header">
+            <div class="title-container">
+        <h2><i class="fab fa-github"></i> Git Tutorial</h2>
+        <p class="modal-subtitle">Follow these steps to use Git version control to submit your activity.</p>
+    </div>
+            <button class="profile-modal-close" id="closeHelpModal">&times;</button>
+        </div>
+        
+        <div class="tutorial-step">
+            <p><b>Step 1:</b> Open the folder where your project is located.</p>
+            <img src="/frontend/asset/step1.png" alt="Open Folder" class="tutorial-step-img">
+        </div>
+
+        <!-- Step 1: Right click -->
+        <div class="tutorial-step">
+            <p><b>Step 2:</b> Right-click inside the folder.</p>
+            <img src="/frontend/asset/step8.png" alt="Right Click" class="tutorial-step-img">
+        </div>
+
+        <!-- Step 2: Show more options -->
+        <div class="tutorial-step">
+            <p><b>Step 3:</b> Click <em>Show more options</em> (if using Windows 11).</p>
+            <img src="/frontend/asset/step2.png" alt="Show More Options" class="tutorial-step-img">
+        </div>
+
+        <!-- Step 3: Open Git Bash -->
+        <div class="tutorial-step">
+            <p><b>Step 4:</b> Click <em>Git Bash Here</em> to open the terminal.</p>
+            <img src="/frontend/asset/step3.png" alt="Git Bash Here" class="tutorial-step-img">
+        </div>
+
+        <!-- Step 4: git add -->
+        <div class="tutorial-step">
+    <p><b>Step 5:</b> Type <code>git add .</code></p>
+    <small>This adds all your changed files to the staging area (preparing them to be saved).</small>
+    <img src="/frontend/asset/step4.png" alt="git add" class="tutorial-step-img">
+</div>
+
+<div class="tutorial-step">
+    <p><b>Step 6:</b> Type <code>git commit -m "your message"</code></p>
+    <small>This saves your changes with a message describing what you did.</small>
+    <img src="/frontend/asset/step5.png" alt="git commit" class="tutorial-step-img">
+</div>
+
+<div class="tutorial-step">
+    <p><b>Step 7:</b> Type <code>git pull</code></p>
+    <small>This gets the latest updates from the repository (important before pushing).</small>
+    <img src="/frontend/asset/step6.png" alt="git pull" class="tutorial-step-img">
+</div>
+
+<div class="tutorial-step">
+    <p><b>Step 8:</b> Type <code>git push</code></p>
+    <small>This uploads your changes to GitHub.</small>
+    <img src="/frontend/asset/step7.png" alt="git push" class="tutorial-step-img">
+</div>
+    </div>
+</div>
+<div class="modal" id="createClassHelpModal">
+    <div class="modal-content">
+        <div class="profile-modal-header">              
+            <div class="title-container">       
+            <h2><i class="fas fa-plus-circle tutorial-icons"></i>Create Classroom Guide</h2>
+            <p class="modal-subtitle">Follow these steps to use Git version control to submit your activity.</p>
+            </div>
+            
+            <button class="profile-modal-close" id="closeCreateClassHelp">&times;</button>
+        </div>
+
+        <div class="tutorial-step">
+            <p><b>Step 1:</b> Click "New Class".</p>
+            <img src="/frontend/asset/cc4.png" alt="git pull" class="tutorial-step-img">
+        </div>
+        <div class="tutorial-step">
+            <p><b>Step 2:</b> Fill up the class details.</p>
+            <img src="/frontend/asset/cc1.png" alt="git pull" class="tutorial-step-img">
+        </div>
+        <div class="tutorial-step">
+            <p><b>Step 3:</b> Click the switch below the "Require Passcode" (Only if creating private room).</p>
+            <img src="/frontend/asset/cc2.png" alt="git pull" class="tutorial-step-img">
+        </div>
+        <div class="tutorial-step">
+            <p><b>Step 4:</b> Click the switch below the "Require Approval" (Only if the creator wants to approve before letting some user get in).</p>
+            <img src="/frontend/asset/cc3.png" alt="git pull" class="tutorial-step-img">
+        </div>
+        <div class="tutorial-step">
+            <p><b>Step 5:</b> Click the "Create Class" to fully build to classroom.</p>
+        </div>
+        
+    </div>
+</div>
+
+<!-- ✅ Join Class Tutorial -->
+<div class="modal" id="joinClassHelpModal">
+    <div class="modal-content">
+        <div class="profile-modal-header">
+            <div class="title-container">
+            <h2><i class="fas fa-sign-in-alt tutorial-icons"></i>Join Classroom Guide</h2>
+            <p class="modal-subtitle">Follow these steps to use Git version control to submit your activity.</p>
+            </div>
+            <button class="profile-modal-close" id="closeJoinClassHelp">&times;</button>
+        </div>
+
+        <div class="tutorial-step">
+            <p><b>Step 1:</b> Click "Join".</p>
+            <img src="/frontend/asset/js1.png" alt="git pull" class="tutorial-step-img">
+        </div>
+        <div class="tutorial-step">
+            <p><b>Step 2:</b> Enter class code (Only if your joining private room).</p>
+            <img src="/frontend/asset/js2.png" alt="git pull" class="tutorial-step-img">
+        </div>
+        <div class="tutorial-step">
+            <p><b>Step 3:</b> Click "Join Class".</p>
+        </div>
+    </div>
+</div>
+    <button class="floating-dropdown-btn" id="viewTutorialsBtn"> <i class="fas fa-question"></i></button> 
+    <!-- Image Preview Modal -->
+<div class="image-preview" id="imagePreview">
+    <span class="close-preview" id="closePreview">&times;</span>
+    <img id="previewImg">
+</div> 
     <script src="/frontend/script/api-client.js"></script>
     <script src="/frontend/script/dashboard.js"></script>
 </body>
