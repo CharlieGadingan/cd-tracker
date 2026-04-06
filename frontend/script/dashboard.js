@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════════
-// DASHBOARD.JS — Fixed with Professor Dashboard Navigation
+// DASHBOARD.JS — Fixed with Proper Refresh Token Handling
 // ══════════════════════════════════════════════════════════════════════════════
 
 const apiRequest = window.ApiClient?.request;
@@ -58,13 +58,30 @@ let currentUser = null;
 // INITIALIZATION
 // ══════════════════════════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (!apiRequest || !userApi) {
         showNotification('API client is not initialized.', 'error');
         return;
     }
 
-    loadUserProfile();
+    if (window.ApiClient?.checkSessionState) {
+        const sessionState = await window.ApiClient.checkSessionState();
+        if (!sessionState.authenticated) {
+            window.location.replace('/');
+            return;
+        }
+
+        if (!sessionState.fullyInitialized) {
+            window.location.replace('/onboarding/');
+            return;
+        }
+    }
+
+    const profile = await loadUserProfile();
+    if (profile && !isProfileInitialized(profile)) {
+        showNotification('Your profile looks incomplete. You can update it from your profile modal.', 'warning');
+    }
+
     loadClasses();
     setupEventListeners();
 
@@ -188,7 +205,6 @@ function resolveClassroomId(classroom) {
         return value;
     };
 
-    // Match backend contract from GetClassroomsProfessorData exactly.
     const topCandidates = [
         classroom.classroomId,
         classroom.classroomID,
@@ -203,13 +219,11 @@ function resolveClassroomId(classroom) {
         if (value) return value;
     }
 
-    // Some APIs wrap classroom payloads inside `classroom`.
     if (classroom.classroom && typeof classroom.classroom === 'object') {
         const nestedId = resolveClassroomId(classroom.classroom);
         if (nestedId) return nestedId;
     }
 
-    // Fallback fields in case backend sends canonical ID as generic `id`.
     const fallbackCandidates = [classroom.id, classroom._id, classroom.uuid];
     for (const candidate of fallbackCandidates) {
         const value = normalize(candidate, true);
@@ -538,29 +552,39 @@ function setupEventListeners() {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
+
 // PROFILE MANAGEMENT
 // ══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Loads the current user's profile and updates the UI.
+ */
 async function loadUserProfile() {
     try {
-        if (!apiRequest || !userApi) {
-            throw new Error('API client is not initialized.');
+        if (!userApi) {
+            showNotification('API client is not initialized.', 'error');
+            return null;
         }
-
-        const [profileData, authData] = await Promise.all([
-            userApi.getProfile(),
-            apiRequest('/auth/check', { method: 'GET' }, { redirectOnUnauthorized: false }).catch(() => ({}))
-        ]);
-
-        const data = { ...(profileData || {}), email: authData?.email || '' };
-
+        const data = await userApi.getProfile();
         currentUser = data;
         applyProfileToUI(data);
-
+        return data;
     } catch (error) {
-        console.error('Error loading profile:', error);
-        showNotification('Failed to load profile', 'error');
+        console.error('Failed to load user profile:', error);
+        showNotification('Failed to load user profile', 'error');
+        return null;
     }
+}
+
+function isProfileInitialized(profile) {
+    if (!profile || typeof profile !== 'object') return false;
+
+    const hasName = Boolean(String(profile.firstName || '').trim()) || Boolean(String(profile.lastName || '').trim());
+    const hasPhone = Boolean(String(unwrap(profile.phoneNumber) || '').trim());
+    const hasGender = Boolean(String(unwrap(profile.gender) || '').trim());
+    const hasBirthday = Boolean(String(unwrap(profile.birthday) || '').trim());
+
+    return hasName || (hasPhone && hasGender && hasBirthday);
 }
 
 function applyProfileToUI(data) {
@@ -570,22 +594,16 @@ function applyProfileToUI(data) {
     const profileUrl = data.profileUrl || '';
     const email      = data.email || '';
 
-    // Welcome text
-    const welcomeUserEl = document.getElementById('welcomeUser');
-    if (welcomeUserEl) welcomeUserEl.textContent = firstName || fullName;
 
-    // Header
     const userNameEl = document.getElementById('userName');
     if (userNameEl) userNameEl.textContent = fullName;
     
-    // Dropdown
     const fullNameEl = document.getElementById('fullName');
     if (fullNameEl) fullNameEl.textContent = fullName;
     
     const usernameEl = document.getElementById('username');
     if (usernameEl) usernameEl.textContent = email;
 
-    // Avatar
     const iconEl = document.getElementById('userIcon');
     if (iconEl) {
         if (profileUrl) {
@@ -613,16 +631,27 @@ async function openProfileModal() {
 
         populateProfilePicture(data);
 
-        document.getElementById('editFirstNameInput').value = data.firstName || '';
-        document.getElementById('editLastNameInput').value  = data.lastName || '';
-        document.getElementById('editPhoneInput').value     = data.phoneNumber || '';
-        document.getElementById('editGenderInput').value    = data.gender || '';
-        document.getElementById('editBirthdayInput').value  = data.birthday || '';
-        document.getElementById('editBioInput').value       = data.bio || '';
+
+        const firstNameEl = document.getElementById('editFirstNameInput');
+        const lastNameEl  = document.getElementById('editLastNameInput');
+        const phoneEl     = document.getElementById('editPhoneInput');
+        const genderEl    = document.getElementById('editGenderInput');
+        const birthdayEl  = document.getElementById('editBirthdayInput');
+        const bioEl       = document.getElementById('editBioInput');
+
+        if (firstNameEl) firstNameEl.value = data.firstName || '';
+        if (lastNameEl)  lastNameEl.value  = data.lastName || '';
+        if (phoneEl)     phoneEl.value     = unwrap(data.phoneNumber) || '';
+        if (genderEl)    genderEl.value    = unwrap(data.gender) || '';
+        if (birthdayEl)  birthdayEl.value  = unwrap(data.birthday) || '';
+        if (bioEl)       bioEl.value       = data.bio || '';
 
     } catch (error) {
-        console.error(error);
-        showNotification('You might not be logged in', 'warning');
+        console.error('Error opening profile:', error);
+        if (!error.message.includes('403') && !error.message.includes('401')) {
+            showNotification('Failed to load profile data', 'error');
+        }
+
     }
 }
 
@@ -696,19 +725,25 @@ async function handleSaveProfile() {
     }
 }
 
-function handleLogout() {
-    if (confirm('Are you sure you want to log out?')) {
-        if (!apiRequest) {
-            window.location.href = '/';
-            return;
-        }
+async function handleLogout() {
+    const confirmed = await window.AppDialog.confirm('Are you sure you want to log out?', {
+        title: 'Log Out',
+        confirmText: 'Log Out',
+        danger: true
+    });
 
-        apiRequest('/auth/logout', { method: 'POST' }, { redirectOnUnauthorized: false }).finally(() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/';
-        });
+    if (!confirmed) return;
+
+    if (!window.ApiClient?.logout) {
+        window.location.href = '/';
+        return;
     }
+
+    window.ApiClient.logout().finally(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/';
+    });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -719,7 +754,7 @@ async function handleProfilePictureUpload() {
     const file = profilePictureInput?.files?.[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
         showNotification('File is too large. Maximum size is 5MB.', 'error');
         profilePictureInput.value = '';
@@ -747,7 +782,6 @@ async function handleProfilePictureUpload() {
 
         showNotification('Profile picture updated!', 'success');
 
-        // Refresh both the modal and the header avatar
         await loadUserProfile();
         if (currentUser) populateProfilePicture(currentUser);
 
@@ -764,7 +798,13 @@ async function handleProfilePictureUpload() {
 }
 
 async function handleRemoveProfilePicture() {
-    if (!confirm('Remove your profile picture?')) return;
+    const confirmed = await window.AppDialog.confirm('Remove your profile picture?', {
+        title: 'Remove Profile Picture',
+        confirmText: 'Remove',
+        danger: true
+    });
+
+    if (!confirmed) return;
 
     if (removePictureBtn) {
         removePictureBtn.disabled = true;
@@ -805,7 +845,6 @@ async function handleCreateClass() {
     const requireApproval = requireApprovalInput?.checked || false;
     const passcode        = passcodeToggle?.checked ? passcodeInput?.value.trim() : null;
 
-    // Validation
     if (!name) {
         return showNotification('Please enter a class name', 'error');
     }
@@ -1064,13 +1103,11 @@ function attachClassCardHandlers() {
     });
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// FIXED NAVIGATION TO PROFESSOR DASHBOARD
-// ══════════════════════════════════════════════════════════════════════════════
-
 function viewClassroom(classId, role) {
     if (classId && classId !== 'unknown') {
-        const page = role === 'student' ? '/studentclass/' : '/profclass/';
+        const page = role === 'student'
+            ? '/studentclass/'
+            : '/profclass/';
         window.location.href = `${page}?id=${encodeURIComponent(classId)}`;
     } else {
         showNotification('Invalid classroom ID', 'error');
@@ -1100,7 +1137,6 @@ async function openManageModal(classId) {
     const classNameEl = document.getElementById('manageClassName');
     if (classNameEl) classNameEl.textContent = classroom?.className || classroom?.name || 'Classroom';
 
-    // Pre-populate form
     const nameEl    = document.getElementById('manageNameInput');
     const descEl    = document.getElementById('manageDescInput');
     const maxEl     = document.getElementById('manageMaxInput');
@@ -1120,7 +1156,6 @@ async function openManageModal(classId) {
         syncCloseStatusAction(classroomStatus);
     }
 
-    // Reset stats to loading state
     ['statTotalStudents', 'statTotalActivities', 'statActiveActivities'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px;color:#484f58"></i>';
@@ -1207,7 +1242,11 @@ async function handleUpdateStatus() {
         return showNotification('Classroom is already closed.', 'info');
     }
 
-    const confirmed = window.confirm('Close this classroom? This is irreversible from the dashboard.');
+    const confirmed = await window.AppDialog.confirm('Close this classroom? This is irreversible from the dashboard.', {
+        title: 'Close Classroom',
+        confirmText: 'Close Classroom',
+        danger: true
+    });
     if (!confirmed) return;
 
     const btn = document.getElementById('updateStatusBtn');
@@ -1268,4 +1307,9 @@ async function handleDeleteClassroom() {
     }
 }
 
-// Open Tutorial Modal
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn  { from { transform:translateX(400px);opacity:0 } to { transform:translateX(0);opacity:1 } }
+    @keyframes slideOut { from { transform:translateX(0);opacity:1 } to { transform:translateX(400px);opacity:0 } }
+`;
+document.head.appendChild(style);
