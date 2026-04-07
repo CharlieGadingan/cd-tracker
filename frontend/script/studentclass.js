@@ -88,9 +88,53 @@
     return !submission;
   }
 
+  
   function getActivitySubmissionState(activityId) {
     return isNeedsRepositorySubmission(activityId) ? 'NOT_SUBMITTED' : 'SUBMITTED';
   }
+
+  async function loadGithubRepos() {
+    const repoSelect = document.getElementById('repoSelect');
+    if (!repoSelect) return;
+
+    repoSelect.innerHTML = '<option value="">— Loading repositories... —</option>';
+    repoSelect.disabled = true;
+
+    try {
+        const response = await apiClient.request('/github/repositories', { method: 'GET' });
+const repos = Array.isArray(response) ? response
+    : Array.isArray(response?.data) ? response.data
+    : Array.isArray(response?.repositories) ? response.repositories
+    : [];
+
+        if (repos.length === 0) {
+            repoSelect.innerHTML = '<option value="">No repositories found</option>';
+            return;
+        }
+
+        repoSelect.innerHTML = '<option value="">— Select a repository —</option>' +
+            repos.map(repo => {
+    const name = repo.fullName || repo.full_name || repo.name || '';
+    const url = repo.htmlUrl || repo.html_url || repo.url || '';
+    return `<option value="${url}">${name}</option>`;
+}).join('');
+    } catch (error) {
+        console.error('Failed to load GitHub repos:', error);
+        repoSelect.innerHTML = '<option value="">Failed to load repositories</option>';
+    } finally {
+        repoSelect.disabled = false;
+    }
+}
+
+function loadClassroomInfo() {
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get('name') || '—';
+    const code = params.get('code') || '—';
+    const nameEl = document.getElementById('classroomInfoName');
+    const codeEl = document.getElementById('classroomInfoCode');
+    if (nameEl) nameEl.textContent = decodeURIComponent(name);
+    if (codeEl) codeEl.textContent = decodeURIComponent(code);
+}
 
   async function refreshNeedsRepositorySubmission() {
     if (!apiClient?.request || !classroomId || state.activities.length === 0) {
@@ -435,19 +479,20 @@
     const existingRepoGroup = document.getElementById('existingRepoGroup');
     const newRepoGroup = document.getElementById('newRepoGroup');
     const repoNameInput = document.getElementById('repositoryName');
+    const repoSelect = document.getElementById('repoSelect');
 
     if (existingRepoGroup) existingRepoGroup.style.display = isNew ? 'none' : 'block';
     if (newRepoGroup) newRepoGroup.style.display = isNew ? 'block' : 'none';
-    if (githubLinkInput) {
-      githubLinkInput.required = !isNew;
-      if (isNew) githubLinkInput.value = '';
-    }
+    if (repoSelect) repoSelect.required = !isNew;
     if (repoNameInput) {
-      repoNameInput.required = isNew;
-      if (!isNew) repoNameInput.value = '';
+        repoNameInput.required = isNew;
+        if (!isNew) repoNameInput.value = '';
     }
-  }
 
+    if (!isNew) loadGithubRepos();
+}
+
+  
   function buildLocalSubmission(payload, activity, repositoryUrl, mode) {
     const modeLabel = mode === 'new' ? 'New repository' : 'Existing repository';
 
@@ -526,13 +571,13 @@
 
     let repositoryUrl = '';
     if (submissionMode === 'existing') {
-      repositoryUrl = githubLinkInput?.value.trim() || '';
+      repositoryUrl = document.getElementById('repoSelect')?.value.trim() || '';
       if (!repositoryUrl) {
-        await window.AppDialog.alert('Please enter a GitHub repository link.', { title: 'Missing Link' });
+        await window.AppDialog.alert('Please select a repository from the list.', { title: 'No Repository Selected' });
         return;
       }
       if (!repositoryUrl.includes('github.com')) {
-        await window.AppDialog.alert('Please enter a valid GitHub repository URL.', { title: 'Invalid Link' });
+        await window.AppDialog.alert('Please select a valid GitHub repository.', { title: 'Invalid Repository' });
         return;
       }
     } else {
@@ -674,7 +719,7 @@
     renderActivities();
     loadStudentProfile();
     loadActivities();
-
+    loadClassroomInfo();
     if (!classroomId) {
       console.warn('studentclass loaded without a classroomId query parameter');
     }

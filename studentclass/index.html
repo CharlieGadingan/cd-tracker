@@ -1,88 +1,106 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeTracker - GitHub Project Tracking System</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link rel="icon" type="image/png" href="/frontend/asset/git.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="/frontend/asset/git.png">
     <link rel="stylesheet" href="/frontend/css/studentclass.css">
   </head>
   <body>
-    <div class="container">
-      <!-- Header -->
-      <header class="header">
-        <div class="logo-section">
-          <div class="logo-container">
-            <div class="logo-icon">
-              <img src="/frontend/asset/git.png" alt="Git Logo" class="git-logo" />
+
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fa-brands fa-github"></i>
+                <span class="logo-text">CodeTracker</span>
             </div>
-            <div class="logo-text">
-              <div class="brand-name">CodeTracker</div>
-              <div class="tagline">GitHub Project Tracking System</div>
-            </div>
-          </div>
+            <span class="header-divider"></span>
+            <span class="header-label" id="welcomeMsg">Classroom</span>
         </div>
-        <div class="user-info">
-          <div class="user-avatar" id="studentAvatar"></div>
-          <div class="user-details">
-            <h3 id="studentName">Loading...</h3>
-            <p>Student</p>
-          </div>
+
+        <div class="header-right">
+            
+
+            <div class="profile">
+                     <span class="student-name-label" id="studentName">Loading...</span>
+                <div class="user-avatar" id="studentAvatar"></div>
+
+            </div>
         </div>
-      </header>
+    </header>
 
-      <!-- Back to Dashboard Button -->
-      <a href="/dashboard/" class="back-to-dashboard" id="backToDashboardBtn">
-        <i class="fas fa-arrow-left"></i>
-        Back to Dashboard
-      </a>
-
-      <!-- Today's Date Badge -->
-      <div class="date-badge">
-        <i class="fas fa-calendar-day"></i>
-        Today's Date: <strong>March 5, 2026</strong>
-      </div>
-
-      <!-- Main Dashboard Grid -->
-      <div class="dashboard-grid">
-        <div class="assignments-column">
-          <div class="section-header assignments-header">
-            <div>
-              <h3 class="section-title">
-                <i class="fas fa-tasks"></i>
-                Classroom Assignments
-              </h3>
-              <p class="section-subtitle">Assignments that need your attention, including repository submission status.</p>
-            </div>
-            <div class="assignment-filters">
-              <select id="activityStatusFilter" aria-label="Filter activities by status">
-                <option value="ALL">All assignments</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="CLOSED">Closed</option>
-                <option value="NEEDS_SUBMISSION">Needs repository submission</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="assignment-summary-row">
+<div class="main-layout">
+        <!-- Left Column -->
+        <div class="left-column">
+            <div class="top-bar-row">
+    <div class="back-to-dashboard">
+        <a href="../dashboard/" id="backDashboardBtn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+    </div>
+    <div class="classroom-info-card" id="classroomInfoCard">
+        <div class="classroom-info-name" id="classroomInfoName">—</div>
+        <div class="classroom-info-code">
+            <i class="fas fa-key"></i>
+            <span>Code:</span>
+            <strong id="classroomInfoCode">—</strong>
+        </div>
+    </div>
+</div>
+            <div class="section">
+    <div class="section-header">
+        <div class="assignment-summary-row">
             <div class="summary-chip">
-              <i class="fas fa-list-check"></i>
-              Showing: <strong id="assignmentCount">0</strong>
+                <i class="fas fa-list-check"></i>
+                Showing: <strong id="assignmentCount">0</strong>
             </div>
             <div class="summary-chip pending">
-              <i class="fas fa-code-branch"></i>
-              Needs repository submission: <strong id="pendingCount">0</strong>
+                <i class="fas fa-code-branch"></i>
+                Needs repository submission: <strong id="pendingCount">0</strong>
             </div>
-          </div>
-
-          <div id="assignmentsList"></div>
         </div>
-      </div>
     </div>
+    <div id="assignmentsList"></div>
+</div>
+              
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-column">
+            <!-- Students Section -->
+            <div class="students-section">
+                <div class="section-header assignments-header">
+    <h3 class="section-title">
+        <i class="fas fa-tasks"></i>
+        Classroom Assignments
+    </h3>
+    <p class="section-subtitle">Assignments that need your attention, including repository submission status.</p>
+    <div class="assignment-filters">
+        <select id="activityStatusFilter" aria-label="Filter activities by status">
+            <option value="ALL">All assignments</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="CLOSED">Closed</option>
+            <option value="NEEDS_SUBMISSION">Needs repository submission</option>
+        </select>
+    </div>
+</div>
+            </div>
+            
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+    
 
     <!-- Submission Modal -->
     <div class="modal" id="submissionModal">
@@ -115,22 +133,14 @@
             <div class="form-group" id="repoInputGroup">
               <!-- For existing repos -->
               <div id="existingRepoGroup" class="repo-input-variant">
-                <label for="githubLink">
-                  <i class="fab fa-github"></i>
-                  GitHub Repository Link
-                </label>
-                <div class="github-input-group">
-                  <input
-                    type="url"
-                    id="githubLink"
-                    placeholder="https://github.com/username/repository"
-                    required
-                  />
-                  <button type="button" id="pasteGithubBtn" title="Paste from clipboard">
-                    <i class="fas fa-paste"></i>
-                  </button>
-                </div>
-              </div>
+  <label for="repoSelect">
+    <i class="fab fa-github"></i>
+    Select Repository
+  </label>
+  <select id="repoSelect">
+    <option value="">— Loading your repositories... —</option>
+  </select>
+</div>
               <!-- For new repos -->
               <div id="newRepoGroup" class="repo-input-variant" style="display: none;">
                 <label for="repositoryName">

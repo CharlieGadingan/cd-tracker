@@ -34,31 +34,17 @@
         <div class="professor-avatar" id="professorAvatar"></div>
 
         <!-- Dropdown -->
-        <div class="professor-dropdown" id="professorDropdown">
-            <div class="dropdown-info">
-                <strong id="profFullName">Prof. John Doe</strong>
-                <small id="profUsername">@jdoe</small>
-            </div>
-            <button class="dropdown-btn" id="viewProfProfileBtn">
-                <i class="fas fa-user-pen"></i> My Profile
-            </button>
-            <button class="dropdown-btn" id="profLogoutBtn">
-                <i class="fas fa-right-from-bracket"></i> Logout
-            </button>
-
-        </div>
+        
     </div>
 </div>
     </header>
-    <!-- Back Navigation -->
-
-    <!-- Main Layout -->
+ 
     <div class="main-layout">
         <!-- Left Column -->
         <div class="left-column">
             <div class="back-to-dashboard">
 
-    <a href="dashboard.html" id="backDashboardBtn">
+    <a href="../dashboard/" id="backDashboardBtn">
         <i class="fas fa-arrow-left"></i>
         Back to Dashboard
     </a>
@@ -267,85 +253,11 @@
         </div>
     </div>
 
-    <div class="modal" id="profileModal">
-        <div class="modal-content profile-modal-content">
-            <div class="profile-modal-header">
-                <h2><i class="fas fa-id-card"></i> My Profile</h2>
-                <button class="profile-modal-close" id="closeProfileModal">&times;</button>
-            </div>
-
-            <div class="profile-modal-body">
-                <!-- Left: Profile Picture -->
-                <div class="profile-picture-section">
-                    <div class="profile-picture-wrapper">
-                        <div class="profile-picture-large" id="profilePictureLarge">
-                            <span id="profileInitialsLarge"></span>
-                        </div>
-                        <div class="profile-picture-overlay" id="profilePictureOverlay">
-                            <i class="fas fa-camera"></i>
-                            <span>Change</span>
-                        </div>
-                    </div>
-                    <input type="file" id="profilePictureInput" accept="image/*" style="display:none;">
-                    <div class="profile-picture-actions">
-                        <button class="btn-profile-action btn-upload" id="uploadPictureBtn">
-                            <i class="fas fa-upload"></i> Upload Photo
-                        </button>
-                        <button class="btn-profile-action btn-remove" id="removePictureBtn">
-                            <i class="fas fa-trash-alt"></i> Remove
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Right: Editable Personal Information -->
-                <div class="profile-info-section">
-                    <div class="profile-form">
-                        <div class="profile-form-row">
-                            <div class="profile-form-group">
-                                <label for="editFirstNameInput"><i class="fas fa-user"></i> First Name</label>
-                                <input type="text" id="editFirstNameInput" placeholder="First name" required>
-                            </div>
-                            <div class="profile-form-group">
-                                <label for="editLastNameInput"><i class="fas fa-user"></i> Last Name</label>
-                                <input type="text" id="editLastNameInput" placeholder="Last name" required>
-                            </div>
-                        </div>
-                        <div class="profile-form-row">
-                            <div class="profile-form-group">
-                                <label for="editPhoneInput"><i class="fas fa-phone"></i> Phone</label>
-                                <input type="text" id="editPhoneInput" placeholder="+639171234567" required>
-                            </div>
-                            <div class="profile-form-group">
-                                <label for="editGenderInput"><i class="fas fa-venus-mars"></i> Gender</label>
-                                <select id="editGenderInput" required>
-                                    <option value="MALE">Male</option>
-                                    <option value="FEMALE">Female</option>
-                                    <option value="OTHER">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="profile-form-group">
-                            <label for="editBirthdayInput"><i class="fas fa-cake-candles"></i> Birthday</label>
-                            <input type="date" id="editBirthdayInput" required>
-                        </div>
-                        <div class="profile-form-group">
-                            <label for="editBioInput"><i class="fas fa-quote-left"></i> Bio</label>
-                            <textarea id="editBioInput" placeholder="Tell something about yourself..."></textarea>
-                        </div>
-                        <div class="profile-form-actions">
-                            <button class="btn cancel" id="cancelProfileModal">Cancel</button>
-                            <button class="btn primary" id="saveProfileBtn"><i class="fas fa-check"></i> Save Changes</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
     
 
     <script src="/frontend/script/api-client.js"></script>
-    <script src="/frontend/script/dashboard.js"></script>
+    <script src="/frontend/script/profclass.js"></script>
 
 </body>
-    <script src="/frontend/script/profclass.js"></script>
 </html>

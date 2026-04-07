@@ -56,6 +56,10 @@
     <!-- ── Main ───────────────────────────────────────────────────────────── -->
     <main class="dashboard-main">
 
+        <div class="welcome-container">
+  <h1>Welcome, <span id="welcomeUser">User</span> 👋</h1>
+  <p>We're glad to see you in the Codetracker.</p>
+</div>
         <!-- Tabs -->
         <div class="tabs-container">
             <button class="tab-button active" data-tab="created">
@@ -109,10 +113,15 @@
                     </div>
                 </label>
                 <div id="passcodeSection" style="display:none;">
-                    <label for="passcodeInput">Passcode *</label>
-                    <input type="text" id="passcodeInput" placeholder="Enter a secure passcode">
-                    <span class="field-hint">Minimum 4 characters</span>
-                </div>
+    <label for="passcodeInput">Passcode *</label>
+    <div class="password-wrapper">
+        <input type="password" id="passcodeInput" placeholder="Enter a secure passcode">
+        <button type="button" class="toggle-password" data-target="passcodeInput">
+            <i class="fas fa-eye"></i>
+        </button>
+    </div>
+    <span class="field-hint">Minimum 4 characters</span>
+</div>
             </div>
 
             <div>
@@ -160,10 +169,15 @@
                     </div>
                 </label>
                 <div id="joinPasscodeSection" style="display:none;">
-                    <label for="joinPasscodeInput">Passcode</label>
-                    <input type="text" id="joinPasscodeInput" placeholder="Enter the class passcode">
-                    <span class="field-hint">Leave empty if the class does not require a passcode</span>
-                </div>
+    <label for="joinPasscodeInput">Passcode</label>
+    <div class="password-wrapper">
+        <input type="password" id="joinPasscodeInput" placeholder="Enter the class passcode">
+        <button type="button" class="toggle-password" data-target="joinPasscodeInput">
+            <i class="fas fa-eye"></i>
+        </button>
+    </div>
+    <span class="field-hint">Leave empty if the class does not require a passcode</span>
+</div>
             </div>
 
             <div class="modal-actions">

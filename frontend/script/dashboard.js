@@ -78,10 +78,11 @@ const joinClassHelpModal = document.getElementById("joinClassHelpModal");
 const preview = document.getElementById("imagePreview");
 const previewImg = document.getElementById("previewImg");
 const closePreview = document.getElementById("closePreview");
-
+let activeHelpModal = null;
 // select ALL tutorial images
 document.querySelectorAll(".tutorial-step-img").forEach(img => {
     img.addEventListener("click", () => {
+        activeHelpModal = img.closest(".modal");
         preview.style.display = "flex";
         previewImg.src = img.src;
     });
@@ -90,16 +91,19 @@ document.querySelectorAll(".tutorial-step-img").forEach(img => {
 // close button
 closePreview.addEventListener("click", () => {
     preview.style.display = "none";
+    resetHelpModal();
 });
 
 // click outside image = close
 preview.addEventListener("click", (e) => {
     if (e.target === preview) {
         preview.style.display = "none";
+        resetHelpModal();
     }
 });
 function resetHelpModal() {
-    const content = helpModal.querySelector(".modal-content");
+    const target = activeHelpModal || helpModal;
+    const content = target ? target.querySelector(".modal-content") : null;
     if (content) content.scrollTop = 0;
 }
 
@@ -160,6 +164,19 @@ document.getElementById("closeJoinClassHelp").onclick = () => {
 
 });
 
+document.querySelectorAll('.toggle-password').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const input = document.getElementById(this.dataset.target);
+        const icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    });
+});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // UTILITY FUNCTIONS
@@ -342,7 +359,8 @@ function syncCloseStatusAction(status) {
 }
 
 function getInitials(name) {
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+    const firstName = name.trim().split(/\s+/)[0] || '';
+    return firstName.substring(0, 2).toUpperCase() || 'U';
 }
 
 function escapeHtml(text) {
@@ -639,7 +657,8 @@ function populateProfilePicture(data) {
             picEl.style.background = 'none';
         } else {
             picEl.innerHTML = `<span id="profileInitialsLarge">${getInitials(fullName)}</span>`;
-            picEl.style.background = 'linear-gradient(135deg, #1f6feb 0%, #238636 100%)';
+            picEl.style.background = 'white';
+picEl.style.color = '#000';
         }
     }
 
@@ -696,21 +715,26 @@ async function handleSaveProfile() {
     }
 }
 
-function handleLogout() {
-    if (confirm('Are you sure you want to log out?')) {
-        if (!apiRequest) {
-            window.location.href = '/';
-            return;
-        }
+async function handleLogout() {
+    const confirmed = await window.AppDialog.confirm('Are you sure you want to log out?', {
+        title: 'Log Out',
+        confirmText: 'Log Out',
+        danger: true
+    });
 
-        apiRequest('/auth/logout', { method: 'POST' }, { redirectOnUnauthorized: false }).finally(() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/';
-        });
+    if (!confirmed) return;
+
+    if (!window.ApiClient?.logout) {
+        window.location.href = '/';
+        return;
     }
-}
 
+    window.ApiClient.logout().finally(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/';
+    });
+}
 // ══════════════════════════════════════════════════════════════════════════════
 // PROFILE PICTURE UPLOAD / REMOVE
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1041,7 +1065,7 @@ function createClassCard(classroom, isCreated) {
                     ${requireApproval ? '<span class="setting-badge"><i class="fas fa-user-check"></i> Approval</span>' : ''}
                 </div>` : ''}
             <div class="class-actions">
-                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}">${isCreated ? 'View Class' : 'Go to Class'}</button>
+                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}" data-class-name="${escapeHtml(className)}" data-class-code="${escapeHtml(String(classCode))}">${isCreated ? 'View Class' : 'Go to Class'}</button>
                 ${isCreated ? `<button class="btn btn-secondary manage-class" data-class-id="${escapeHtml(classId)}">Manage</button>` : ''}
             </div>
         </div>
@@ -1051,9 +1075,11 @@ function createClassCard(classroom, isCreated) {
 function attachClassCardHandlers() {
     document.querySelectorAll('.view-class').forEach(btn => {
         btn.addEventListener('click', e => {
-            const classId = e.currentTarget.dataset.classId;
-            const role    = e.currentTarget.dataset.role;
-            if (classId) viewClassroom(classId, role);
+            const classId   = e.currentTarget.dataset.classId;
+            const role      = e.currentTarget.dataset.role;
+            const className = e.currentTarget.dataset.className;
+            const classCode = e.currentTarget.dataset.classCode;
+            if (classId) viewClassroom(classId, role, className, classCode);
         });
     });
     document.querySelectorAll('.manage-class').forEach(btn => {
@@ -1068,10 +1094,12 @@ function attachClassCardHandlers() {
 // FIXED NAVIGATION TO PROFESSOR DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
 
-function viewClassroom(classId, role) {
+function viewClassroom(classId, role, className, classCode) {
     if (classId && classId !== 'unknown') {
         const page = role === 'student' ? '/studentclass/' : '/profclass/';
-        window.location.href = `${page}?id=${encodeURIComponent(classId)}`;
+        const nameParam = className ? `&name=${encodeURIComponent(className)}` : '';
+        const codeParam = classCode ? `&code=${encodeURIComponent(classCode)}` : '';
+        window.location.href = `${page}?id=${encodeURIComponent(classId)}${nameParam}${codeParam}`;
     } else {
         showNotification('Invalid classroom ID', 'error');
     }

@@ -170,9 +170,11 @@ body {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: white; /* default avatar color */
+    background: white; /* default avatar color */
     margin-left: 6px;
+    font-weight: 600; font-size: 11px; color: black;
     border: 1px solid #21262d;
+    display: flex; align-items: center; justify-content: center;
 }
 .professor-avatar img {
     width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
@@ -228,7 +230,7 @@ body.modal-open {
     font-weight: 500;
     transition: all 0.2s ease-in-out;
     font-size: 0.8rem;
-    border: 1px solid #21262d;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .back-to-dashboard a i {
@@ -241,13 +243,14 @@ body.modal-open {
     transform: translateX(-2px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     color: #58a6ff;
+    border: 1px solid #58a6ff;
 }
 /* ── Section Base ─────────────────────────────────────────────── */
 .section,
 .students-section,
 .activity-section {
     background: #161b22;
-    border: 1px solid #21262d;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
     padding: 16px;
 }
