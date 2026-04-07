@@ -454,7 +454,7 @@ const apiRequest = window.ApiClient?.request;
                                 ${escapeHtml(getActivityTitle(activity))}
                             </div>
                             <div class="assignment-actions">
-                                <button class="action-btn" onclick="showUnsubmittedStudents('${escapeHtml(activityId)}')" title="Needs Repository Submission">
+                                <button class="action-btn" onclick="showUnsubmittedStudents('${escapeHtml(activityId)}')" title="Submission status is only available from the student view">
                                     <i class="fas fa-user-clock"></i>
                                 </button>
                                 <button class="action-btn" onclick="editActivity('${escapeHtml(activityId)}')">
@@ -491,109 +491,14 @@ const apiRequest = window.ApiClient?.request;
             }).join('');
         }
 
-        function renderUnsubmittedList(items) {
-            const unsubmittedList = document.getElementById('unsubmittedList');
-            if (!unsubmittedList) return;
-
-            if (!Array.isArray(items) || items.length === 0) {
-                unsubmittedList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-check-circle"></i>
-                        <p>No students currently need repository submission.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            unsubmittedList.innerHTML = items.map(student => {
-                const name = escapeHtml(student.displayName);
-                const username = student.username ? `<div class="unsubmitted-username">@${escapeHtml(student.username)}</div>` : '';
-
-                return `
-                    <div class="unsubmitted-item" data-student-id="${escapeHtml(student.userId)}">
-                        <div class="unsubmitted-avatar">${student.profileUrl ? `<img src="${escapeHtml(student.profileUrl)}" alt="${name}">` : escapeHtml(student.initials)}</div>
-                        <div class="unsubmitted-info">
-                            <div class="unsubmitted-name">${name}</div>
-                            ${username}
-                        </div>
-                        <div class="unsubmitted-state">
-                            <i class="fas fa-hourglass-half"></i>
-                            Needs repository submission
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
         async function showUnsubmittedStudents(activityId) {
-            if (!classroomId || !activityId) {
-                showNotification('Classroom or activity ID is missing', 'error');
-                return;
-            }
-
-            currentUnsubmittedActivityId = activityId;
             const activity = activities.find(item => getActivityId(item) === activityId);
-            const modal = document.getElementById('unsubmittedModal');
-            const title = document.getElementById('unsubmittedModalTitle');
-            const subtitle = document.getElementById('unsubmittedSubtitle');
-            const list = document.getElementById('unsubmittedList');
+            const activityTitle = activity ? getActivityTitle(activity) : 'this activity';
 
-            if (!modal || !title || !subtitle || !list) return;
-
-            title.textContent = getActivityTitle(activity);
-            subtitle.textContent = 'Loading students who need repository submission...';
-            list.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Checking who needs repository submission...</p>
-                </div>
-            `;
-            openModal(modal);
-
-            try {
-                const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/activities/unsubmitted`, {
-                    method: 'GET'
-                });
-
-                if (currentUnsubmittedActivityId !== activityId) return;
-
-                const rawItems = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
-                const normalized = rawItems
-                    .filter(item => {
-                        const hasStudentShape = item && (
-                            item.studentId || item.userId || item.firstName || item.lastName || item.fullName || item.username
-                        );
-                        return !!hasStudentShape;
-                    })
-                    .map(normalizeUnsubmittedStudent);
-
-                if (normalized.length === 0 && rawItems.length > 0) {
-                    subtitle.textContent = 'This backend currently returns activity-level unsubmitted data, not per-student entries.';
-                    list.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-circle-info"></i>
-                            <p>Per-student repository submission details are unavailable from this endpoint.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                subtitle.textContent = normalized.length > 0
-                    ? `${normalized.length} student${normalized.length === 1 ? '' : 's'} need repository submission`
-                    : 'No students need repository submission';
-                renderUnsubmittedList(normalized);
-            } catch (error) {
-                if (currentUnsubmittedActivityId !== activityId) return;
-
-                console.error('Error loading unsubmitted repositories:', error);
-                subtitle.textContent = 'Could not load students who need repository submission';
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        <p>${escapeHtml(error.message || 'Failed to load students who need repository submission')}</p>
-                    </div>
-                `;
-            }
+            showNotification(
+                `Professor view does not expose per-student repository submission status for ${activityTitle}. Check the student analytics page for submission details.`,
+                'info'
+            );
         }
 
         function editActivity(activityId) {
@@ -716,6 +621,5 @@ const apiRequest = window.ApiClient?.request;
             // Implement filtering logic if needed
         }
 
-        window.showUnsubmittedStudents = showUnsubmittedStudents;
         window.editActivity = editActivity;
         window.deleteActivity = deleteActivity;
