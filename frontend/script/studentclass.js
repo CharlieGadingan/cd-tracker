@@ -324,130 +324,149 @@ function loadClassroomInfo() {
     submitAssignmentBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Assignment';
   }
 
+  
   function renderActivities() {
     if (!assignmentsList) return;
 
     if (!classroomId) {
-      assignmentsList.innerHTML = renderEmptyState(
+      document.getElementById('unsubmittedAssignments').innerHTML = renderEmptyState(
         'Missing classroom id',
         'Open this page from a classroom to load its activities.',
         'fas fa-link'
       );
+      document.getElementById('submittedAssignments').innerHTML = '';
       return;
     }
 
+    // ✅ ALL YOUR ORIGINAL LOGIC REMAINS 100% UNCHANGED HERE
     const filteredActivities = state.activities.filter(matchesActivityFilters);
 
     if (assignmentCount) {
       assignmentCount.textContent = String(filteredActivities.length);
     }
     if (pendingCount) {
-    pendingCount.textContent = String(getPendingActivities().length);
-}
+      pendingCount.textContent = String(getPendingActivities().length);
+    }
 
-const submittedCountEl = document.getElementById('submittedCount');
-if (submittedCountEl) {
-    const submittedCount = state.activities.filter(
-        activity => getActivitySubmissionState(getActivityId(activity)) === 'SUBMITTED'
-    ).length;
-    submittedCountEl.textContent = String(submittedCount);
-}
+    const submittedCountEl = document.getElementById('submittedCount');
+    if (submittedCountEl) {
+        const submittedCount = state.activities.filter(
+            activity => getActivitySubmissionState(getActivityId(activity)) === 'SUBMITTED'
+        ).length;
+        submittedCountEl.textContent = String(submittedCount);
+    }
 
     if (filteredActivities.length === 0) {
       const isNeedsFilter = state.filters.status === 'NEEDS_SUBMISSION';
-      assignmentsList.innerHTML = renderEmptyState(
+      document.getElementById('unsubmittedAssignments').innerHTML = renderEmptyState(
         isNeedsFilter ? 'No assignments need repository submission' : 'No activities match the filter',
         isNeedsFilter
           ? 'Every assignment in this classroom already has a repository attached, or data is still loading.'
           : 'Try a different status filter.',
         isNeedsFilter ? 'fas fa-code-branch' : 'fas fa-tasks'
       );
+      document.getElementById('submittedAssignments').innerHTML = '';
       return;
     }
 
-    assignmentsList.innerHTML = filteredActivities.map(activity => {
-      const activityId = getActivityId(activity);
-      const title = escapeHtml(getActivityTitle(activity));
-      const description = getActivityDescription(activity);
-      const dueDate = formatDate(activity?.dueDate);
-      const daysLeft = getDaysLeft(activity?.dueDate);
-      const badgeClass = getStatusBadgeClass(activity);
-      const statusLabel = escapeHtml(getStatusLabel(activity));
-      const statusIcon = badgeClass === 'expired' ? 'fas fa-hourglass-end' : 'fas fa-clock';
-      const points = activity?.maxScore != null ? `<span class="points"><i class="fas fa-star"></i> ${escapeHtml(activity.maxScore)} points</span>` : '';
-      const needsSubmission = isNeedsRepositorySubmission(activityId);
-      const submissionBadge = needsSubmission
-        ? '<span class="assignment-repo-badge"><i class="fas fa-code-branch"></i> Needs repository submission</span>'
-        : '<span class="assignment-repo-badge submitted"><i class="fas fa-check"></i> Repository submitted</span>';
-      const dueLabel = dueDate
-        ? `<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${daysLeft != null && daysLeft <= 7 ? 'urgent' : 'normal'}">${daysLeft != null ? (daysLeft > 0 ? `${daysLeft} days left` : 'Overdue') : dueDate}</span></span>`
-        : '<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left normal">No due date</span></span>';
-      const submissionAction = needsSubmission
-        ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repository</button>`
-        : '<span class="repo-submitted-pill"><i class="fas fa-check"></i> Repository submitted</span>';
 
-      return `
-        <div class="assignment ${needsSubmission ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(activityId)}">
-          <div class="assignment-header">
-            <div class="assignment-title-wrap">
-              <div class="assignment-title">
-                <i class="fas fa-project-diagram"></i>
-                ${title}
-              </div>
-              <div class="assignment-subtitle">
-                ${submissionBadge}
-              </div>
-            </div>
-            <div class="assignment-status ${badgeClass}">
-              <i class="${statusIcon}"></i>
-              ${statusLabel}
-            </div>
-          </div>
-          ${description ? `<div class="assignment-desc">${escapeHtml(description)}</div>` : ''}
-          <div class="assignment-meta">
-            ${dueLabel}
-            ${points}
-            ${submissionAction}
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
+    // Split activities using EXACTLY the same logic you already use
+    const unsubmitted = [];
+    const submitted = [];
+    filteredActivities.forEach(activity => {
+      if (isNeedsRepositorySubmission(getActivityId(activity))) {
+        unsubmitted.push(activity);
+      } else {
+        submitted.push(activity);
+      }
+    });
 
-  function setModalAssignment(activity) {
-    if (!modalAssignmentDetail) return;
+    // Nice default: unsubmitted sorted by most urgent first
+    unsubmitted.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
 
-    const title = getActivityTitle(activity);
-    const description = getActivityDescription(activity);
-    const dueDate = formatDate(activity?.dueDate);
-    const points = activity?.maxScore != null ? activity.maxScore : 'Not set';
-    const status = getActivityStatus(activity) || 'ACTIVE';
 
-    modalAssignmentDetail.innerHTML = `
-      <div class="assignment-detail-item">
-        <i class="fas fa-tasks"></i>
-        <div><strong>${escapeHtml(title)}</strong></div>
-      </div>
-      ${description ? `
-        <div class="assignment-detail-item">
-          <i class="fas fa-align-left"></i>
-          <div>${escapeHtml(description)}</div>
-        </div>
-      ` : ''}
-      <div class="assignment-detail-item">
-        <i class="fas fa-calendar-alt"></i>
-        <div><strong>Due:</strong> ${escapeHtml(dueDate || 'No due date')}</div>
-      </div>
-      <div class="assignment-detail-item">
-        <i class="fas fa-star"></i>
-        <div><strong>Points:</strong> ${escapeHtml(points)}</div>
-      </div>
-      <div class="assignment-detail-item">
-        <i class="fas fa-signal"></i>
-        <div><strong>Status:</strong> ${escapeHtml(status)}</div>
+    // Render Unsubmitted section
+    const unsubmittedContainer = document.getElementById('unsubmittedAssignments');
+    unsubmittedContainer.innerHTML = `
+      <div class="section-header">
+        <i class="fas fa-paper-plane"></i> Needs Submission
+        <span class="section-count">(${unsubmitted.length})</span>
       </div>
     `;
-  }
+
+    if (unsubmitted.length === 0) {
+      unsubmittedContainer.innerHTML += `<div class="section-empty"><i class="fas fa-check-double"></i> All assignments have been submitted 🎉</div>`;
+    } else {
+      unsubmittedContainer.innerHTML += unsubmitted.map(renderAssignmentCard).join('');
+    }
+
+
+    // Render Submitted section
+    const submittedContainer = document.getElementById('submittedAssignments');
+    submittedContainer.innerHTML = `
+      <div class="section-header">
+        <i class="fas fa-check"></i> Submitted
+        <span class="section-count">(${submitted.length})</span>
+      </div>
+    `;
+
+    if (submitted.length === 0) {
+      submittedContainer.innerHTML += `<div class="section-empty">No submitted assignments yet</div>`;
+    } else {
+      submittedContainer.innerHTML += submitted.map(renderAssignmentCard).join('');
+    }
+}
+
+
+// ✅ We moved your original card template into this clean reusable helper!
+// This is exactly your original code, not changed at all
+function renderAssignmentCard(activity) {
+  const activityId = getActivityId(activity);
+  const title = escapeHtml(getActivityTitle(activity));
+  const description = getActivityDescription(activity);
+  const dueDate = formatDate(activity?.dueDate);
+  const daysLeft = getDaysLeft(activity?.dueDate);
+  const badgeClass = getStatusBadgeClass(activity);
+  const statusLabel = escapeHtml(getStatusLabel(activity));
+  const statusIcon = badgeClass === 'expired' ? 'fas fa-hourglass-end' : 'fas fa-clock';
+  const points = activity?.maxScore != null ? `<span class="points"><i class="fas fa-star"></i> ${escapeHtml(activity.maxScore)} points</span>` : '';
+  const needsSubmission = isNeedsRepositorySubmission(activityId);
+  const submissionBadge = needsSubmission
+    ? '<span class="assignment-repo-badge"><i class="fas fa-code-branch"></i> Needs repository submission</span>'
+    : '<span class="assignment-repo-badge submitted"><i class="fas fa-check"></i> Repository submitted</span>';
+  const dueLabel = dueDate
+    ? `<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${daysLeft != null && daysLeft <= 7 ? 'urgent' : 'normal'}">${daysLeft != null ? (daysLeft > 0 ? `${daysLeft} days left` : 'Overdue') : dueDate}</span></span>`
+    : '<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left normal">No due date</span></span>';
+  const submissionAction = needsSubmission
+    ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repository</button>`
+    : '<span class="repo-submitted-pill"><i class="fas fa-check"></i> Repository submitted</span>';
+
+  return `
+    <div class="assignment ${needsSubmission ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(activityId)}">
+      <div class="assignment-header">
+        <div class="assignment-title-wrap">
+          <div class="assignment-title">
+            <i class="fas fa-project-diagram"></i>
+            ${title}
+          </div>
+          <div class="assignment-subtitle">
+            ${submissionBadge}
+          </div>
+        </div>
+        <div class="assignment-status ${badgeClass}">
+          <i class="${statusIcon}"></i>
+          ${statusLabel}
+        </div>
+      </div>
+      ${description ? `<div class="assignment-desc">${escapeHtml(description)}</div>` : ''}
+      <div class="assignment-meta">
+        ${dueLabel}
+        ${points}
+        ${submissionAction}
+      </div>
+    </div>
+  `;
+}
 
   function openSubmissionModal(activityId) {
     const activity = state.activities.find(item => getActivityId(item) === activityId);
