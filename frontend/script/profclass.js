@@ -1,3 +1,4 @@
+
     const apiRequest = window.ApiClient?.request;
             let classroomId = null;
             let currentUser = null;
@@ -6,6 +7,7 @@
             let activityLog = [];
             let currentUnsubmittedActivityId = null;
 
+
             // ═══════════════════════════════════════════════════════════════════
             // INITIALIZATION
             // ═══════════════════════════════════════════════════════════════════
@@ -13,6 +15,7 @@
             document.addEventListener('DOMContentLoaded', () => {
                 if (!apiRequest) {
                     showNotification('API client is not initialized.', 'error');
+
                     return;
                 }
 
@@ -178,6 +181,7 @@
                         closeModal(document.getElementById('unsubmittedModal'));
                     });
                 }
+
 
                 document.getElementById('activityFilter').addEventListener('change', (e) => {
                     filterActivityLog(e.target.value);
@@ -520,6 +524,7 @@
                                 <i class="fas fa-hourglass-half"></i>
                                 Needs repository submission
                             </div>
+
                         </div>
                     `;
                 }).join('');
@@ -594,6 +599,7 @@
                         </div>
                     `;
                 }
+
             }
 
             function editActivity(activityId) {
@@ -644,6 +650,7 @@
                 const maxScoreRaw = document.getElementById('editMaxScore').value;
                 const maxScore = maxScoreRaw !== '' ? parseInt(maxScoreRaw) : null;
                 const status = document.getElementById('editActivityStatus').value;
+
 
                 if (!title || !status) {
                     showNotification('Title and Status are required', 'error');
@@ -719,3 +726,4 @@
             window.showUnsubmittedStudents = showUnsubmittedStudents;
             window.editActivity = editActivity;
             window.deleteActivity = deleteActivity;
+
