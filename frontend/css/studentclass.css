@@ -1241,40 +1241,91 @@
 .top-bar-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+    margin-top: 20px;
+    
 }
 
-.classroom-info-card {
-    background: #161b22;
-    border: 1px solid #21262d;
-    border-radius: 8px;
-    padding: 6px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.classroom-info-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #e6edf3;
-}
-
-.classroom-info-code {
-    display: flex;
+.classroom-info-name-card,
+.classroom-info-code-card {
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(93, 108, 33, 0.3);
+    border: 1px solid #a6f036;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #969e8b;
+    white-space: nowrap;
+}
+
+.classroom-info-name-card {
+  margin-left: 382px;
+}
+.classroom-info-name-card strong,
+.classroom-info-name-card span:last-child,
+.classroom-info-code-card strong {
+    color: #e6edf3;
+    font-weight: 600;
+}
+
+.classroom-info-label {
     color: #8b949e;
+    font-weight: 400;
 }
 
-.classroom-info-code i {
-    font-size: 9px;
-    color: #484f58;
+.repo-hint {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  cursor: default;
+  color: #8b949e;
 }
 
-.classroom-info-code strong {
-    color: #58a6ff;
-    font-family: monospace;
+.repo-hint i {
+  font-size: 12px;
+  color: #8b949e;
+  transition: color 0.15s;
+}
+
+.repo-hint:hover i {
+  color: #58a6ff;
+}
+
+.repo-hint-tooltip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 140%;
+  transform: translateX(-50%);
+  background: #21262d;
+  color: #c9d1d9;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  border: 1px solid #30363d;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.repo-hint:hover .repo-hint-tooltip {
+  display: block;
+}
+
+.top-bar-row .back-to-dashboard {
+    margin: 0;
+}
+
+.summary-chip.submitted-chip {
+    border-color: rgba(46, 160, 67, 0.4);
+    background: rgba(46, 160, 67, 0.08);
+}
+.summary-chip.submitted-chip i {
+    color: #2ea043;
 }

@@ -342,8 +342,16 @@ function loadClassroomInfo() {
       assignmentCount.textContent = String(filteredActivities.length);
     }
     if (pendingCount) {
-      pendingCount.textContent = String(getPendingActivities().length);
-    }
+    pendingCount.textContent = String(getPendingActivities().length);
+}
+
+const submittedCountEl = document.getElementById('submittedCount');
+if (submittedCountEl) {
+    const submittedCount = state.activities.filter(
+        activity => getActivitySubmissionState(getActivityId(activity)) === 'SUBMITTED'
+    ).length;
+    submittedCountEl.textContent = String(submittedCount);
+}
 
     if (filteredActivities.length === 0) {
       const isNeedsFilter = state.filters.status === 'NEEDS_SUBMISSION';
@@ -451,10 +459,17 @@ function loadClassroomInfo() {
 
     state.currentActivity = activity;
     setModalAssignment(activity);
-    if (submissionModeSelect) submissionModeSelect.value = 'existing';
-    applySubmissionMode('existing');
+    if (submissionModeSelect) submissionModeSelect.value = '';
+    applySubmissionMode('');
+
+    const repoSelect = document.getElementById('repoSelect');
+    if (repoSelect) {
+      repoSelect.innerHTML = '<option value="">— Select a repository —</option>';
+      repoSelect.disabled = false;
+    }
+
     submissionModal.style.display = 'block';
-  }
+}
 
   function closeSubmissionModal() {
     submissionModal.style.display = 'none';
@@ -476,20 +491,21 @@ function loadClassroomInfo() {
 
   function applySubmissionMode(mode) {
     const isNew = mode === 'new';
+    const isExisting = mode === 'existing';
     const existingRepoGroup = document.getElementById('existingRepoGroup');
     const newRepoGroup = document.getElementById('newRepoGroup');
     const repoNameInput = document.getElementById('repositoryName');
     const repoSelect = document.getElementById('repoSelect');
 
-    if (existingRepoGroup) existingRepoGroup.style.display = isNew ? 'none' : 'block';
+    if (existingRepoGroup) existingRepoGroup.style.display = isExisting ? 'block' : 'none';
     if (newRepoGroup) newRepoGroup.style.display = isNew ? 'block' : 'none';
-    if (repoSelect) repoSelect.required = !isNew;
+    if (repoSelect) repoSelect.required = isExisting;
     if (repoNameInput) {
         repoNameInput.required = isNew;
         if (!isNew) repoNameInput.value = '';
     }
 
-    if (!isNew) loadGithubRepos();
+    if (isExisting) loadGithubRepos();
 }
 
   

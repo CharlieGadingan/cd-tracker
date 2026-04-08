@@ -110,7 +110,6 @@ body {
     position: relative;
     display: inline-flex;
     align-items: center;
-    cursor: pointer;
 }
 
 .professor-dropdown {
@@ -199,8 +198,8 @@ body {
 
 /* Back to Dashboard Button */
 .back-to-dashboard {
-    margin-bottom: 1px; /* pushes Active Activities down slightly */
-    margin-top: 4px;
+    margin-bottom: 15px;
+    margin-top: 20px;
     
 }
 

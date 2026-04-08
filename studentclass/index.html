@@ -41,13 +41,13 @@
             Back to Dashboard
         </a>
     </div>
-    <div class="classroom-info-card" id="classroomInfoCard">
-        <div class="classroom-info-name" id="classroomInfoName">—</div>
-        <div class="classroom-info-code">
-            <i class="fas fa-key"></i>
-            <span>Code:</span>
-            <strong id="classroomInfoCode">—</strong>
-        </div>
+    <div class="classroom-info-name-card">
+        <span class="classroom-info-label">Room name:</span>
+        <span id="classroomInfoName">—</span>
+    </div>
+    <div class="classroom-info-code-card">
+        <span class="classroom-info-label">Classcode:</span>
+        <strong id="classroomInfoCode">—</strong>
     </div>
 </div>
             <div class="section">
@@ -58,9 +58,13 @@
                 Showing: <strong id="assignmentCount">0</strong>
             </div>
             <div class="summary-chip pending">
-                <i class="fas fa-code-branch"></i>
-                Needs repository submission: <strong id="pendingCount">0</strong>
-            </div>
+        <i class="fas fa-code-branch"></i>
+        Needs repository submission: <strong id="pendingCount">0</strong>
+    </div>
+    <div class="summary-chip submitted-chip">
+        <i class="fas fa-check-circle"></i>
+        Repository submitted: <strong id="submittedCount">0</strong>
+    </div>
         </div>
     </div>
     <div id="assignmentsList"></div>
@@ -91,17 +95,6 @@
             
         </div>
     </div>
-
-
-
-
-
-
-
-
-
-    
-
     <!-- Submission Modal -->
     <div class="modal" id="submissionModal">
       <div class="modal-content">
@@ -120,43 +113,47 @@
 
           <form id="submissionForm">
             <div class="form-group">
-              <label for="submissionMode">
-                <i class="fas fa-code-branch"></i>
-                Submission Type
-              </label>
-              <select id="submissionMode">
-                <option value="existing">Submit existing repository</option>
-                <option value="new">Create and submit new repository</option>
-              </select>
-            </div>
-
-            <div class="form-group" id="repoInputGroup">
-              <!-- For existing repos -->
-              <div id="existingRepoGroup" class="repo-input-variant">
-  <label for="repoSelect">
-    <i class="fab fa-github"></i>
-    Select Repository
+  <label for="submissionMode">
+    <i class="fas fa-code-branch"></i>
+    Submission Type
   </label>
-  <select id="repoSelect">
-    <option value="">— Loading your repositories... —</option>
-  </select>
+  <select id="submissionMode">
+    <option value="" disabled hidden>— Select submission type —</option>
+    <option value="existing">Submit existing repository</option>
+    <option value="new">Create and submit new repository</option>
+</select>
 </div>
-              <!-- For new repos -->
-              <div id="newRepoGroup" class="repo-input-variant" style="display: none;">
-                <label for="repositoryName">
-                  <i class="fas fa-folder-plus"></i>
-                  Repository Name
-                </label>
-                <input
-                  type="text"
-                  id="repositoryName"
-                  placeholder="my-awesome-project"
-                  pattern="[a-zA-Z0-9_\\-]+"
-                  title="Repository name can contain letters, numbers, hyphens, and underscores"
-                  required
-                />
-              </div>
-            </div>
+
+<div class="form-group" id="repoInputGroup">
+  <!-- For existing repos -->
+  <div id="existingRepoGroup" class="repo-input-variant" style="display: none;">
+    <label for="repoSelect">
+      <i class="fab fa-github"></i>
+      Select Repository
+      <span class="repo-hint">
+        <i class="fas fa-circle-question"></i>
+        <span class="repo-hint-tooltip">Wait about 5–10 seconds to load all of your repositories from GitHub</span>
+      </span>
+    </label>
+    <select id="repoSelect">
+      <option value="">— Select a repository —</option>
+    </select>
+  </div>
+  <!-- For new repos -->
+  <div id="newRepoGroup" class="repo-input-variant" style="display: none;">
+    <label for="repositoryName">
+      <i class="fas fa-folder-plus"></i>
+      Repository Name
+    </label>
+    <input
+      type="text"
+      id="repositoryName"
+      placeholder="my-awesome-project"
+      pattern="[a-zA-Z0-9_\\-]+"
+      title="Repository name can contain letters, numbers, hyphens, and underscores"
+    />
+  </div>
+</div>
 
             <div class="form-group">
               <label for="submissionNote">
