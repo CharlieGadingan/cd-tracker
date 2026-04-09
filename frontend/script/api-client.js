@@ -1,6 +1,28 @@
 
 (function attachApiClient(globalScope) {
-  const API_BASE_URL = "http://localhost:8080/api";
+  const DEFAULT_API_BASE_URL = "http://localhost:8080/api";
+
+  function safeReadStorage(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function normalizeBaseUrl(value) {
+    return String(value || "").trim().replace(/\/+$/, "");
+  }
+
+  function resolveApiBaseUrl() {
+    const fromWindow = globalScope.__CODETRACKER_API_BASE_URL || globalScope.__API_BASE_URL;
+    const fromMeta = document.querySelector('meta[name="api-base-url"]')?.getAttribute("content");
+    const fromStorage = safeReadStorage("api_base_url");
+    const chosen = fromWindow || fromMeta || fromStorage || DEFAULT_API_BASE_URL;
+    return normalizeBaseUrl(chosen);
+  }
+
+  const API_BASE_URL = resolveApiBaseUrl();
 
   function getCookie(name) {
     if (!document.cookie) return null;
@@ -513,6 +535,7 @@
 
   globalScope.ApiClient = {
     request,
+    baseUrl: API_BASE_URL,
     user,
     checkAuth,
     checkAndRedirectIfAuthenticated,

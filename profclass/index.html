@@ -257,6 +257,96 @@
     
     
 
+    
+
+    <!-- Unsubmitted Students Modal -->
+    <div class="modal" id="unsubmittedModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="unsubmittedModalTitle">
+                    <i class="fas fa-user-clock"></i>
+                    Students Needing Repository Submission
+                </h2>
+                <button class="close-btn" id="closeUnsubmittedModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="unsubmittedSubtitle" style="color: #666; margin-bottom: 20px;">Loading students...</p>
+                <div id="unsubmittedList">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Checking who needs repository submission...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeUnsubmittedBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Submission Modal -->
+    <div class="modal" id="studentSubmissionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-paper-plane"></i>
+                    Submit Activity for Student
+                </h2>
+                <button class="close-btn" id="closeSubmissionModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="submissionStudentInfo" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;">
+                    <!-- Will be filled dynamically -->
+                </div>
+                <form id="studentSubmissionForm">
+                    <div class="form-group">
+                        <label for="submissionType">
+                            <i class="fas fa-code-branch"></i>
+                            Submission Type
+                        </label>
+                        <select id="submissionType">
+                            <option value="" disabled hidden>— Select submission type —</option>
+                            <option value="existing">Existing Repository URL</option>
+                            <option value="new">New Repository Name</option>
+                            <option value="general">Mark as Submitted (No Repository)</option>
+                        </select>
+                    </div>
+
+                    <div id="repositoryUrlGroup" class="form-group" style="display: none;">
+                        <label for="profileSubmissionUrl">
+                            <i class="fab fa-github"></i>
+                            Repository URL
+                        </label>
+                        <input type="url" id="profileSubmissionUrl" placeholder="https://github.com/user/repo">
+                    </div>
+
+                    <div id="repositoryNameGroup" class="form-group" style="display: none;">
+                        <label for="profileSubmissionName">
+                            <i class="fas fa-folder-plus"></i>
+                            Repository Name
+                        </label>
+                        <input type="text" id="profileSubmissionName" placeholder="my-awesome-project" pattern="[a-zA-Z0-9_\-]+" title="Repository name can contain letters, numbers, hyphens, and underscores">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="submissionNotes">
+                            <i class="fas fa-comment"></i>
+                            Notes (Optional)
+                        </label>
+                        <textarea id="submissionNotes" rows="3" placeholder="Add notes about this submission..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelSubmissionBtn">Cancel</button>
+                <button class="btn btn-primary" id="submitForStudentBtn">
+                    <i class="fas fa-paper-plane"></i>
+                    Submit for Student
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="/frontend/script/api-client.js"></script>
     <script src="/frontend/script/profclass.js"></script>
 

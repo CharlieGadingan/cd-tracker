@@ -6,7 +6,8 @@
             let students = [];
             let activityLog = [];
             let currentUnsubmittedActivityId = null;
-
+            let currentStudentForSubmission = null;
+            let currentActivityForSubmission = null;
 
             // ═══════════════════════════════════════════════════════════════════
             // INITIALIZATION
@@ -204,6 +205,33 @@
                 if (closeUnsubmittedBtn) {
                     closeUnsubmittedBtn.addEventListener('click', () => {
                         closeModal(document.getElementById('unsubmittedModal'));
+                    });
+                }
+
+                // Student Submission Modal Event Listeners
+                const closeSubmissionModalBtn = document.getElementById('closeSubmissionModalBtn');
+                const cancelSubmissionBtn = document.getElementById('cancelSubmissionBtn');
+                const submitForStudentBtn = document.getElementById('submitForStudentBtn');
+                const submissionType = document.getElementById('submissionType');
+
+                if (closeSubmissionModalBtn) {
+                    closeSubmissionModalBtn.addEventListener('click', () => {
+                        closeModal(document.getElementById('studentSubmissionModal'));
+                    });
+                }
+                if (cancelSubmissionBtn) {
+                    cancelSubmissionBtn.addEventListener('click', () => {
+                        closeModal(document.getElementById('studentSubmissionModal'));
+                    });
+                }
+                if (submitForStudentBtn) {
+                    submitForStudentBtn.addEventListener('click', async () => {
+                        await handleSubmitForStudent();
+                    });
+                }
+                if (submissionType) {
+                    submissionType.addEventListener('change', (e) => {
+                        applySubmissionTypeUI(e.target.value);
                     });
                 }
 

@@ -709,6 +709,80 @@ function renderAssignmentCard(activity) {
     }
   }
 
+  /**
+   * Submit an activity using the general submit endpoint
+   * This marks an activity as submitted without a specific repository
+   */
+  async function submitActivityGeneral(activityId) {
+    const activity = state.activities.find(item => getActivityId(item) === activityId);
+
+    if (!activity) {
+      await window.AppDialog.alert('Activity not found.', { title: 'Missing Activity' });
+      return;
+    }
+
+    if (!classroomId) {
+      await window.AppDialog.alert('Missing classroom id in the page URL.', { title: 'Missing Classroom' });
+      return;
+    }
+
+    const confirmed = await window.AppDialog.confirm('Mark this activity as submitted?', {
+      title: 'Confirm Submission',
+      confirmText: 'Submit'
+    });
+
+    if (!confirmed) return;
+
+    const endpoint = `/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(getActivityId(activity))}/submit`;
+
+    try {
+      setSubmitButtonState('loading');
+
+      const response = await apiClient.request(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }, {
+        redirectOnUnauthorized: false
+      });
+
+      const submitted = response?.data ?? response;
+      const record = {
+        id: submitted?.submissionId || submitted?.id || `${getActivityId(activity)}-${Date.now()}`,
+        activityId: getActivityId(activity),
+        title: getActivityTitle(activity),
+        mode: 'general',
+        modeLabel: 'Submitted',
+        result: 'passed',
+        resultLabel: 'Submitted',
+        submittedAt: new Date().toISOString()
+      };
+
+      state.submissions = [record, ...state.submissions];
+      saveSubmissions();
+
+      await refreshNeedsRepositorySubmission();
+      renderActivities();
+      setSubmitButtonState('success');
+      await sleep(700);
+
+      await window.AppDialog.alert('Activity submitted successfully.', {
+        title: 'Success'
+      });
+
+      setSubmitButtonState('idle');
+    } catch (error) {
+      console.error('Error submitting activity:', error);
+      setSubmitButtonState('error');
+      await window.AppDialog.alert(error.message || 'Failed to submit activity.', {
+        title: 'Submission Failed'
+      });
+      await sleep(1200);
+      setSubmitButtonState('idle');
+    }
+  }
+
   function attachEventHandlers() {
     const closeModalBtn = document.getElementById('closeModal');
     const cancelSubmitBtn = document.getElementById('cancelSubmitBtn');
@@ -777,6 +851,8 @@ function renderAssignmentCard(activity) {
       });
     }
 
+    // Export general submit function to window for inline use
+    window.submitActivityGeneral = submitActivityGeneral;
 
     window.addEventListener('click', event => {
       if (event.target === submissionModal) closeSubmissionModal();

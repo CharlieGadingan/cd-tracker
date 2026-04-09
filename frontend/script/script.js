@@ -1,5 +1,26 @@
 // GitHub OAuth Configuration
-const BACKEND_URL = "http://localhost:8080/api/oauth";
+const DEFAULT_API_BASE_URL = "http://localhost:8080/api";
+
+function normalizeBaseUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function readApiBaseUrl() {
+  const fromClient = window.ApiClient?.baseUrl;
+  const fromWindow = window.__CODETRACKER_API_BASE_URL || window.__API_BASE_URL;
+  const fromMeta = document.querySelector('meta[name="api-base-url"]')?.getAttribute("content");
+
+  let fromStorage = null;
+  try {
+    fromStorage = localStorage.getItem("api_base_url");
+  } catch (_) {
+    fromStorage = null;
+  }
+
+  return normalizeBaseUrl(fromClient || fromWindow || fromMeta || fromStorage || DEFAULT_API_BASE_URL);
+}
+
+const BACKEND_URL = `${readApiBaseUrl()}/oauth`;
 
 function clearOAuthQueryParamsFromUrl() {
   const url = new URL(window.location.href);
