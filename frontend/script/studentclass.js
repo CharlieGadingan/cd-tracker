@@ -93,6 +93,14 @@
     return isNeedsRepositorySubmission(activityId) ? 'NOT_SUBMITTED' : 'SUBMITTED';
   }
 
+  function isActivitySubmittedToInstructor(activityId) {
+    const normalizedId = String(activityId || '');
+    return state.submissions.some(item =>
+      String(item.activityId || '') === normalizedId &&
+      String(item.mode || '').toLowerCase() === 'general'
+    );
+  }
+
   async function loadGithubRepos() {
     const repoSelect = document.getElementById('repoSelect');
     if (!repoSelect) return;
@@ -446,6 +454,13 @@ function renderAssignmentCard(activity) {
   const submissionAction = needsSubmission
     ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repository</button>`
     : '';
+  const canSubmitActivity = !needsSubmission && !isActivitySubmittedToInstructor(activityId);
+  const activitySubmitAction = canSubmitActivity
+    ? `<button type="button" class="submit-repo-btn" data-submit-activity-only-id="${escapeHtml(activityId)}"><i class="fas fa-upload"></i> Submit activity</button>`
+    : '';
+  const activitySubmittedPill = (!needsSubmission && isActivitySubmittedToInstructor(activityId))
+    ? '<span class="repo-submitted-pill"><i class="fas fa-check-circle"></i> Activity submitted</span>'
+    : '';
 
   return `
     <div class="assignment ${needsSubmission ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(activityId)}">
@@ -469,6 +484,8 @@ function renderAssignmentCard(activity) {
         ${dueLabel}
         ${points}
         ${submissionAction}
+        ${activitySubmitAction}
+        ${activitySubmittedPill}
       </div>
     </div>
   `;
@@ -842,12 +859,21 @@ function renderAssignmentCard(activity) {
     if (assignmentsList) {
       assignmentsList.addEventListener('click', event => {
         const actionButton = event.target.closest('[data-submit-activity-id]');
-        if (!actionButton) return;
+        if (actionButton) {
+          const activityId = actionButton.getAttribute('data-submit-activity-id');
+          if (!activityId) return;
 
-        const activityId = actionButton.getAttribute('data-submit-activity-id');
+          openSubmissionModal(String(activityId));
+          return;
+        }
+
+        const activitySubmitButton = event.target.closest('[data-submit-activity-only-id]');
+        if (!activitySubmitButton) return;
+
+        const activityId = activitySubmitButton.getAttribute('data-submit-activity-only-id');
         if (!activityId) return;
 
-        openSubmissionModal(String(activityId));
+        submitActivityGeneral(String(activityId));
       });
     }
 
