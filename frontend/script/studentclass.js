@@ -119,8 +119,14 @@ const repos = Array.isArray(response) ? response
     return `<option value="${url}">${name}</option>`;
 }).join('');
     } catch (error) {
-        console.error('Failed to load GitHub repos:', error);
-        repoSelect.innerHTML = '<option value="">Failed to load repositories</option>';
+        const errorMessage = String(error?.message || '');
+        if (errorMessage.includes('500')) {
+          console.warn('GitHub repository endpoint returned 500. Backend GitHub integration may be unavailable.');
+          repoSelect.innerHTML = '<option value="">GitHub repositories are temporarily unavailable</option>';
+        } else {
+          console.error('Failed to load GitHub repos:', error);
+          repoSelect.innerHTML = '<option value="">Failed to load repositories</option>';
+        }
     } finally {
         repoSelect.disabled = false;
     }
@@ -389,7 +395,7 @@ function loadClassroomInfo() {
     const unsubmittedContainer = document.getElementById('unsubmittedAssignments');
     unsubmittedContainer.innerHTML = `
       <div class="section-header">
-        <i class="fas fa-paper-plane"></i> Needs Submission
+        <i class="fas fa-paper-plane"></i> Needs Repository Submission
         <span class="section-count">(${unsubmitted.length})</span>
       </div>
     `;
@@ -405,7 +411,7 @@ function loadClassroomInfo() {
     const submittedContainer = document.getElementById('submittedAssignments');
     submittedContainer.innerHTML = `
       <div class="section-header">
-        <i class="fas fa-check"></i> Submitted
+        <i class="fas fa-check"></i> Tracked Activities
         <span class="section-count">(${submitted.length})</span>
       </div>
     `;
@@ -433,13 +439,13 @@ function renderAssignmentCard(activity) {
   const needsSubmission = isNeedsRepositorySubmission(activityId);
   const submissionBadge = needsSubmission
     ? '<span class="assignment-repo-badge"><i class="fas fa-code-branch"></i> Needs repository submission</span>'
-    : '<span class="assignment-repo-badge submitted"><i class="fas fa-check"></i> Repository submitted</span>';
+    : '';
   const dueLabel = dueDate
     ? `<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${daysLeft != null && daysLeft <= 7 ? 'urgent' : 'normal'}">${daysLeft != null ? (daysLeft > 0 ? `${daysLeft} days left` : 'Overdue') : dueDate}</span></span>`
     : '<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left normal">No due date</span></span>';
   const submissionAction = needsSubmission
     ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repository</button>`
-    : '<span class="repo-submitted-pill"><i class="fas fa-check"></i> Repository submitted</span>';
+    : '';
 
   return `
     <div class="assignment ${needsSubmission ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(activityId)}">
@@ -468,6 +474,24 @@ function renderAssignmentCard(activity) {
   `;
 }
 
+  function setModalAssignment(activity) {
+    if (!modalAssignmentDetail) return;
+
+    const title = escapeHtml(getActivityTitle(activity));
+    const description = escapeHtml(getActivityDescription(activity) || 'No description provided.');
+    const dueDate = formatDate(activity?.dueDate) || 'No due date';
+    const status = escapeHtml(getStatusLabel(activity));
+
+    modalAssignmentDetail.innerHTML = `
+      <div class="modal-assignment-title"><i class="fas fa-project-diagram"></i> ${title}</div>
+      <div class="modal-assignment-meta">
+        <span><i class="fas fa-calendar-alt"></i> ${dueDate}</span>
+        <span><i class="fas fa-circle-info"></i> ${status}</span>
+      </div>
+      <p class="modal-assignment-description">${description}</p>
+    `;
+  }
+
   function openSubmissionModal(activityId) {
     const activity = state.activities.find(item => getActivityId(item) === activityId);
 
@@ -487,11 +511,15 @@ function renderAssignmentCard(activity) {
       repoSelect.disabled = false;
     }
 
-    submissionModal.style.display = 'block';
+    if (submissionModal) {
+      submissionModal.style.display = 'block';
+    }
 }
 
   function closeSubmissionModal() {
-    submissionModal.style.display = 'none';
+    if (submissionModal) {
+      submissionModal.style.display = 'none';
+    }
     setSubmitButtonState('idle');
   }
 
@@ -564,6 +592,7 @@ function renderAssignmentCard(activity) {
       renderActivities();
     } catch (error) {
       console.error('Error loading student profile:', error);
+      setStudentProfile({});
     }
   }
 
@@ -683,7 +712,7 @@ function renderAssignmentCard(activity) {
   function attachEventHandlers() {
     const closeModalBtn = document.getElementById('closeModal');
     const cancelSubmitBtn = document.getElementById('cancelSubmitBtn');
-    const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+    const backToDashboardBtn = document.getElementById('backToDashboardBtn') || document.getElementById('backDashboardBtn');
     const pasteGithubBtn = document.getElementById('pasteGithubBtn');
     setSubmitButtonState('idle');
     const existingRepoGroup = document.getElementById('existingRepoGroup');
@@ -697,7 +726,12 @@ function renderAssignmentCard(activity) {
         applySubmissionMode(event.target.value === 'new' ? 'new' : 'existing');
       });
 
-      applySubmissionMode(submissionModeSelect.value === 'new' ? 'new' : 'existing');
+      const initialMode = submissionModeSelect.value === 'new'
+        ? 'new'
+        : submissionModeSelect.value === 'existing'
+          ? 'existing'
+          : '';
+      applySubmissionMode(initialMode);
     }
 
     if (backToDashboardBtn) {
