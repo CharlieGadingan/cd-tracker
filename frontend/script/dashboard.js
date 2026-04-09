@@ -373,8 +373,10 @@ function syncCloseStatusAction(status) {
 }
 
 function getInitials(name) {
-    const firstName = name.trim().split(/\s+/)[0] || '';
-    return firstName.substring(0, 2).toUpperCase() || 'U';
+    const parts = name.trim().split(/\s+/); // split by spaces
+    const firstInitial = parts[0] ? parts[0][0].toUpperCase() : '';
+    const lastInitial = parts.length > 1 ? parts[parts.length - 1][0].toUpperCase() : '';
+    return (firstInitial + lastInitial) || 'U';
 }
 
 function escapeHtml(text) {
@@ -612,6 +614,8 @@ function applyProfileToUI(data) {
     const profileUrl = data.profileUrl || '';
     const email      = data.email || '';
 
+    const welcomeUserEl = document.getElementById('welcomeUser');
+    if (welcomeUserEl) welcomeUserEl.textContent = firstName || fullName;
 
     const userNameEl = document.getElementById('userName');
     if (userNameEl) userNameEl.textContent = fullName;
