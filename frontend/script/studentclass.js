@@ -752,13 +752,14 @@ function renderAssignmentCard(activity) {
   function init() {
     attachEventHandlers();
     renderActivities();
-    loadStudentProfile();
-    loadActivities();
-    loadClassroomInfo();
-    if (!classroomId) {
-      console.warn('studentclass loaded without a classroomId query parameter');
-    }
+  }
+
+  async function initializeAsync() {
+    await loadStudentProfile();
+    await loadActivities();
+    await loadClassroomInfo();
   }
 
   init();
+  initializeAsync();
 })();

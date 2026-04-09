@@ -77,12 +77,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    const profile = await loadUserProfile();
-    if (profile && !isProfileInitialized(profile)) {
-        showNotification('Your profile looks incomplete. You can update it from your profile modal.', 'warning');
-    }
-
-    loadClasses();
+    await loadUserProfile();
+    await loadClasses();
     setupEventListeners();
 
     // ── Tutorial Modal ─────────────────────────────────────────────

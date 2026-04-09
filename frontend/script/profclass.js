@@ -12,18 +12,18 @@
             // INITIALIZATION
             // ═══════════════════════════════════════════════════════════════════
 
-            document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', async () => {
                 if (!apiRequest) {
                     showNotification('API client is not initialized.', 'error');
-
                     return;
                 }
 
                 extractClassroomId();
-                loadUserProfile();
-                loadStudents();
-                loadActivities();
                 setupEventListeners();
+
+                await loadUserProfile();
+                await loadStudents();
+                await loadActivities();
             });
 
             // ═══════════════════════════════════════════════════════════════════
@@ -143,31 +143,56 @@
             // ═══════════════════════════════════════════════════════════════════
 
             function setupEventListeners() {
-                document.getElementById('createActivityBtn').addEventListener('click', () => {
-                    document.getElementById('createActivityForm').reset();
-                    document.getElementById('activityStatus').value = 'PUBLISHED';
-                    openModal(document.getElementById('createActivityModal'));
-                });
+                const createActivityBtn = document.getElementById('createActivityBtn');
+                if (createActivityBtn) {
+                    createActivityBtn.addEventListener('click', () => {
+                        document.getElementById('createActivityForm').reset();
+                        document.getElementById('activityStatus').value = 'PUBLISHED';
+                        openModal(document.getElementById('createActivityModal'));
+                    });
+                }
 
-                document.getElementById('closeModalBtn').addEventListener('click', () => {
-                    closeModal(document.getElementById('createActivityModal'));
-                });
+                const closeModalBtn = document.getElementById('closeModalBtn');
+                if (closeModalBtn) {
+                    closeModalBtn.addEventListener('click', () => {
+                        closeModal(document.getElementById('createActivityModal'));
+                    });
+                }
 
-                document.getElementById('cancelBtn').addEventListener('click', () => {
-                    closeModal(document.getElementById('createActivityModal'));
-                });
+                const cancelBtn = document.getElementById('cancelBtn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        closeModal(document.getElementById('createActivityModal'));
+                    });
+                }
 
-                document.getElementById('saveActivityBtn').addEventListener('click', handleCreateActivity);
+                const saveActivityBtn = document.getElementById('saveActivityBtn');
+                if (saveActivityBtn) {
+                    saveActivityBtn.addEventListener('click', async () => {
+                        await handleCreateActivity();
+                    });
+                }
 
-                document.getElementById('closeEditModalBtn').addEventListener('click', () => {
-                    closeModal(document.getElementById('editActivityModal'));
-                });
+                const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+                if (closeEditModalBtn) {
+                    closeEditModalBtn.addEventListener('click', () => {
+                        closeModal(document.getElementById('editActivityModal'));
+                    });
+                }
 
-                document.getElementById('cancelEditBtn').addEventListener('click', () => {
-                    closeModal(document.getElementById('editActivityModal'));
-                });
+                const cancelEditBtn = document.getElementById('cancelEditBtn');
+                if (cancelEditBtn) {
+                    cancelEditBtn.addEventListener('click', () => {
+                        closeModal(document.getElementById('editActivityModal'));
+                    });
+                }
 
-                document.getElementById('saveEditActivityBtn').addEventListener('click', handleEditActivity);
+                const saveEditActivityBtn = document.getElementById('saveEditActivityBtn');
+                if (saveEditActivityBtn) {
+                    saveEditActivityBtn.addEventListener('click', async () => {
+                        await handleEditActivity();
+                    });
+                }
 
                 const closeUnsubmittedModalBtn = document.getElementById('closeUnsubmittedModalBtn');
                 const closeUnsubmittedBtn = document.getElementById('closeUnsubmittedBtn');
@@ -182,16 +207,21 @@
                     });
                 }
 
+                const activityFilter = document.getElementById('activityFilter');
+                if (activityFilter) {
+                    activityFilter.addEventListener('change', async (e) => {
+                        await filterActivityLog(e.target.value);
+                    });
+                }
 
-                document.getElementById('activityFilter').addEventListener('change', (e) => {
-                    filterActivityLog(e.target.value);
-                });
-
-                document.getElementById('backToDashboardBtn').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // Navigate back to main dashboard
-                    window.location.href = '/dashboard/';
-                });
+                const backToDashboardBtn = document.getElementById('backDashboardBtn');
+                if (backToDashboardBtn) {
+                    backToDashboardBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        // Navigate back to main dashboard
+                        window.location.href = '/dashboard/';
+                    });
+                }
 
                 window.addEventListener('click', (e) => {
                     const createModal = document.getElementById('createActivityModal');
@@ -222,7 +252,7 @@
                     const lastName   = data.lastName  || '';
                     const fullName   = `${firstName} ${lastName}`.trim() || 'Professor';
                     const profileUrl = data.profileUrl || '';
-                    const initials   = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'IC';
+                    const initials   = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'PR';
 
                     document.getElementById('professorName').textContent = fullName;
 
@@ -237,7 +267,15 @@
 
                 } catch (error) {
                     console.error('Error loading profile:', error);
-                    showNotification('Failed to load profile', 'error');
+                    // Gracefully handle - show defaults
+                    const professorNameEl = document.getElementById('professorName');
+                    if (professorNameEl) {
+                        professorNameEl.textContent = 'Professor';
+                    }
+                    const avatarEl = document.getElementById('professorAvatar');
+                    if (avatarEl) {
+                        avatarEl.textContent = 'PR';
+                    }
                 }
             }
 
@@ -426,8 +464,16 @@
                         renderActivities();
                         return;
                     }
+                    if (String(error.message || '').includes('401') || String(error.message || '').includes('Authentication')) {
+                        console.log('Authentication error - token may have expired');
+                        activities = [];
+                        renderActivities();
+                        return;
+                    }
                     console.error('Error loading activities:', error);
                     showNotification(error.message || 'Failed to load activities', 'error');
+                    activities = [];
+                    renderActivities();
                 }
             }
 
@@ -458,13 +504,13 @@
                                     ${escapeHtml(getActivityTitle(activity))}
                                 </div>
                                 <div class="assignment-actions">
-                                    <button class="action-btn" onclick="showUnsubmittedStudents('${escapeHtml(activityId)}')" title="Needs Repository Submission">
+                                    <button class="action-btn" onclick="(async () => await showUnsubmittedStudents('${escapeHtml(activityId)}'))()" title="Needs Repository Submission">
                                         <i class="fas fa-user-clock"></i>
                                     </button>
-                                    <button class="action-btn" onclick="editActivity('${escapeHtml(activityId)}')">
+                                    <button class="action-btn" onclick="(async () => await editActivity('${escapeHtml(activityId)}'))()" >
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="action-btn" onclick="deleteActivity('${escapeHtml(activityId)}')">
+                                    <button class="action-btn" onclick="(async () => await deleteActivity('${escapeHtml(activityId)}'))()" >
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
