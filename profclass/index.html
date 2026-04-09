@@ -80,7 +80,7 @@
                         <i class="fas fa-users"></i>
                         Students
                     </h2>
-                    <p class="students-subtitle">Click on a student to view analytics</p>
+                    <p class="students-subtitle">Student roster</p>
                 </div>
                 <div id="studentsList">
                     <div class="empty-state">
@@ -265,21 +265,42 @@
             <div class="modal-header">
                 <h2 id="unsubmittedModalTitle">
                     <i class="fas fa-user-clock"></i>
-                    Students Needing Repository Submission
+                    Activity Repository Status
                 </h2>
                 <button class="close-btn" id="closeUnsubmittedModalBtn">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="unsubmittedSubtitle" style="color: #666; margin-bottom: 20px;">Loading students...</p>
+                <p id="unsubmittedSubtitle" style="color: #8b949e; margin-bottom: 20px;">Loading activity repository status...</p>
                 <div id="unsubmittedList">
                     <div class="empty-state">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <p>Checking who needs repository submission...</p>
+                        <p>Loading students and repository submissions...</p>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="closeUnsubmittedBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="submittedDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="submittedDetailTitle">
+                    <i class="fas fa-file-circle-check"></i>
+                    Submission Details
+                </h2>
+                <button class="close-btn" id="closeSubmittedDetailModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="submittedDetailBody">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading submission details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeSubmittedDetailBtn">Back to Submitted</button>
             </div>
         </div>
     </div>

@@ -384,7 +384,6 @@ function loadClassroomInfo() {
     }
 
 
-    // Split activities using EXACTLY the same logic you already use
     const unsubmitted = [];
     const submitted = [];
     filteredActivities.forEach(activity => {
@@ -395,11 +394,9 @@ function loadClassroomInfo() {
       }
     });
 
-    // Nice default: unsubmitted sorted by most urgent first
     unsubmitted.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
 
 
-    // Render Unsubmitted section
     const unsubmittedContainer = document.getElementById('unsubmittedAssignments');
     unsubmittedContainer.innerHTML = `
       <div class="section-header">
