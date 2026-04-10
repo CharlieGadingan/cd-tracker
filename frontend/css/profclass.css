@@ -652,6 +652,12 @@ body.modal-open {
     border: 1px solid rgba(88, 166, 255, 0.2);
 }
 
+.badge-joined {
+    background: rgba(240, 136, 62, 0.12);
+    color: #f0883e;
+    border: 1px solid rgba(240, 136, 62, 0.28);
+}
+
 /* ── Modal ─────────────────────────────────────────────────────── */
 .modal {
     display: none;

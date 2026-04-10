@@ -32,6 +32,7 @@
                 await loadUserProfile();
                 await loadStudents();
                 await loadActivities();
+                await loadRecentActivities();
             });
 
             // ═══════════════════════════════════════════════════════════════════
@@ -301,6 +302,184 @@
                 return getSubmittedEntries(activityId)
                     .filter(item => String(item.repositoryUrl || '').trim().length > 0)
                     .length;
+            }
+
+            function normalizeRecentActivity(entry) {
+                const firstName = String(entry?.firstName || '').trim();
+                const lastName = String(entry?.lastName || '').trim();
+                const studentName = `${firstName} ${lastName}`.trim();
+                const eventType = String(entry?.eventType || '').trim().toUpperCase();
+                const occurredAt = String(entry?.occurredAt || '').trim();
+
+                return {
+                    eventType,
+                    occurredAt,
+                    studentUserId: String(entry?.studentUserId || '').trim(),
+                    studentName,
+                    profileUrl: String(entry?.profileUrl || '').trim(),
+                    activityId: String(entry?.activityId || '').trim(),
+                    activityTitle: String(entry?.activityTitle || '').trim(),
+                    repositoryName: String(entry?.repositoryName || '').trim(),
+                    repositoryUrl: String(entry?.repositoryUrl || '').trim()
+                };
+            }
+
+            function extractRecentActivitiesPayload(responseBody) {
+                if (!responseBody) return [];
+                if (Array.isArray(responseBody)) return responseBody;
+                if (Array.isArray(responseBody?.data)) return responseBody.data;
+                if (Array.isArray(responseBody?.data?.data)) return responseBody.data.data;
+                return [];
+            }
+
+            function getRecentActivityUi(eventType) {
+                if (eventType === 'ACTIVITY_CREATED') {
+                    return {
+                        filter: 'activities',
+                        badgeClass: 'badge-created',
+                        badgeText: 'Activity',
+                        iconClass: 'fas fa-tasks',
+                        actor: 'Professor',
+                        isProfessor: true
+                    };
+                }
+
+                if (eventType === 'REPOSITORY_SUBMITTED') {
+                    return {
+                        filter: 'submissions',
+                        badgeClass: 'badge-submitted',
+                        badgeText: 'Submission',
+                        iconClass: 'fas fa-code-branch',
+                        actor: null,
+                        isProfessor: false
+                    };
+                }
+
+                if (eventType === 'STUDENT_JOINED') {
+                    return {
+                        filter: 'joins',
+                        badgeClass: 'badge-joined',
+                        badgeText: 'Join',
+                        iconClass: 'fas fa-user-plus',
+                        actor: null,
+                        isProfessor: false
+                    };
+                }
+
+                return {
+                    filter: 'all',
+                    badgeClass: 'badge-submitted',
+                    badgeText: 'Activity',
+                    iconClass: 'fas fa-bolt',
+                    actor: null,
+                    isProfessor: false
+                };
+            }
+
+            function renderActivityLog(items = activityLog) {
+                const activityList = document.getElementById('activityList');
+                if (!activityList) return;
+
+                if (!Array.isArray(items) || items.length === 0) {
+                    activityList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <p>No activity yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                activityList.innerHTML = items.map(item => {
+                    const ui = getRecentActivityUi(item.eventType);
+                    const actorName = ui.actor || item.studentName || 'Student';
+                    const initials = actorName
+                        .split(' ')
+                        .filter(Boolean)
+                        .map(part => part.charAt(0))
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase() || 'CT';
+
+                    let text = 'Classroom activity updated';
+                    let details = '';
+
+                    if (item.eventType === 'ACTIVITY_CREATED') {
+                        text = `${actorName} created an activity`;
+                        details = item.activityTitle ? `<i class="fas fa-book"></i> ${escapeHtml(item.activityTitle)}` : '';
+                    } else if (item.eventType === 'REPOSITORY_SUBMITTED') {
+                        text = `${actorName} submitted a repository`;
+                        const parts = [];
+                        if (item.activityTitle) parts.push(`<i class="fas fa-book"></i> ${escapeHtml(item.activityTitle)}`);
+                        if (item.repositoryName) parts.push(`<i class="fas fa-folder-open"></i> ${escapeHtml(item.repositoryName)}`);
+                        details = parts.join(' • ');
+                    } else if (item.eventType === 'STUDENT_JOINED') {
+                        text = `${actorName} joined the classroom`;
+                    }
+
+                    const avatarMarkup = item.profileUrl
+                        ? `<img src="${escapeHtml(item.profileUrl)}" alt="${escapeHtml(actorName)}">`
+                        : escapeHtml(initials);
+
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-avatar ${ui.isProfessor ? 'professor' : ''}">${avatarMarkup}</div>
+                            <div class="activity-content">
+                                <div class="activity-user">
+                                    ${escapeHtml(actorName)}
+                                    <span class="activity-badge ${ui.badgeClass}"><i class="${ui.iconClass}"></i> ${ui.badgeText}</span>
+                                </div>
+                                <div class="activity-text">${escapeHtml(text)}</div>
+                                ${details ? `<div class="activity-details">${details}</div>` : ''}
+                                <div class="activity-time"><i class="far fa-clock"></i> ${escapeHtml(item.occurredAt ? timeAgo(item.occurredAt) : 'Recently')}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function loadRecentActivities(limit = 20) {
+                if (!classroomId) return;
+
+                const activityList = document.getElementById('activityList');
+                if (activityList) {
+                    activityList.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading recent activity...</p>
+                        </div>
+                    `;
+                }
+
+                try {
+                    const result = await apiRequest(`/classrooms/${encodeURIComponent(classroomId)}/recent-activities?limit=${encodeURIComponent(limit)}`, {
+                        method: 'GET'
+                    });
+
+                    if (result?.error && !result?.data) {
+                        activityLog = [];
+                        renderActivityLog();
+                        return;
+                    }
+
+                    const rawItems = extractRecentActivitiesPayload(result);
+                    activityLog = rawItems
+                        .filter(item => item && typeof item === 'object')
+                        .map(normalizeRecentActivity)
+                        .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
+
+                    const selectedFilter = document.getElementById('activityFilter')?.value || 'all';
+                    filterActivityLog(selectedFilter);
+                } catch (error) {
+                    if (String(error.message || '').includes('405') || String(error.message || '').includes('404')) {
+                        activityLog = [];
+                        renderActivityLog();
+                        return;
+                    }
+                    console.error('Error loading recent activity:', error);
+                    activityLog = [];
+                    renderActivityLog();
+                }
             }
 
             function timeAgo(dateString) {
@@ -850,6 +1029,7 @@
                     }
 
                     showNotification('Activity created successfully!', 'success');
+                    await loadRecentActivities();
                     
                     closeModal(document.getElementById('createActivityModal'));
                     document.getElementById('createActivityForm').reset();
@@ -1340,6 +1520,7 @@
                     showNotification('Activity updated successfully!', 'success');
                     closeModal(document.getElementById('editActivityModal'));
                     await loadActivities();
+                    await loadRecentActivities();
 
                 } catch (error) {
                     console.error('Error updating activity:', error);
@@ -1366,6 +1547,7 @@
 
                     showNotification('Activity deleted successfully', 'success');
                     await loadActivities();
+                    await loadRecentActivities();
 
                 } catch (error) {
                     console.error('Error deleting activity:', error);
@@ -1374,7 +1556,18 @@
             }
 
             function filterActivityLog(filter) {
-                // Implement filtering logic if needed
+                if (!Array.isArray(activityLog) || activityLog.length === 0) {
+                    renderActivityLog([]);
+                    return;
+                }
+
+                if (filter === 'all') {
+                    renderActivityLog(activityLog);
+                    return;
+                }
+
+                const filtered = activityLog.filter(item => getRecentActivityUi(item.eventType).filter === filter);
+                renderActivityLog(filtered);
             }
 
             window.showUnsubmittedStudents = showUnsubmittedStudents;
