@@ -156,28 +156,15 @@
                 <span class="field-hint">Enter the unique class code</span>
             </div>
 
-            <!-- Optional Passcode Section -->
-            <div>
-                <label class="toggle-option" for="joinPasscodeToggle">
-                    <div class="toggle-info">
-                        <strong>Class Requires Passcode?</strong>
-                        <small>Enable if your teacher provided a passcode</small>
-                    </div>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="joinPasscodeToggle">
-                        <span class="toggle-slider"></span>
-                    </div>
-                </label>
-                <div id="joinPasscodeSection" style="display:none;">
-    <label for="joinPasscodeInput">Passcode</label>
-    <div class="password-wrapper">
-        <input type="password" id="joinPasscodeInput" placeholder="Enter the class passcode">
-        <button type="button" class="toggle-password" data-target="joinPasscodeInput">
-            <i class="fas fa-eye"></i>
-        </button>
-    </div>
-    <span class="field-hint">Leave empty if the class does not require a passcode</span>
-</div>
+            <div id="joinPasscodeSection" style="display:none;">
+                <label for="joinPasscodeInput">Passcode *</label>
+                <div class="password-wrapper">
+                    <input type="password" id="joinPasscodeInput" placeholder="Enter the class passcode">
+                    <button type="button" class="toggle-password" data-target="joinPasscodeInput">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <span class="field-hint">This field appears automatically when the class requires a passcode</span>
             </div>
 
             <div class="modal-actions">

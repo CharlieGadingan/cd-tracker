@@ -39,9 +39,11 @@ const requireApprovalInput = document.getElementById('requireApprovalInput');
 
 // Form inputs — Join Class
 const classCodeInput       = document.getElementById('classCodeInput');
-const joinPasscodeToggle   = document.getElementById('joinPasscodeToggle');
 const joinPasscodeSection  = document.getElementById('joinPasscodeSection');
 const joinPasscodeInput    = document.getElementById('joinPasscodeInput');
+
+let joinRequiresPasscode = false;
+let joinPasscodeClassCode = '';
 
 // Tab state
 let currentTab = 'created';
@@ -401,6 +403,37 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+function normalizeClassCodeForJoin(value) {
+    return String(value || '').trim().toUpperCase();
+}
+
+function setJoinPasscodeRequirement(required, forCode = '') {
+    joinRequiresPasscode = Boolean(required);
+    joinPasscodeClassCode = normalizeClassCodeForJoin(forCode);
+
+    if (joinPasscodeSection) {
+        joinPasscodeSection.style.display = joinRequiresPasscode ? 'block' : 'none';
+    }
+
+    if (joinPasscodeInput) {
+        joinPasscodeInput.required = joinRequiresPasscode;
+        if (!joinRequiresPasscode) {
+            joinPasscodeInput.value = '';
+        }
+    }
+}
+
+function resetJoinPasscodeRequirement() {
+    setJoinPasscodeRequirement(false, '');
+}
+
+function isPasscodeRequiredError(message) {
+    const normalized = String(message || '').toLowerCase();
+    return normalized.includes('requires a passcode') ||
+        normalized.includes('passcode required') ||
+        normalized.includes('passcode is required');
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MODAL HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -424,9 +457,7 @@ function closeModal(modal) {
         requireApprovalInput.checked = false;
     } else if (modal === joinModal) {
         classCodeInput.value = '';
-        if (joinPasscodeSection) joinPasscodeSection.style.display = 'none';
-        if (joinPasscodeInput) joinPasscodeInput.value = '';
-        if (joinPasscodeToggle) joinPasscodeToggle.checked = false;
+        resetJoinPasscodeRequirement();
     } else if (modal === manageModal) {
         const box   = document.getElementById('deleteConfirmBox');
         const input = document.getElementById('deleteConfirmInput');
@@ -487,17 +518,15 @@ function setupEventListeners() {
         }
     });
 
-    // Join class passcode toggle
-    joinPasscodeToggle?.addEventListener('change', (e) => {
-        if (e.target.checked) {
-            if (joinPasscodeSection) joinPasscodeSection.style.display = 'block';
-            if (joinPasscodeInput) joinPasscodeInput.required = true;
-        } else {
-            if (joinPasscodeSection) joinPasscodeSection.style.display = 'none';
-            if (joinPasscodeInput) {
-                joinPasscodeInput.required = false;
-                joinPasscodeInput.value = '';
-            }
+    classCodeInput?.addEventListener('input', () => {
+        const normalizedCode = normalizeClassCodeForJoin(classCodeInput.value);
+        if (!normalizedCode) {
+            resetJoinPasscodeRequirement();
+            return;
+        }
+
+        if (joinPasscodeClassCode && normalizedCode !== joinPasscodeClassCode) {
+            resetJoinPasscodeRequirement();
         }
     });
 
@@ -915,10 +944,16 @@ async function handleCreateClass() {
 
 async function handleJoinClass() {
     const code = classCodeInput?.value.trim() || '';
-    const passcode = joinPasscodeToggle?.checked ? joinPasscodeInput?.value.trim() : undefined;
+    const normalizedCode = normalizeClassCodeForJoin(code);
+    const passcode = joinPasscodeInput?.value.trim() || '';
 
     if (!code) {
         return showNotification('Please enter a class code', 'error');
+    }
+
+    if (joinRequiresPasscode && !passcode) {
+        joinPasscodeInput?.focus();
+        return showNotification('Please enter the class passcode', 'error');
     }
 
     if (confirmJoin) {
@@ -928,11 +963,12 @@ async function handleJoinClass() {
 
     try {
         const payload = { code };
-        if (passcode) {
+
+        if (joinRequiresPasscode && passcode) {
             payload.passcode = passcode;
         }
 
-        await apiRequest('/classrooms/join', {
+        const response = await apiRequest('/classrooms/join', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -941,13 +977,25 @@ async function handleJoinClass() {
             body: JSON.stringify(payload)
         });
 
+        const hasPassword = Boolean(response?.data?.hasPassword ?? response?.hasPassword);
+        setJoinPasscodeRequirement(hasPassword, normalizedCode);
+
         showNotification('Successfully joined classroom!', 'success');
         closeModal(joinModal);
         await loadClasses();
 
     } catch (error) {
         console.error('Error joining classroom:', error);
-        showNotification(error.message || 'Failed to join classroom. Please try again.', 'error');
+
+        const message = error?.message || '';
+        if (isPasscodeRequiredError(message)) {
+            setJoinPasscodeRequirement(true, normalizedCode);
+            joinPasscodeInput?.focus();
+            showNotification('This class requires a passcode. Enter it to continue.', 'info');
+            return;
+        }
+
+        showNotification(message || 'Failed to join classroom. Please try again.', 'error');
     } finally {
         if (confirmJoin) {
             confirmJoin.disabled    = false;

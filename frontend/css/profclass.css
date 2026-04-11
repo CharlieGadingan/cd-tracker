@@ -1654,6 +1654,320 @@ a.submission-repo-link:hover {
     font-weight: 500;
 }
 
+/* Feature styles (non-redesign): submission/grade workflow */
+.assignment-top-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.assignment-meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #8b949e;
+}
+
+.assignment-description {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #c9d1d9;
+    font-size: 13px;
+}
+
+.activity-status-chip,
+.status-chip,
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.status-chip.pending,
+.status-pill.pending,
+.activity-status-chip.pending,
+.activity-status-chip.draft {
+    color: #f5cc86;
+    background: rgba(210, 153, 34, 0.16);
+    border-color: rgba(210, 153, 34, 0.34);
+}
+
+.status-chip.submitted,
+.status-pill.submitted,
+.activity-status-chip.submitted,
+.activity-status-chip.published {
+    color: #9fd4ff;
+    background: rgba(88, 166, 255, 0.16);
+    border-color: rgba(88, 166, 255, 0.34);
+}
+
+.status-chip.graded,
+.status-pill.graded,
+.activity-status-chip.graded,
+.activity-status-chip.closed {
+    color: #8ee6ab;
+    background: rgba(46, 160, 67, 0.16);
+    border-color: rgba(46, 160, 67, 0.34);
+}
+
+.status-chip.none,
+.activity-status-chip.archived,
+.activity-status-chip.none {
+    color: #b6c0ca;
+    background: rgba(139, 148, 158, 0.16);
+    border-color: rgba(139, 148, 158, 0.34);
+}
+
+.progress-block {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #21262d;
+}
+
+.progress-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: #8b949e;
+}
+
+.progress-meta {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #8b949e;
+}
+
+.btn.btn-small {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.btn.btn-icon {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.btn.btn-danger {
+    background: rgba(248, 81, 73, 0.12);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.35);
+}
+
+.btn.btn-danger:hover {
+    background: rgba(248, 81, 73, 0.22);
+}
+
+.submission-card {
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    background: #0d1117;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.submission-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.submission-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+.submission-time {
+    font-size: 11px;
+    color: #8b949e;
+}
+
+.submission-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    font-size: 12px;
+}
+
+.submission-fields > div {
+    min-width: 0;
+}
+
+.field-label {
+    display: block;
+    color: #8b949e;
+    margin-bottom: 3px;
+}
+
+.submission-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.inline-note {
+    font-size: 12px;
+    color: #8b949e;
+}
+
+.inline-note.success {
+    color: #3fb950;
+}
+
+.repo-link {
+    color: #58a6ff;
+    text-decoration: none;
+}
+
+.repo-link:hover {
+    text-decoration: underline;
+}
+
+.repo-missing {
+    color: #8b949e;
+}
+
+.grade-student-info {
+    margin-bottom: 12px;
+    padding: 10px;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    background: #0d1117;
+}
+
+.grade-info-grid {
+    display: grid;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #c9d1d9;
+}
+
+.grade-info-grid strong {
+    color: #8b949e;
+    font-weight: 600;
+}
+
+.grade-activity-description {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #c9d1d9;
+    line-height: 1.45;
+    border-top: 1px dashed #30363d;
+    padding-top: 8px;
+}
+
+.empty-state.compact {
+    padding: 22px 16px;
+}
+
+.submitted-detail-modal-content {
+    width: 860px;
+    max-width: 96%;
+}
+
+.detail-shell {
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    background: #0d1117;
+    padding: 12px;
+}
+
+.detail-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.detail-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.detail-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+.detail-section {
+    border-top: 1px solid #21262d;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.detail-section h4 {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #8b949e;
+    margin-bottom: 8px;
+}
+
+.detail-grid {
+    display: grid;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.detail-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-grid span {
+    color: #c9d1d9;
+}
+
+.detail-paragraph {
+    font-size: 12px;
+    color: #c9d1d9;
+    line-height: 1.45;
+}
+
+.detail-repo-row {
+    margin-bottom: 8px;
+}
+
+.detail-repo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.detail-meta-line {
+    font-size: 12px;
+    color: #c9d1d9;
+    margin-top: 4px;
+}
+
+.detail-meta-line strong {
+    color: #8b949e;
+}
+
+.submission-repo-link i {
+    margin-left: 8px;
+    font-size: 10px;
+}
+
 @media (max-width: 640px) {
     .submitted-detail-grid {
         grid-template-columns: 1fr;
