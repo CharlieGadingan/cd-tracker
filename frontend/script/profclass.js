@@ -12,13 +12,40 @@ const state = {
   currentDetailRow: null,
 };
 
+// Add this at the beginning of your DOMContentLoaded event listener
 document.addEventListener("DOMContentLoaded", async () => {
   if (!apiRequest) {
     showNotification("API client is not initialized.", "error");
     return;
   }
 
+  // Clean up any stale analysis data if we're not coming from syntax page
+  const urlParams = new URLSearchParams(window.location.search);
+  const comingFromAnalyzer = urlParams.get("from") === "analyzer";
+
+  if (!comingFromAnalyzer) {
+    // Clear stale analysis data if older than 30 minutes
+    const stored = localStorage.getItem("pendingAnalysis");
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        const timestamp = new Date(data.timestamp);
+        const now = new Date();
+        const diffMinutes = (now - timestamp) / (1000 * 60);
+
+        if (diffMinutes > 30) {
+          localStorage.removeItem("pendingAnalysis");
+          sessionStorage.removeItem("pendingAnalysis");
+        }
+      } catch (e) {
+        localStorage.removeItem("pendingAnalysis");
+        sessionStorage.removeItem("pendingAnalysis");
+      }
+    }
+  }
+
   state.classroomId = extractClassroomId();
+
   if (!state.classroomId) {
     showNotification("Classroom ID not found in URL.", "error");
     setTimeout(() => {
@@ -32,8 +59,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function extractClassroomId() {
+  // First check URL parameters
   const params = new URLSearchParams(window.location.search);
-  const value = params.get("id") || params.get("classroomId") || "";
+  let value = params.get("id") || params.get("classroomId") || "";
+
+  // If not in URL, check localStorage (for when returning from syntax page)
+  if (!value) {
+    value = localStorage.getItem("currentClassroomId") || "";
+  }
+
   return String(value).trim();
 }
 
@@ -124,13 +158,19 @@ function setupEventListeners() {
       const action = actionButton.getAttribute("data-action");
 
       // Handle analyze action (doesn't need activityId or studentId)
+      // In the submissions list event listener, update the analyze button handler
       if (action === "analyze-code") {
         const repoUrl = actionButton.getAttribute("data-repo-url");
         const activityTitle = actionButton.getAttribute("data-activity-title");
         const studentName = actionButton.getAttribute("data-student-name");
 
         if (repoUrl) {
-          navigateToSyntaxAnalyzer(repoUrl, activityTitle, studentName);
+          // Use validation before navigating
+          await validateAndNavigateToAnalyzer(
+            repoUrl,
+            activityTitle,
+            studentName,
+          );
         } else {
           showNotification(
             "No repository URL available for analysis.",
@@ -212,16 +252,39 @@ function setupEventListeners() {
 }
 
 async function loadInitialData() {
-  await Promise.all([
-    loadUserProfile(),
-    loadStudents(),
-    loadActivities(),
-    loadSubmittedActivities(),
-  ]);
+  // Validate classroom ID before loading
+  if (!state.classroomId) {
+    showNotification(
+      "Classroom ID is missing. Redirecting to dashboard...",
+      "error",
+    );
+    setTimeout(() => {
+      window.location.href = "/dashboard/";
+    }, 1500);
+    return;
+  }
 
-  renderStudents();
-  renderActivities();
-  renderOverview();
+  // Store classroom ID in localStorage for persistence
+  localStorage.setItem("currentClassroomId", state.classroomId);
+
+  try {
+    await Promise.all([
+      loadUserProfile(),
+      loadStudents(),
+      loadActivities(),
+      loadSubmittedActivities(),
+    ]);
+
+    renderStudents();
+    renderActivities();
+    renderOverview();
+  } catch (error) {
+    console.error("Failed to load initial data:", error);
+    showNotification(
+      "Failed to load classroom data. Please try again.",
+      "error",
+    );
+  }
 }
 
 async function loadUserProfile() {
@@ -1524,36 +1587,447 @@ function getInputValue(id) {
   return element ? element.value : "";
 }
 /**
- * Navigate to Syntax Analyzer page with repository data
+ * Navigate to Syntax Analyzer page with repository data and classroom context
  * @param {string} repoUrl - GitHub repository URL
  * @param {string} activityTitle - Activity title
  * @param {string} studentName - Student name
  */
 
 function navigateToSyntaxAnalyzer(repoUrl, activityTitle, studentName) {
-    // Store the data in localStorage for the syntax page to use
-    const analysisData = {
-        repoUrl: repoUrl,
-        activityTitle: activityTitle || 'Activity',
-        studentName: studentName || 'Student',
-        timestamp: new Date().toISOString(),
-        source: 'professor_dashboard'
-    };
-    
-    // Save to localStorage
-    localStorage.setItem('pendingAnalysis', JSON.stringify(analysisData));
-    
-    // Also store in sessionStorage as backup
-    sessionStorage.setItem('pendingAnalysis', JSON.stringify(analysisData));
-    
-    // Show notification
-    showNotification(`Navigating to analyzer for: ${studentName}`, 'info');
-    
-    // Navigate to syntax.html
-    // Adjust the path based on your file structure
-    window.location.href = '/Syntax.html';
-    // If Syntax.html is in the same directory, use:
-    // window.location.href = 'Syntax.html';
-    // If it's in a different folder, adjust accordingly:
-    // window.location.href = '/frontend/Syntax.html';
+  // Get the current classroom ID from state
+  const classroomId = state.classroomId;
+
+  if (!classroomId) {
+    showNotification("Classroom ID not found. Unable to analyze.", "error");
+    return;
+  }
+
+  if (!repoUrl) {
+    showNotification("No repository URL available for analysis.", "error");
+    return;
+  }
+
+  // Store the complete data for the syntax page to use
+  const analysisData = {
+    repoUrl: repoUrl,
+    activityTitle: activityTitle || "Activity",
+    studentName: studentName || "Student",
+    classroomId: classroomId,
+    timestamp: new Date().toISOString(),
+    source: "professor_dashboard",
+    returnUrl: window.location.href, // Store current URL for return
+  };
+
+  // Save to localStorage
+  localStorage.setItem("pendingAnalysis", JSON.stringify(analysisData));
+
+  // Also store in sessionStorage as backup
+  sessionStorage.setItem("pendingAnalysis", JSON.stringify(analysisData));
+
+  // Store just the classroom ID separately for quick access
+  localStorage.setItem("currentClassroomId", classroomId);
+
+  // Show notification
+  showNotification(`Opening analyzer for: ${studentName}`, "info");
+
+  // Navigate to syntax.html with classroom ID as query parameter
+  window.location.href = `/Syntax.html?classroomId=${encodeURIComponent(classroomId)}&student=${encodeURIComponent(studentName)}&activity=${encodeURIComponent(activityTitle)}`;
+}
+/**
+ * Validate if repository contains C/C++ files before navigating to analyzer
+ * @param {string} repoUrl - GitHub repository URL
+ * @param {string} activityTitle - Activity title
+ * @param {string} studentName - Student name
+ */
+
+async function validateAndNavigateToAnalyzer(
+  repoUrl,
+  activityTitle,
+  studentName,
+) {
+  if (!repoUrl) {
+    showNotification("No repository URL available for analysis.", "error");
+    return false;
+  }
+
+  // Show loading notification
+  showNotification("Checking repository language...", "info");
+
+  try {
+    // Extract owner and repo name from GitHub URL
+    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (!match) {
+      showNotification("Invalid GitHub repository URL.", "error");
+      return false;
+    }
+
+    const owner = match[1];
+    const repo = match[2].replace(/\.git$/, "");
+
+    // Use GitHub API to get repository languages
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/languages`,
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        showNotification(
+          "Repository not found. Please check the URL.",
+          "error",
+        );
+      } else if (response.status === 403) {
+        showNotification(
+          "GitHub API rate limit exceeded. Please try again later.",
+          "error",
+        );
+      } else {
+        showNotification("Unable to check repository languages.", "error");
+      }
+      return false;
+    }
+
+    const languages = await response.json();
+
+    // Define C/C++ language keywords
+    const cppLanguages = ["C", "C++", "C#", "Objective-C", "Objective-C++"];
+    const cppExtensions = [
+      ".c",
+      ".cpp",
+      ".cc",
+      ".cxx",
+      ".h",
+      ".hpp",
+      ".hxx",
+      ".ino",
+    ];
+
+    // Check if any C/C++ language is present
+    let hasCpp = false;
+    let detectedLanguages = [];
+
+    for (const [lang, bytes] of Object.entries(languages)) {
+      detectedLanguages.push(lang);
+      if (cppLanguages.includes(lang)) {
+        hasCpp = true;
+        break;
+      }
+    }
+
+    // If no C/C++ detected by language name, we need to check file extensions via contents API
+    if (!hasCpp) {
+      showNotification("Checking file extensions...", "info");
+
+      // Get repository contents to check file extensions
+      const contentsResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`,
+      );
+
+      if (contentsResponse.ok) {
+        const contents = await contentsResponse.json();
+        const hasCppFiles = contents.tree?.some((item) => {
+          const fileName = item.path.toLowerCase();
+          return cppExtensions.some((ext) => fileName.endsWith(ext));
+        });
+
+        if (hasCppFiles) {
+          hasCpp = true;
+        }
+      }
+    }
+
+    if (!hasCpp) {
+      // Show detailed warning modal
+      showNoCppWarning(repoUrl, activityTitle, studentName, detectedLanguages);
+      return false;
+    }
+
+    // If C/C++ found, proceed to analyzer
+    proceedToAnalyzer(repoUrl, activityTitle, studentName);
+    return true;
+  } catch (error) {
+    console.error("Language validation error:", error);
+    showNotification(
+      "Failed to validate repository. Please try again.",
+      "error",
+    );
+    return false;
+  }
+}
+
+/**
+ * Show warning modal when no C/C++ files are found
+ */
+function showNoCppWarning(
+  repoUrl,
+  activityTitle,
+  studentName,
+  detectedLanguages,
+) {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById("noCppWarningModal");
+
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "noCppWarningModal";
+    modal.className = "modal";
+    modal.innerHTML = `
+            <div class="modal-content warning-modal">
+                <div class="modal-header">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--accent-yellow);"></i>
+                    <h3>No C/C++ Code Detected</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-icon-large">
+                        <i class="fab fa-cuttlefish"></i>
+                        <i class="fas fa-plus"></i>
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <p class="warning-message">
+                        <strong>This repository does not appear to contain C or C++ code.</strong>
+                    </p>
+                    <div class="repo-info-box">
+                        <p><i class="fab fa-github"></i> <strong>Repository:</strong></p>
+                        <code class="repo-url-display">${escapeHtml(repoUrl)}</code>
+                        <p><strong>Student:</strong> ${escapeHtml(studentName)}</p>
+                        <p><strong>Activity:</strong> ${escapeHtml(activityTitle)}</p>
+                    </div>
+                    ${
+                      detectedLanguages.length > 0
+                        ? `
+                        <div class="detected-languages">
+                            <p><i class="fas fa-code"></i> <strong>Detected Languages:</strong></p>
+                            <div class="language-tags">
+                                ${detectedLanguages.map((lang) => `<span class="lang-tag">${escapeHtml(lang)}</span>`).join("")}
+                            </div>
+                        </div>
+                    `
+                        : ""
+                    }
+                    <div class="warning-suggestions">
+                        <p><i class="fas fa-lightbulb"></i> <strong>Possible reasons:</strong></p>
+                        <ul>
+                            <li>The student submitted a repository without C/C++ files</li>
+                            <li>The repository might be empty or contain only other languages</li>
+                            <li>The repository URL might be incorrect</li>
+                            <li>The student may have submitted the wrong repository</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="closeCppWarningBtn">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button class="btn btn-primary" id="forceAnalyzeBtn">
+                        <i class="fas fa-code-branch"></i> Analyze Anyway
+                    </button>
+                </div>
+            </div>
+        `;
+    document.body.appendChild(modal);
+
+    // Add modal styles if not present
+    if (!document.getElementById("warningModalStyles")) {
+      const styles = document.createElement("style");
+      styles.id = "warningModalStyles";
+      styles.textContent = `
+                .warning-modal {
+                    max-width: 500px;
+                    width: 90%;
+                    background: var(--bg-card);
+                    border-radius: 16px;
+                    border: 1px solid var(--border);
+                    overflow: hidden;
+                }
+                .modal-header {
+                    padding: 20px;
+                    background: rgba(210, 153, 34, 0.1);
+                    border-bottom: 1px solid var(--border);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .modal-header h3 {
+                    margin: 0;
+                    color: var(--accent-yellow);
+                }
+                .modal-body {
+                    padding: 24px;
+                }
+                .warning-icon-large {
+                    text-align: center;
+                    font-size: 48px;
+                    margin-bottom: 20px;
+                    color: var(--accent-yellow);
+                }
+                .warning-icon-large i {
+                    margin: 0 5px;
+                }
+                .warning-message {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    font-size: 1.1rem;
+                }
+                .repo-info-box {
+                    background: var(--bg-input);
+                    padding: 16px;
+                    border-radius: 8px;
+                    margin: 16px 0;
+                    border: 1px solid var(--border);
+                }
+                .repo-info-box p {
+                    margin: 8px 0;
+                }
+                .repo-info-box code {
+                    display: block;
+                    word-break: break-all;
+                    margin: 8px 0;
+                    font-size: 0.85rem;
+                    color: var(--accent-blue);
+                }
+                .detected-languages {
+                    margin: 16px 0;
+                }
+                .language-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-top: 8px;
+                }
+                .lang-tag {
+                    background: rgba(88, 166, 255, 0.15);
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 0.85rem;
+                    color: var(--accent-blue);
+                }
+                .warning-suggestions {
+                    background: rgba(248, 81, 73, 0.1);
+                    padding: 16px;
+                    border-radius: 8px;
+                    margin-top: 16px;
+                    border-left: 3px solid var(--accent-yellow);
+                }
+                .warning-suggestions ul {
+                    margin: 8px 0 0 20px;
+                    color: var(--text-secondary);
+                }
+                .warning-suggestions li {
+                    margin: 4px 0;
+                }
+                .modal-footer {
+                    padding: 16px 20px;
+                    border-top: 1px solid var(--border);
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+                .btn-primary {
+                    background: var(--accent-blue);
+                    color: white;
+                    border: none;
+                }
+                .btn-primary:hover {
+                    background: #4793e0;
+                }
+                .btn-secondary {
+                    background: var(--bg-input);
+                    border: 1px solid var(--border);
+                    color: var(--text-primary);
+                }
+                .btn-secondary:hover {
+                    background: var(--border);
+                }
+                @media (max-width: 600px) {
+                    .warning-modal {
+                        width: 95%;
+                        margin: 20px;
+                    }
+                    .modal-footer {
+                        flex-direction: column;
+                    }
+                }
+            `;
+      document.head.appendChild(styles);
+    }
+  }
+
+  // Store data for force analyze
+  modal.setAttribute("data-repo-url", repoUrl);
+  modal.setAttribute("data-activity-title", activityTitle);
+  modal.setAttribute("data-student-name", studentName);
+
+  // Setup event listeners
+  const closeBtn = document.getElementById("closeCppWarningBtn");
+  const forceBtn = document.getElementById("forceAnalyzeBtn");
+
+  // Remove old listeners and add new ones
+  const newCloseBtn = closeBtn.cloneNode(true);
+  const newForceBtn = forceBtn.cloneNode(true);
+  closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+  forceBtn.parentNode.replaceChild(newForceBtn, forceBtn);
+
+  newCloseBtn.addEventListener("click", () => {
+    closeModal("noCppWarningModal");
+  });
+
+  newForceBtn.addEventListener("click", () => {
+    closeModal("noCppWarningModal");
+    // Proceed anyway (for cases where GitHub API might have missed C++ files)
+    proceedToAnalyzer(repoUrl, activityTitle, studentName);
+  });
+
+  // Close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal("noCppWarningModal");
+    }
+  });
+
+  openModal("noCppWarningModal");
+}
+
+/**
+ * Proceed to analyzer with the repository data
+ */
+function proceedToAnalyzer(repoUrl, activityTitle, studentName) {
+  const analysisData = {
+    repoUrl: repoUrl,
+    activityTitle: activityTitle || "Activity",
+    studentName: studentName || "Student",
+    classroomId: state.classroomId,
+    timestamp: new Date().toISOString(),
+    source: "professor_dashboard",
+  };
+
+  // Save to localStorage
+  localStorage.setItem("pendingAnalysis", JSON.stringify(analysisData));
+  sessionStorage.setItem("pendingAnalysis", JSON.stringify(analysisData));
+  localStorage.setItem("currentClassroomId", state.classroomId);
+
+  showNotification(`Opening analyzer for: ${studentName}`, "success");
+
+  // Navigate to syntax.html with all parameters
+  window.location.href = `/Syntax.html?classroomId=${encodeURIComponent(state.classroomId)}&student=${encodeURIComponent(studentName)}&activity=${encodeURIComponent(activityTitle)}&repo=${encodeURIComponent(repoUrl)}`;
+}
+
+/**
+ * Helper function to open modal
+ */
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add("active");
+    document.body.classList.add("modal-open");
+  }
+}
+
+/**
+ * Helper function to close modal
+ */
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove("active");
+    document.body.classList.remove("modal-open");
+  }
 }

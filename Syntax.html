@@ -1,936 +1,947 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>C/C++ Code Analyzer</title>
-    <link rel="icon" type="image/png" href="https://github.githubassets.com/favicons/favicon.png" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      :root {
-        --bg-dark: #0d1117;
-        --bg-card: #161b22;
-        --bg-input: #0d1117;
-        --border: #30363d;
-        --text-primary: #c9d1d9;
-        --text-secondary: #8b949e;
-        --accent-blue: #58a6ff;
-        --accent-green: #3fb950;
-        --accent-red: #f85149;
-        --accent-yellow: #d29922;
-        --accent-purple: #bc8cff;
-        --line-height: 1.6;
-        --font-size: 14px;
-        --line-number-width: 60px;
-      }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: var(--bg-dark);
-        color: var(--text-primary);
-        min-height: 100vh;
-      }
-      .header {
-        background: var(--bg-card);
-        border-bottom: 1px solid var(--border);
-        padding: 20px 30px;
-        text-align: center;
-        position: relative;
-      }
-      .back-btn {
-        position: absolute;
-        left: 30px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--bg-card);
-        color: var(--accent-blue);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 18px;
-        cursor: pointer;
-        font-size: 0.95rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.2s;
-        text-decoration: none;
-      }
-      .back-btn:hover {
-        background: var(--border);
-        border-color: var(--accent-blue);
-      }
-      .header h1 {
-        font-size: 2rem;
-        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-      .header p {
-        color: var(--text-secondary);
-        margin-top: 5px;
-      }
-      .main-content {
-        padding: 30px;
-        max-width: 1400px;
-        margin: 0 auto;
-      }
-      .input-section {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px 25px;
-        margin-bottom: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 20px;
-      }
-      .input-section-left {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-      }
-      .input-section-left h2 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 1.1rem;
-        color: var(--text-secondary);
-      }
-      .repo-url-display {
-        padding: 8px 16px;
-        background: var(--bg-input);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        color: var(--accent-blue);
-        font-size: 0.95rem;
-        font-family: monospace;
-        max-width: 500px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .repo-status {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-      }
-      .repo-status.analyzing {
-        background: rgba(88, 166, 255, 0.15);
-        color: var(--accent-blue);
-      }
-      .repo-status.completed {
-        background: rgba(63, 185, 80, 0.15);
-        color: var(--accent-green);
-      }
-      .repo-status.error {
-        background: rgba(248, 81, 73, 0.15);
-        color: var(--accent-red);
-      }
-      .repo-status.waiting {
-        background: rgba(210, 153, 34, 0.15);
-        color: var(--accent-yellow);
-      }
-      .supported-badge {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        color: var(--text-secondary);
-        font-size: 0.8rem;
-      }
-      .results-section {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        overflow: hidden;
-      }
-      .results-header {
-        background: var(--bg-input);
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-      .results-header h3 {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-      }
-      .summary-stats {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-      }
-      .stat {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        background: var(--bg-card);
-      }
-      .stat.errors {
-        color: var(--accent-red);
-      }
-      .stat.warnings {
-        color: var(--accent-yellow);
-      }
-      .stat.files {
-        color: var(--accent-blue);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>C/C++ Code Analyzer | Student Review</title>
+  <link rel="icon" type="image/png" href="https://github.githubassets.com/favicons/favicon.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-dark: #0d1117;
+      --bg-card: #161b22;
+      --bg-input: #0d1117;
+      --border: #30363d;
+      --text-primary: #c9d1d9;
+      --text-secondary: #8b949e;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-red: #f85149;
+      --accent-yellow: #d29922;
+      --accent-purple: #bc8cff;
+      --line-height: 1.5;
+      --font-size: 14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ===== FULLY RESPONSIVE: MOBILE + PC ===== */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      background: var(--bg-card);
+      color: var(--accent-blue);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .back-btn:hover {
+      background: var(--border);
+      border-color: var(--accent-blue);
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .main-content {
+      padding: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Input section - responsive grid */
+    .input-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .input-section-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .input-section-left h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .repo-url-display {
+      padding: 8px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--accent-blue);
+      font-size: 0.9rem;
+      font-family: monospace;
+      max-width: 500px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .input-section-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .repo-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+
+    .repo-status.analyzing {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .repo-status.completed {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--accent-green);
+    }
+
+    .repo-status.error {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--accent-red);
+    }
+
+    .repo-status.waiting {
+      background: rgba(210, 153, 34, 0.15);
+      color: var(--accent-yellow);
+    }
+
+    .supported-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+
+    /* Results section */
+    .results-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .results-header {
+      background: var(--bg-input);
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .results-header h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      font-size: 0.85rem;
+    }
+
+    .stat.errors { color: var(--accent-red); }
+    .stat.warnings { color: var(--accent-yellow); }
+    .stat.files { color: var(--accent-blue); }
+
+    /* ===== DESKTOP: HORIZONTAL LAYOUT ===== */
+    /* ===== MOBILE: VERTICAL LAYOUT (auto via media query) ===== */
+    .analyzer-container {
+      display: flex;
+      height: 70vh;
+      min-height: 500px;
+    }
+
+    /* Sidebar - files */
+    .file-sidebar {
+      width: 300px;
+      background: var(--bg-input);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .file-sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .file-sidebar-header h4 {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .file-search {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+    }
+
+    .file-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .file-item {
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+    }
+
+    .file-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .file-item.active {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .file-item.has-errors { border-left: 3px solid var(--accent-red); }
+    .file-item.has-warnings { border-left: 3px solid var(--accent-yellow); }
+    .file-item.clean { border-left: 3px solid var(--accent-green); }
+
+    .file-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.85rem;
+    }
+
+    /* Code area */
+    .code-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #1e1e1e;
+      min-width: 0;
+    }
+
+    .code-toolbar {
+      background: var(--bg-input);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .current-file-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .language-badge {
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      background: rgba(188, 140, 255, 0.15);
+      color: var(--accent-purple);
+    }
+
+    .code-viewer {
+      flex: 1;
+      display: flex;
+      overflow: auto;
+      background: #1e1e1e;
+    }
+
+    .line-numbers {
+      flex-shrink: 0;
+      width: 60px;
+      background: #1e1e1e;
+      color: #6e7681;
+      text-align: right;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      padding: 16px 8px 16px 0;
+      border-right: 1px solid #2d2d2d;
+      user-select: none;
+      white-space: pre;
+    }
+
+    .code-content {
+      flex: 1;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      color: #d4d4d4;
+      padding: 16px 0 16px 16px;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .code-line {
+      display: block;
+      white-space: pre;
+    }
+
+    .code-line.error-line {
+      background: rgba(248, 81, 73, 0.2);
+      border-left: 3px solid var(--accent-red);
+      margin-left: -16px;
+      padding-left: 13px;
+    }
+
+    .code-line.warning-line {
+      background: rgba(210, 153, 34, 0.2);
+      border-left: 3px solid var(--accent-yellow);
+      margin-left: -16px;
+      padding-left: 13px;
+    }
+
+    /* Error panel */
+    .error-panel {
+      width: 350px;
+      background: var(--bg-input);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .error-panel-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .error-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .error-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent-red);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .error-item.warning {
+      border-left-color: var(--accent-yellow);
+    }
+
+    .error-line-num {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .error-message {
+      font-size: 0.8rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .no-errors {
+      text-align: center;
+      padding: 30px;
+      color: var(--accent-green);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.success { background: var(--accent-green); }
+    .toast.error { background: var(--accent-red); }
+    .toast.info { background: var(--accent-blue); }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ========== RESPONSIVE BREAKPOINT: TABLET & MOBILE ========== */
+    @media (max-width: 900px) {
       .analyzer-container {
-        display: flex;
-        height: 70vh;
-        overflow: hidden;
+        flex-direction: column;
+        height: auto;
       }
+
       .file-sidebar {
-        width: 300px;
-        background: var(--bg-input);
-        border-right: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-      }
-      .file-sidebar-header {
-        padding: 15px;
-        border-bottom: 1px solid var(--border);
-      }
-      .file-sidebar-header h4 {
-        font-size: 0.95rem;
-        color: var(--text-secondary);
-        margin-bottom: 10px;
-      }
-      .file-search {
         width: 100%;
-        padding: 8px 12px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        color: var(--text-primary);
-        font-size: 0.85rem;
-      }
-      .file-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-      }
-      .file-item {
-        padding: 10px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 5px;
-        transition: background 0.2s;
-      }
-      .file-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-      }
-      .file-item.active {
-        background: rgba(88, 166, 255, 0.15);
-        color: var(--accent-blue);
-      }
-      .file-item.has-errors {
-        border-left: 3px solid var(--accent-red);
-      }
-      .file-item.has-warnings {
-        border-left: 3px solid var(--accent-yellow);
-      }
-      .file-item.clean {
-        border-left: 3px solid var(--accent-green);
-      }
-      .code-area {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        background: #1e1e1e;
-      }
-      .code-toolbar {
-        background: var(--bg-input);
+        max-height: 280px;
+        border-right: none;
         border-bottom: 1px solid var(--border);
-        padding: 10px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
       }
-      .current-file-info {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .language-badge {
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        background: rgba(188, 140, 255, 0.15);
-        color: var(--accent-purple);
-      }
-      .code-viewer {
-        flex: 1;
-        display: flex;
-        overflow: auto;
-        position: relative;
-        background: #1e1e1e;
-      }
-      .line-numbers {
-        flex-shrink: 0;
-        width: var(--line-number-width);
-        background: #1e1e1e;
-        color: #6e7681;
-        text-align: right;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-        font-size: var(--font-size);
-        line-height: var(--line-height);
-        padding: 15px 8px 15px 0;
-        border-right: 1px solid #2d2d2d;
-        user-select: none;
-        white-space: pre;
-      }
-      .code-content {
-        flex: 1;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-        font-size: var(--font-size);
-        line-height: var(--line-height);
-        color: #d4d4d4;
-        padding: 15px 0 15px 15px;
-        white-space: pre;
-        overflow: visible;
-      }
-      .code-line {
-        display: block;
-        white-space: pre;
-      }
-      .code-line.error-line {
-        background: rgba(248, 81, 73, 0.2);
-        border-left: 3px solid var(--accent-red);
-        margin-left: -15px;
-        padding-left: 12px;
-      }
-      .code-line.warning-line {
-        background: rgba(210, 153, 34, 0.2);
-        border-left: 3px solid var(--accent-yellow);
-        margin-left: -15px;
-        padding-left: 12px;
-      }
+
       .error-panel {
-        width: 350px;
-        background: var(--bg-input);
-        border-left: 1px solid var(--border);
-        display: flex;
+        width: 100%;
+        max-height: 320px;
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .code-area {
+        min-height: 400px;
+      }
+
+      .header {
         flex-direction: column;
+        align-items: flex-start;
       }
-      .error-panel-header {
-        padding: 15px;
-        border-bottom: 1px solid var(--border);
-        display: flex;
+
+      .header-left {
+        width: 100%;
         justify-content: space-between;
-        align-items: center;
       }
-      .error-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
+
+      .header h1 {
+        font-size: 1.4rem;
+        white-space: normal;
       }
-      .error-item {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-left: 3px solid var(--accent-red);
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 10px;
+
+      .input-section {
+        flex-direction: column;
+        align-items: flex-start;
       }
-      .error-item.warning {
-        border-left-color: var(--accent-yellow);
+
+      .input-section-left {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
       }
-      .error-line-num {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-bottom: 5px;
-        font-weight: 600;
+
+      .repo-url-display {
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-all;
       }
-      .error-message {
+
+      .input-section-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-content {
+        padding: 16px;
+      }
+
+      .results-header {
+        padding: 14px;
+      }
+
+      .summary-stats {
+        gap: 8px;
+      }
+
+      .stat {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+      }
+
+      .code-toolbar {
+        padding: 8px 12px;
+      }
+
+      .line-numbers {
+        width: 45px;
+        font-size: 11px;
+        padding: 12px 6px 12px 0;
+      }
+
+      .code-content {
+        font-size: 11px;
+        padding: 12px 0 12px 12px;
+      }
+
+      .back-btn {
+        padding: 6px 14px;
         font-size: 0.85rem;
-        line-height: 1.5;
       }
-      .no-errors {
-        text-align: center;
-        padding: 30px;
-        color: var(--accent-green);
+
+      .header h1 {
+        font-size: 1.2rem;
       }
-      .toast {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 2000;
-        animation: slideIn 0.3s ease;
-      }
-      .toast.success {
-        background: var(--accent-green);
-      }
-      .toast.error {
-        background: var(--accent-red);
-      }
-      .toast.info {
-        background: var(--accent-blue);
-      }
-      @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
-      }
-      .info-message {
-        background: rgba(88, 166, 255, 0.1);
-        border: 1px solid var(--accent-blue);
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px;
-        text-align: center;
-      }
-      @media (max-width: 1000px) {
-        .analyzer-container {
-          flex-direction: column;
-        }
-        .file-sidebar {
-          width: 100%;
-          max-height: 200px;
-        }
-        .error-panel {
-          width: 100%;
-          max-height: 250px;
-        }
-        .back-btn {
-          position: static;
-          transform: none;
-          margin-bottom: 15px;
-        }
-        .header {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        .input-section {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header">
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
       <button class="back-btn" id="backToClassBtn">
         <i class="fas fa-arrow-left"></i> Back to Class
       </button>
-      <h1><i class="fas fa-code"></i> C/C++ Code Analyzer</h1>
-      <p id="headerSubtitle">Analyzing C/C++ code from GitHub repository</p>
+      <h1><i class="fas fa-code"></i> C/C++ Analyzer</h1>
     </div>
+    <p id="headerSubtitle"><i class="fas fa-chalkboard-user"></i> Student code review system</p>
+  </div>
 
-    <div class="main-content">
-      <div class="input-section">
-        <div class="input-section-left">
-          <h2><i class="fab fa-github"></i> Repository:</h2>
-          <span class="repo-url-display" id="repoUrlDisplay">Loading...</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 20px;">
-          <span class="repo-status waiting" id="repoStatus">
-            <i class="fas fa-clock"></i> Waiting...
-          </span>
-          <span class="supported-badge">
-            <i class="fas fa-info-circle"></i> .c .cpp .cc .cxx .h .hpp
-          </span>
-        </div>
+  <div class="main-content">
+    <div class="input-section">
+      <div class="input-section-left">
+        <h2><i class="fab fa-github"></i> Repository:</h2>
+        <span class="repo-url-display" id="repoUrlDisplay">Loading session...</span>
       </div>
-
-      <div class="results-section" id="resultsSection" style="display: none;">
-        <div class="results-header">
-          <h3><i class="fas fa-chart-bar"></i> Analysis Results</h3>
-          <div class="summary-stats" id="summaryStats"></div>
-        </div>
-        <div class="analyzer-container">
-          <div class="file-sidebar">
-            <div class="file-sidebar-header">
-              <h4><i class="fas fa-folder-open"></i> Source Files</h4>
-              <input type="text" class="file-search" placeholder="Search files..." id="fileSearch" />
-            </div>
-            <div class="file-list" id="fileList"></div>
-          </div>
-
-          <div class="code-area">
-            <div class="code-toolbar">
-              <div class="current-file-info">
-                <i class="fas fa-file-code"></i>
-                <span id="currentFileName">Select a file</span>
-                <span class="language-badge" id="languageBadge">-</span>
-              </div>
-            </div>
-            <div class="code-viewer" id="codeViewer">
-              <div class="line-numbers" id="lineNumbers"></div>
-              <div class="code-content" id="codeContent"></div>
-            </div>
-          </div>
-
-          <div class="error-panel">
-            <div class="error-panel-header">
-              <h4><i class="fas fa-exclamation-triangle"></i> Issues Found</h4>
-              <div style="display: flex; gap: 10px;">
-                <span id="errorCount" style="color: var(--accent-red); font-weight: 600;">0</span>
-                <span id="warningCount" style="color: var(--accent-yellow); font-weight: 600;">0</span>
-              </div>
-            </div>
-            <div class="error-list" id="errorList"></div>
-          </div>
-        </div>
+      <div class="input-section-right">
+        <span class="repo-status waiting" id="repoStatus">
+          <i class="fas fa-clock"></i> Ready
+        </span>
+        <span class="supported-badge">
+          <i class="fas fa-info-circle"></i> .c .cpp .cc .cxx .h .hpp
+        </span>
       </div>
     </div>
 
-    <script>
-      const API_BASE_URL = "https://analyzec1-production.up.railway.app";
-      // For Railway: const API_BASE_URL = "https://analyzec1-production.up.railway.app";
-      
-      let currentAnalysisId = null;
-      let pollingInterval = null;
-      let fileList = [];
-      let currentFileIndex = 0;
-      let currentErrors = [];
-      let currentWarnings = [];
-      let analysisCompleted = false;
+    <div class="results-section" id="resultsSection" style="display: none;">
+      <div class="results-header">
+        <h3><i class="fas fa-chart-bar"></i> Analysis Results</h3>
+        <div class="summary-stats" id="summaryStats"></div>
+      </div>
+      <div class="analyzer-container">
+        <div class="file-sidebar">
+          <div class="file-sidebar-header">
+            <h4><i class="fas fa-folder-open"></i> Source Files</h4>
+            <input type="text" class="file-search" placeholder="Search files..." id="fileSearch" />
+          </div>
+          <div class="file-list" id="fileList"></div>
+        </div>
 
-      // =============================================
-      // FIX: Data persists on refresh
-      // =============================================
-      
-      function getStoredAnalysisData() {
-        const data = localStorage.getItem('pendingAnalysis');
-        if (data) {
-          try {
-            return JSON.parse(data);
-          } catch (e) {
-            return null;
-          }
-        }
-        return null;
+        <div class="code-area">
+          <div class="code-toolbar">
+            <div class="current-file-info">
+              <i class="fas fa-file-code"></i>
+              <span id="currentFileName">Select a file</span>
+              <span class="language-badge" id="languageBadge">-</span>
+            </div>
+          </div>
+          <div class="code-viewer" id="codeViewer">
+            <div class="line-numbers" id="lineNumbers"></div>
+            <div class="code-content" id="codeContent"></div>
+          </div>
+        </div>
+
+        <div class="error-panel">
+          <div class="error-panel-header">
+            <h4><i class="fas fa-exclamation-triangle"></i> Issues Found</h4>
+            <div style="display: flex; gap: 12px;">
+              <span id="errorCount" style="color: var(--accent-red); font-weight: 600;">0</span>
+              <span id="warningCount" style="color: var(--accent-yellow); font-weight: 600;">0</span>
+            </div>
+          </div>
+          <div class="error-list" id="errorList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "https://analyzec1-production.up.railway.app";
+    
+    let currentAnalysisId = null;
+    let pollingInterval = null;
+    let fileList = [];
+    let currentFileIndex = 0;
+    let currentErrors = [];
+    let currentWarnings = [];
+    let analysisCompleted = false;
+
+    // ========== PERSISTENCE ==========
+    function getStoredAnalysisData() {
+      const data = localStorage.getItem('pendingAnalysis');
+      if (data) {
+        try { return JSON.parse(data); } catch(e) { return null; }
       }
-      
-      function checkPendingAnalysis() {
-        const data = getStoredAnalysisData();
-        
-        if (data && data.repoUrl) {
-          console.log('📥 Found pending analysis:', data);
-          
-          // Display repo URL
-          document.getElementById('repoUrlDisplay').textContent = data.repoUrl;
-          
-          // Update header with student context
-          updateHeaderForProfessor(data.studentName, data.activityTitle);
-          
-          // Check if analysis was already started/completed
-          if (data.analysisId) {
-            // Resume polling for existing analysis
-            currentAnalysisId = data.analysisId;
-            document.getElementById('resultsSection').style.display = "block";
-            
-            const repoStatus = document.getElementById('repoStatus');
-            repoStatus.className = 'repo-status analyzing';
-            repoStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resuming...';
-            
-            // Check current status
-            checkAnalysisStatus(data.analysisId);
-          } else if (!analysisCompleted) {
-            // Start new analysis
-            startAutoAnalysis(data);
-          }
-        }
+      return null;
+    }
+    
+    function savePendingAnalysis(data) {
+      localStorage.setItem('pendingAnalysis', JSON.stringify(data));
+    }
+    
+    function updateHeaderForProfessor(studentName, activityTitle) {
+      const subtitle = document.getElementById('headerSubtitle');
+      if (subtitle && studentName) {
+        subtitle.innerHTML = `<i class="fas fa-user-graduate"></i> Reviewing: ${escapeHtml(studentName)} | ${escapeHtml(activityTitle || 'Activity')}`;
       }
-      
-      async function checkAnalysisStatus(analysisId) {
+    }
+
+    // ========== TOAST ==========
+    function showToast(message, type) {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      const icon = type === "success" ? "fa-check-circle" : (type === "error" ? "fa-exclamation-circle" : "fa-info-circle");
+      toast.innerHTML = `<i class="fas ${icon}"></i> ${escapeHtml(message)}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 5000);
+    }
+
+    // ========== API & POLLING ==========
+    async function checkAnalysisStatus(analysisId) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/analysis/${analysisId}`);
+        const data = await response.json();
+        if (data.success && data.status === 'completed') {
+          document.getElementById('repoStatus').className = 'repo-status completed';
+          document.getElementById('repoStatus').innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+          displayResults(data);
+          analysisCompleted = true;
+          if (pollingInterval) clearInterval(pollingInterval);
+          return true;
+        } else if (data.status === 'error') {
+          document.getElementById('repoStatus').className = 'repo-status error';
+          document.getElementById('repoStatus').innerHTML = '<i class="fas fa-times-circle"></i> Failed';
+          showToast(data.error || "Analysis failed", "error");
+          if (pollingInterval) clearInterval(pollingInterval);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function startPolling(analysisId) {
+      if (pollingInterval) clearInterval(pollingInterval);
+      let attempts = 0;
+      pollingInterval = setInterval(async () => {
+        attempts++;
         try {
           const response = await fetch(`${API_BASE_URL}/api/analysis/${analysisId}`);
           const data = await response.json();
-          
-          if (data.success) {
-            if (data.status === 'completed') {
-              // Analysis already completed
-              const repoStatus = document.getElementById('repoStatus');
-              repoStatus.className = 'repo-status completed';
-              repoStatus.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
-              displayResults(data);
-              analysisCompleted = true;
-            } else if (data.status === 'error') {
-              const repoStatus = document.getElementById('repoStatus');
-              repoStatus.className = 'repo-status error';
-              repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Failed';
-            } else {
-              // Still analyzing - start polling
-              startPolling(analysisId);
-            }
+          if (data.success && data.status === "completed") {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+            document.getElementById('repoStatus').className = 'repo-status completed';
+            document.getElementById('repoStatus').innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+            displayResults(data);
+            analysisCompleted = true;
+            showToast("Analysis completed successfully!", "success");
+          } else if (data.status === "error") {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+            document.getElementById('repoStatus').className = 'repo-status error';
+            document.getElementById('repoStatus').innerHTML = '<i class="fas fa-times-circle"></i> Failed';
+            showToast(data.error || "Analysis failed", "error");
+          }
+          if (attempts >= 120) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+            showToast("Analysis timeout", "error");
           }
         } catch (error) {
-          console.error('Error checking status:', error);
+          console.error("Polling error:", error);
         }
+      }, 2000);
+    }
+
+    function startAutoAnalysis(data) {
+      const repoStatus = document.getElementById('repoStatus');
+      repoStatus.className = 'repo-status analyzing';
+      repoStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+      document.getElementById('resultsSection').style.display = "block";
+      document.getElementById('summaryStats').innerHTML = `<div class="stat files"><i class="fas fa-spinner fa-spin"></i> Cloning repository...</div>`;
+      
+      fetch(`${API_BASE_URL}/api/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo_url: data.repoUrl })
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          currentAnalysisId = result.analysis_id;
+          data.analysisId = result.analysis_id;
+          savePendingAnalysis(data);
+          startPolling(result.analysis_id);
+          showToast(`Analysis started! Branch: ${result.branch_used}`, "success");
+        } else {
+          repoStatus.className = 'repo-status error';
+          repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Failed';
+          showToast(result.error || "Failed to start analysis", "error");
+        }
+      })
+      .catch(error => {
+        repoStatus.className = 'repo-status error';
+        repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Error';
+        showToast(`Error: ${error.message}`, "error");
+      });
+    }
+
+    // ========== DISPLAY RESULTS ==========
+    function displayResults(data) {
+      const summary = data.summary;
+      fileList = data.files || [];
+      
+      if (fileList.length === 0) {
+        document.getElementById("summaryStats").innerHTML = `<div class="stat"><i class="fas fa-info-circle"></i> No C/C++ files found</div>`;
+        document.getElementById("fileList").innerHTML = `<div style="padding: 20px; text-align: center;">No source files found</div>`;
+        return;
       }
       
-      function startAutoAnalysis(data) {
-        const repoStatus = document.getElementById('repoStatus');
-        repoStatus.className = 'repo-status analyzing';
-        repoStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
-        
-        document.getElementById('resultsSection').style.display = "block";
-        document.getElementById('summaryStats').innerHTML = `
-          <div class="stat files"><i class="fas fa-spinner fa-spin"></i> Cloning repository...</div>
-        `;
-        document.getElementById('fileList').innerHTML = `
-          <div style="padding: 20px; text-align: center; color: var(--text-secondary);">
-            <i class="fas fa-spinner fa-spin"></i> Waiting for analysis...
+      document.getElementById("summaryStats").innerHTML = `
+        <div class="stat files"><i class="fas fa-file-code"></i> Files: ${summary.total_files || 0}</div>
+        <div class="stat errors"><i class="fas fa-times-circle"></i> Errors: ${summary.errors_count || 0}</div>
+        <div class="stat warnings"><i class="fas fa-exclamation-triangle"></i> Warnings: ${summary.warnings_count || 0}</div>
+        <div class="stat"><i class="fas fa-code-branch"></i> ${summary.branch_used || "main"}</div>
+      `;
+      
+      renderFileList();
+      if (fileList.length > 0) loadFile(0);
+    }
+
+    function renderFileList(filter = "") {
+      const fileListEl = document.getElementById("fileList");
+      if (!fileList || fileList.length === 0) {
+        fileListEl.innerHTML = `<div style="padding: 20px; text-align: center;">No files</div>`;
+        return;
+      }
+      
+      const filteredFiles = filter ? fileList.filter(f => f.file_name.toLowerCase().includes(filter.toLowerCase())) : fileList;
+      
+      fileListEl.innerHTML = filteredFiles.map((file) => {
+        const originalIndex = fileList.findIndex(f => f.file_path === file.file_path);
+        let statusClass = "", statusIcon = "";
+        if (file.errors_count > 0) {
+          statusClass = "has-errors";
+          statusIcon = '<i class="fas fa-times-circle" style="color: var(--accent-red);"></i>';
+        } else if (file.warnings_count > 0) {
+          statusClass = "has-warnings";
+          statusIcon = '<i class="fas fa-exclamation-circle" style="color: var(--accent-yellow);"></i>';
+        } else {
+          statusClass = "clean";
+          statusIcon = '<i class="fas fa-check-circle" style="color: var(--accent-green);"></i>';
+        }
+        return `
+          <div class="file-item ${statusClass} ${originalIndex === currentFileIndex ? "active" : ""}" onclick="window.loadFile(${originalIndex})">
+            <i class="fas fa-file-code"></i>
+            <span class="file-name" title="${escapeHtml(file.file_path)}">${escapeHtml(file.file_name)}</span>
+            ${statusIcon}
           </div>
         `;
+      }).join("");
+    }
+
+    window.loadFile = function(index) {
+      if (index < 0 || index >= fileList.length) return;
+      currentFileIndex = index;
+      const file = fileList[index];
+      document.getElementById("currentFileName").textContent = file.file_name;
+      document.getElementById("languageBadge").textContent = file.language || "C/C++";
+      currentErrors = file.errors || [];
+      currentWarnings = file.warnings || [];
+      updateErrorPanel();
+      displayCode(file.code || file.content || "// No code content available");
+      renderFileList(document.getElementById("fileSearch").value);
+    };
+
+    function displayCode(code) {
+      const lines = code.split("\n");
+      const lineNumbersEl = document.getElementById("lineNumbers");
+      const codeContentEl = document.getElementById("codeContent");
+      lineNumbersEl.innerHTML = "";
+      codeContentEl.innerHTML = "";
+      
+      for (let i = 0; i < lines.length; i++) {
+        const lineNum = document.createElement("div");
+        lineNum.textContent = i + 1;
+        lineNumbersEl.appendChild(lineNum);
         
-        // Start the analysis
-        fetch(`${API_BASE_URL}/api/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ repo_url: data.repoUrl })
-        })
-        .then(response => response.json())
-        .then(result => {
-          if (result.success) {
-            currentAnalysisId = result.analysis_id;
-            
-            // Save analysis ID to localStorage
-            data.analysisId = result.analysis_id;
-            localStorage.setItem('pendingAnalysis', JSON.stringify(data));
-            
-            startPolling(result.analysis_id);
-            showToast(`Analysis started! Branch: ${result.branch_used}`, "success");
-          } else {
-            repoStatus.className = 'repo-status error';
-            repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Failed';
-            showToast(result.error || "Failed to start analysis", "error");
-          }
-        })
-        .catch(error => {
-          repoStatus.className = 'repo-status error';
-          repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Error';
-          showToast(`Error: ${error.message}`, "error");
+        const lineContent = document.createElement("div");
+        lineContent.className = "code-line";
+        const hasError = currentErrors.some(e => e.line === i + 1);
+        const hasWarning = currentWarnings.some(w => w.line === i + 1);
+        if (hasError) lineContent.classList.add("error-line");
+        else if (hasWarning) lineContent.classList.add("warning-line");
+        lineContent.textContent = lines[i] || " ";
+        codeContentEl.appendChild(lineContent);
+      }
+    }
+
+    function updateErrorPanel() {
+      const errorListEl = document.getElementById("errorList");
+      const errorCountEl = document.getElementById("errorCount");
+      const warningCountEl = document.getElementById("warningCount");
+      errorCountEl.textContent = currentErrors.length;
+      warningCountEl.textContent = currentWarnings.length;
+      
+      if (currentErrors.length === 0 && currentWarnings.length === 0) {
+        errorListEl.innerHTML = `<div class="no-errors"><i class="fas fa-check-circle fa-2x"></i><div style="margin-top: 10px;">No issues found!</div></div>`;
+        return;
+      }
+      
+      let html = "";
+      if (currentErrors.length > 0) {
+        html += `<div style="margin-bottom: 10px; font-weight: 600; color: var(--accent-red);"><i class="fas fa-times-circle"></i> Errors (${currentErrors.length})</div>`;
+        currentErrors.forEach(err => {
+          html += `<div class="error-item"><div class="error-line-num">Line ${err.line || "?"}</div><div class="error-message">${escapeHtml(err.message)}</div></div>`;
         });
       }
-      
-      function updateHeaderForProfessor(studentName, activityTitle) {
-        const subtitle = document.getElementById('headerSubtitle');
-        if (subtitle && studentName) {
-          subtitle.innerHTML = `<i class="fas fa-user-graduate"></i> Reviewing: ${escapeHtml(studentName)} | ${escapeHtml(activityTitle || 'Activity')}`;
-          subtitle.style.color = 'var(--accent-purple)';
-        }
+      if (currentWarnings.length > 0) {
+        if (currentErrors.length > 0) html += `<div style="margin: 12px 0 4px;"></div>`;
+        html += `<div style="margin-bottom: 10px; font-weight: 600; color: var(--accent-yellow);"><i class="fas fa-exclamation-triangle"></i> Warnings (${currentWarnings.length})</div>`;
+        currentWarnings.forEach(warn => {
+          html += `<div class="error-item warning"><div class="error-line-num">Line ${warn.line || "?"}</div><div class="error-message">${escapeHtml(warn.message)}</div></div>`;
+        });
       }
+      errorListEl.innerHTML = html;
+    }
 
-      // =============================================
-      // BACK TO CLASS BUTTON - Clears data
-      // =============================================
-      
-      document.getElementById('backToClassBtn').addEventListener('click', () => {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          pollingInterval = null;
-        }
-        // Clear storage when going back
-        localStorage.removeItem('pendingAnalysis');
-        window.location.href = '/profclass.html';
-      });
+    function escapeHtml(text) {
+      if (!text) return "";
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
-      // =============================================
-      // FILE SEARCH
-      // =============================================
-      
-      document.getElementById('fileSearch').addEventListener('input', (e) => renderFileList(e.target.value));
+    // ========== INIT & BACK BUTTON ==========
+    document.getElementById('backToClassBtn').addEventListener('click', () => {
+      if (pollingInterval) clearInterval(pollingInterval);
+      localStorage.removeItem('pendingAnalysis');
+      window.location.href = '../profclass/index.html';
+    });
 
-      // =============================================
-      // POLLING
-      // =============================================
-      
-      function startPolling(analysisId) {
-        if (pollingInterval) clearInterval(pollingInterval);
-        
-        let attempts = 0;
-        const maxAttempts = 120;
-        
-        pollingInterval = setInterval(async () => {
-          attempts++;
-          
-          try {
-            const response = await fetch(`${API_BASE_URL}/api/analysis/${analysisId}`);
-            const data = await response.json();
-            
-            if (data.success && data.status === "completed") {
-              clearInterval(pollingInterval);
-              pollingInterval = null;
-              
-              const repoStatus = document.getElementById('repoStatus');
-              repoStatus.className = 'repo-status completed';
-              repoStatus.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
-              
-              displayResults(data);
-              analysisCompleted = true;
-              showToast("Analysis completed successfully!", "success");
-            } else if (data.status === "error") {
-              clearInterval(pollingInterval);
-              pollingInterval = null;
-              
-              const repoStatus = document.getElementById('repoStatus');
-              repoStatus.className = 'repo-status error';
-              repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Failed';
-              
-              showToast(data.error || "Analysis failed", "error");
-              document.getElementById("summaryStats").innerHTML = `
-                <div class="stat errors"><i class="fas fa-exclamation-triangle"></i> ${data.error || "Analysis failed"}</div>
-              `;
-            } else if (data.summary && data.summary.total_files === 0 && data.status === "completed") {
-              clearInterval(pollingInterval);
-              pollingInterval = null;
-              
-              const repoStatus = document.getElementById('repoStatus');
-              repoStatus.className = 'repo-status completed';
-              repoStatus.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
-              
-              showToast("No C/C++ files found", "info");
-              document.getElementById("summaryStats").innerHTML = `
-                <div class="stat"><i class="fas fa-info-circle"></i> No C/C++ files found</div>
-              `;
-            }
-            
-            if (attempts >= maxAttempts) {
-              clearInterval(pollingInterval);
-              pollingInterval = null;
-              
-              const repoStatus = document.getElementById('repoStatus');
-              repoStatus.className = 'repo-status error';
-              repoStatus.innerHTML = '<i class="fas fa-times-circle"></i> Timeout';
-              
-              showToast("Analysis timeout - please try again", "error");
-            }
-          } catch (error) {
-            console.error("Polling error:", error);
-          }
-        }, 2000);
-      }
+    document.getElementById('fileSearch').addEventListener('input', (e) => renderFileList(e.target.value));
 
-      function displayResults(data) {
-        const summary = data.summary;
-        fileList = data.files || [];
-        
-        if (fileList.length === 0) {
-          document.getElementById("summaryStats").innerHTML = `
-            <div class="stat"><i class="fas fa-info-circle"></i> No C/C++ files found</div>
-          `;
-          return;
-        }
-        
-        document.getElementById("summaryStats").innerHTML = `
-          <div class="stat files"><i class="fas fa-file-code"></i> Files: ${summary.total_files || 0}</div>
-          <div class="stat errors"><i class="fas fa-times-circle"></i> Errors: ${summary.errors_count || 0}</div>
-          <div class="stat warnings"><i class="fas fa-exclamation-triangle"></i> Warnings: ${summary.warnings_count || 0}</div>
-          <div class="stat"><i class="fas fa-code-branch"></i> Branch: ${summary.branch_used || "unknown"}</div>
-        `;
-        
-        renderFileList();
-        
-        if (fileList.length > 0) {
-          loadFile(0);
-        }
-      }
+    document.addEventListener("keydown", (e) => {
+      if (fileList.length === 0) return;
+      if (e.key === "ArrowUp" && currentFileIndex > 0) loadFile(currentFileIndex - 1);
+      else if (e.key === "ArrowDown" && currentFileIndex < fileList.length - 1) loadFile(currentFileIndex + 1);
+    });
 
-      function renderFileList(filter = "") {
-        const fileListEl = document.getElementById("fileList");
-        
-        if (!fileList || fileList.length === 0) {
-          fileListEl.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No C/C++ files found</div>`;
-          return;
-        }
-        
-        const filteredFiles = filter
-          ? fileList.filter(f => f.file_name.toLowerCase().includes(filter.toLowerCase()))
-          : fileList;
-        
-        if (filteredFiles.length === 0) {
-          fileListEl.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-secondary);">No matching files</div>`;
-          return;
-        }
-        
-        fileListEl.innerHTML = filteredFiles.map((file) => {
-          const originalIndex = fileList.findIndex(f => f.file_path === file.file_path);
-          let statusClass = "";
-          let statusIcon = "";
-          
-          if (file.errors_count > 0) {
-            statusClass = "has-errors";
-            statusIcon = '<i class="fas fa-times-circle" style="color: var(--accent-red);"></i>';
-          } else if (file.warnings_count > 0) {
-            statusClass = "has-warnings";
-            statusIcon = '<i class="fas fa-exclamation-circle" style="color: var(--accent-yellow);"></i>';
-          } else {
-            statusClass = "clean";
-            statusIcon = '<i class="fas fa-check-circle" style="color: var(--accent-green);"></i>';
-          }
-          
-          return `
-            <div class="file-item ${statusClass} ${originalIndex === currentFileIndex ? "active" : ""}" onclick="loadFile(${originalIndex})">
-              <i class="fas fa-file-code"></i>
-              <span class="file-name" title="${file.file_path}">${file.file_name}</span>
-              ${statusIcon}
-            </div>
-          `;
-        }).join("");
-      }
-
-      function loadFile(index) {
-        if (index < 0 || index >= fileList.length) return;
-        
-        currentFileIndex = index;
-        const file = fileList[index];
-        
-        document.getElementById("currentFileName").textContent = file.file_name;
-        document.getElementById("languageBadge").textContent = file.language || "C/C++";
-        
-        currentErrors = file.errors || [];
-        currentWarnings = file.warnings || [];
-        
-        updateErrorPanel();
-        displayCode(file.code || file.content || "// No code content available");
-        renderFileList();
-      }
-
-      function displayCode(code) {
-        const lines = code.split("\n");
-        const lineNumbersEl = document.getElementById("lineNumbers");
-        const codeContentEl = document.getElementById("codeContent");
-        
-        lineNumbersEl.innerHTML = "";
-        codeContentEl.innerHTML = "";
-        
-        for (let i = 0; i < lines.length; i++) {
-          const lineNum = document.createElement("div");
-          lineNum.textContent = i + 1;
-          lineNumbersEl.appendChild(lineNum);
-          
-          const lineContent = document.createElement("div");
-          lineContent.className = "code-line";
-          
-          const hasError = currentErrors.some(e => e.line === i + 1);
-          const hasWarning = currentWarnings.some(w => w.line === i + 1);
-          
-          if (hasError) {
-            lineContent.classList.add("error-line");
-          } else if (hasWarning) {
-            lineContent.classList.add("warning-line");
-          }
-          
-          lineContent.textContent = lines[i] || " ";
-          codeContentEl.appendChild(lineContent);
-        }
-      }
-
-      function updateErrorPanel() {
-        const errorListEl = document.getElementById("errorList");
-        const errorCountEl = document.getElementById("errorCount");
-        const warningCountEl = document.getElementById("warningCount");
-        
-        errorCountEl.textContent = currentErrors.length;
-        warningCountEl.textContent = currentWarnings.length;
-        
-        if (currentErrors.length === 0 && currentWarnings.length === 0) {
-          errorListEl.innerHTML = `
-            <div class="no-errors">
-              <i class="fas fa-check-circle fa-2x"></i>
-              <div style="margin-top: 10px;">No issues found!</div>
-            </div>
-          `;
-          return;
-        }
-        
-        let html = "";
-        
-        if (currentErrors.length > 0) {
-          html += `<div style="margin-bottom: 10px; font-weight: 600; color: var(--accent-red);"><i class="fas fa-times-circle"></i> Errors (${currentErrors.length})</div>`;
-          currentErrors.forEach(err => {
-            html += `
-              <div class="error-item">
-                <div class="error-line-num">Line ${err.line || "?"}</div>
-                <div class="error-message">${escapeHtml(err.message)}</div>
-              </div>
-            `;
+    // Check for pending analysis on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const data = getStoredAnalysisData();
+      if (data && data.repoUrl) {
+        document.getElementById('repoUrlDisplay').textContent = data.repoUrl;
+        updateHeaderForProfessor(data.studentName, data.activityTitle);
+        if (data.analysisId) {
+          currentAnalysisId = data.analysisId;
+          document.getElementById('resultsSection').style.display = "block";
+          document.getElementById('repoStatus').className = 'repo-status analyzing';
+          document.getElementById('repoStatus').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resuming...';
+          checkAnalysisStatus(data.analysisId).then(completed => {
+            if (!completed && !analysisCompleted) startPolling(data.analysisId);
           });
+        } else if (!analysisCompleted) {
+          startAutoAnalysis(data);
         }
-        
-        if (currentWarnings.length > 0) {
-          if (currentErrors.length > 0) html += `<div style="margin: 15px 0 10px 0;"></div>`;
-          html += `<div style="margin-bottom: 10px; font-weight: 600; color: var(--accent-yellow);"><i class="fas fa-exclamation-triangle"></i> Warnings (${currentWarnings.length})</div>`;
-          currentWarnings.forEach(warn => {
-            html += `
-              <div class="error-item warning">
-                <div class="error-line-num">Line ${warn.line || "?"}</div>
-                <div class="error-message">${escapeHtml(warn.message)}</div>
-              </div>
-            `;
-          });
-        }
-        
-        errorListEl.innerHTML = html;
+      } else {
+        document.getElementById('repoUrlDisplay').textContent = 'No active session. Please return to class dashboard.';
       }
-
-      function escapeHtml(text) {
-        if (!text) return "";
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function showToast(message, type) {
-        const toast = document.createElement("div");
-        toast.className = `toast ${type}`;
-        const icon = type === "success" ? "fa-check-circle" : (type === "error" ? "fa-exclamation-circle" : "fa-info-circle");
-        toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 5000);
-      }
-
-      // Keyboard navigation
-      document.addEventListener("keydown", (e) => {
-        if (fileList.length === 0) return;
-        
-        if (e.key === "ArrowUp" && currentFileIndex > 0) {
-          loadFile(currentFileIndex - 1);
-        } else if (e.key === "ArrowDown" && currentFileIndex < fileList.length - 1) {
-          loadFile(currentFileIndex + 1);
-        }
-      });
-
-      window.loadFile = loadFile;
-      
-      // Initialize
-      document.addEventListener('DOMContentLoaded', () => {
-        const data = getStoredAnalysisData();
-        if (data && data.repoUrl) {
-          document.getElementById('repoUrlDisplay').textContent = data.repoUrl;
-        }
-        checkPendingAnalysis();
-      });
-
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>
