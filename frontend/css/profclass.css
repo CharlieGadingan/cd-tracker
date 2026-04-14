@@ -826,12 +826,21 @@ body.modal-open {
 .btn.btn-primary:hover      { background: rgb(224, 223, 223); }
 .btn.btn-primary:disabled   { background: #21262d; color: #484f58; cursor: not-allowed; }
 
+.btn-secondarys {
+    background: transparent;
+    border-color: #21262d;
+    color: #22c55e;
+}
+.btn-secondarys:hover:not(:disabled) { color: #22c55e;
+    background: rgba(34,197,94,0.15); }
+
 .btn-secondary {
     background: transparent;
     border-color: #21262d;
     color: #8b949e;
 }
-.btn-secondary:hover:not(:disabled) { background: #21262d; color: #c9d1d9; }
+.btn-secondary:hover:not(:disabled) { color: #f85149;
+        background: rgba(248,81,73,0.1); }
 
 /* ── Notification ─────────────────────────────────────────────── */
 .notification {

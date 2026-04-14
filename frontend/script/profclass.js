@@ -14,6 +14,7 @@ const state = {
 
 // Add this at the beginning of your DOMContentLoaded event listener
 document.addEventListener("DOMContentLoaded", async () => {
+  renderLoadingSkeleton();
   if (!apiRequest) {
     showNotification("API client is not initialized.", "error");
     return;
@@ -275,6 +276,8 @@ async function loadInitialData() {
       loadSubmittedActivities(),
     ]);
 
+    await new Promise(r => setTimeout(r, 120));
+    
     renderStudents();
     renderActivities();
     renderOverview();
@@ -285,6 +288,7 @@ async function loadInitialData() {
       "error",
     );
   }
+}
 
 
 async function loadUserProfile() {
@@ -587,7 +591,7 @@ function renderActivities() {
                             <i class="fas fa-list-check"></i>
                             <span>View Submissions</span>
                         </button>
-                        <button class="btn btn-secondary btn-icon" data-action="edit-activity" data-activity-id="${escapeHtml(activityId)}" title="Edit Activity">
+                        <button class="btn btn-secondarys btn-icon" data-action="edit-activity" data-activity-id="${escapeHtml(activityId)}" title="Edit Activity">
                             <i class="fas fa-pen"></i>
                         </button>
                         <button class="btn btn-danger btn-icon" data-action="delete-activity" data-activity-id="${escapeHtml(activityId)}" title="Delete Activity">
@@ -1093,6 +1097,7 @@ function openGradeModal(activityId, studentUserId) {
 }
 
 async function handleSubmitGrade() {
+  if (this.disabled) return;
   const activityId = asString(getInputValue("gradeActivityId"));
   const studentUserId = asString(getInputValue("gradeStudentUserId"));
   const feedback = asString(getInputValue("gradeFeedback"));
@@ -1276,6 +1281,7 @@ function openEditActivityModal(activityId) {
 }
 
 async function handleEditActivity() {
+  if (this.disabled) return;
   const activityId = asString(getInputValue("editActivityId"));
   const title = asString(getInputValue("editActivityTitle"));
   const description = asString(getInputValue("editActivityDescription"));
@@ -1350,6 +1356,7 @@ async function handleEditActivity() {
 }
 
 async function deleteActivity(activityId) {
+  if (this.disabled) return;
   const confirmMessage =
     "Are you sure you want to delete this activity? This cannot be undone.";
   let approved = false;
@@ -2035,24 +2042,7 @@ function proceedToAnalyzer(repoUrl, activityTitle, studentName) {
 /**
  * Helper function to open modal
  */
-function openModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.add("active");
-    document.body.classList.add("modal-open");
-  }
-}
 
-/**
- * Helper function to close modal
- */
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.remove("active");
-    document.body.classList.remove("modal-open");
-  }
-}
 
     // Store the data in localStorage for the syntax page to use
     const analysisData = {
@@ -2079,7 +2069,7 @@ function closeModal(modalId) {
     // window.location.href = 'Syntax.html';
     // If it's in a different folder, adjust accordingly:
     // window.location.href = '/frontend/Syntax.html';
-}
+
 
 function renderLoadingSkeleton() {
     const assignments = document.getElementById('assignmentsList');
