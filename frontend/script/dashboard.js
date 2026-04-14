@@ -99,82 +99,115 @@ document.querySelectorAll(".tutorial-step-img").forEach(img => {
     img.addEventListener("click", () => {
         activeHelpModal = img.closest(".modal");
         preview.style.display = "flex";
+        setTimeout(() => preview.classList.add('show'), 10);
         previewImg.src = img.src;
     });
 });
 
 // close button
 closePreview.addEventListener("click", () => {
-    preview.style.display = "none";
-    resetHelpModal();
+    preview.classList.remove('show');
+    setTimeout(() => preview.style.display = "none", 250);
+    resetHelpModal(); // ✅ Always reset after closing preview
 });
 
-// click outside image = close
 preview.addEventListener("click", (e) => {
     if (e.target === preview) {
-        preview.style.display = "none";
-        resetHelpModal();
+        preview.classList.remove('show');
+        setTimeout(() => preview.style.display = "none", 250);
+        resetHelpModal(); // ✅ Reset here too
     }
 });
-function resetHelpModal() {
-    const target = activeHelpModal || helpModal;
-    const content = target ? target.querySelector(".modal-content") : null;
-    if (content) content.scrollTop = 0;
+
+// ✅ Universal reset function that works for all 3 modals
+function resetHelpModal(modal = null) {
+    // Use the passed modal first, fall back for backwards compatibility
+    const targetModal = modal || activeHelpModal || window.helpModal;
+    
+    if (!targetModal) return;
+    
+    const scrollableContent = targetModal.querySelector(".modal-content");
+    if (scrollableContent) {
+        scrollableContent.scrollTop = 0;
+    }
+
+    // Clear the active modal reference properly
+    activeHelpModal = null;
 }
 
 closeHelpBtn.addEventListener("click", () => {
-    helpModal.style.display = "none";
     resetHelpModal();
+    closeModal(helpModal);
 });
 // Open Tutorial Modal
 viewTutorialsBtn.addEventListener('click', () => {
-    tutorialModal.style.display = 'flex';
-resetHelpModal();
-    
+    openModal(tutorialModal);
+    resetHelpModal();
 });
 
 // Close Tutorial Modal
 closeTutorialModal.addEventListener('click', () => {
-    tutorialModal.style.display = 'none';
+    closeModal(tutorialModal);
 });
 
 helpModal.addEventListener("click", (e) => {
     if (e.target === helpModal) {
-        resetHelpModal();   // reset scroll first
-        helpModal.style.display = "none";
+        resetHelpModal();
+        closeModal(helpModal);
     }
 });
 // Optional: close if clicking outside the modal content
 window.addEventListener('click', (e) => {
     if (e.target === tutorialModal) {
-        tutorialModal.style.display = 'none';
+        closeModal(tutorialModal);
     }
 });
 
-// OPEN
+// Add these after your other modal handlers
+createClassHelpModal.addEventListener("click", (e) => {
+    if (e.target === createClassHelpModal) {
+        resetHelpModal(createClassHelpModal);
+        closeModal(createClassHelpModal);
+    }
+});
+
+joinClassHelpModal.addEventListener("click", (e) => {
+    if (e.target === joinClassHelpModal) {
+        resetHelpModal(joinClassHelpModal);
+        closeModal(joinClassHelpModal);
+    }
+});
+// ✅ Fixed open handlers
 document.getElementById("gitTutorialCard").onclick = () => {
-    helpModal.style.display = "flex";
+    resetHelpModal(helpModal); // Reset first
+    openModal(helpModal);
 };
 
 document.getElementById("createClassTutorialCard").onclick = () => {
-    document.getElementById("createClassHelpModal").style.display = "flex";
+    const modal = document.getElementById("createClassHelpModal");
+    resetHelpModal(modal); // ✅ Reset scroll BEFORE opening
+    openModal(modal);
 };
 
 document.getElementById("joinClassTutorialCard").onclick = () => {
-    document.getElementById("joinClassHelpModal").style.display = "flex";
+    const modal = document.getElementById("joinClassHelpModal");
+    resetHelpModal(modal); // ✅ Reset first
+    openModal(modal);
 };
 
 // CLOSE
 document.getElementById("closeHelpModal").onclick = () => {
-    helpModal.style.display = "none";
+    closeModal(helpModal);
 };
 
 document.getElementById("closeCreateClassHelp").onclick = () => {
-    document.getElementById("createClassHelpModal").style.display = "none";
+    resetHelpModal(document.getElementById("createClassHelpModal"));
+    closeModal(document.getElementById("createClassHelpModal"));
 };
 
 document.getElementById("closeJoinClassHelp").onclick = () => {
-    document.getElementById("joinClassHelpModal").style.display = "none";
+    resetHelpModal(document.getElementById("joinClassHelpModal"));
+    closeModal(document.getElementById("joinClassHelpModal"));
 };
 
 });
@@ -439,12 +472,16 @@ function isPasscodeRequiredError(message) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function openModal(modal) {
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
 }
 
 function closeModal(modal) {
     if (!modal) return;
-    modal.style.display = 'none';
+    modal.classList.remove('show');
+    setTimeout(() => modal.style.display = 'none', 250);
     
     if (modal === createModal) {
         classNameInput.value       = '';

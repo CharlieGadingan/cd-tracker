@@ -1,3 +1,11 @@
+/* Global responsive fixes */
+
+
+html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
 * {
         margin: 0;
         padding: 0;
@@ -5,6 +13,8 @@
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif,
           "Apple Color Emoji", "Segoe UI Emoji";
+          max-width: 100%;
+    min-width: 0;
       }
 
       :root {
@@ -33,11 +43,13 @@
       }
 
       body {
-        background-color: var(--color-canvas-default);
-        color: var(--color-fg-default);
-        line-height: 1.5;
-        font-size: 14px;
-      }
+    background-color: var(--color-canvas-default);
+    color: var(--color-fg-default);
+    line-height: 1.5;
+    font-size: 14px;
+    overflow-x: hidden;
+    min-width: 320px;
+}
 
       .container {
         display: flex;
@@ -1074,55 +1086,7 @@
       }
 
       /* Responsive */
-      @media (max-width: 1024px) {
-        .container {
-          padding: 18px;
-        }
-
-        .assignment-filters select {
-          min-width: 190px;
-        }
-        .main-layout { grid-template-columns: 1fr; }
-    .right-column { order: -1; }
-      }
-
-      @media (max-width: 768px) {
-        .header { padding: 0 12px; height: 44px; }
-    .main-layout { padding: 12px; gap: 12px; }
-
-        .section-header {
-          align-items: flex-start;
-          flex-direction: column;
-          gap: 10px;
-          padding: 16px;
-        }
-
-        .assignment-meta {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .modal-content {
-          margin: 20% auto;
-          padding: 20px;
-        }
-
-        .github-input-group {
-          flex-direction: column;
-        }
-
-        .assignment-subtitle {
-          padding-left: 0;
-        }
-      }
-
-      @media (max-width: 768px) {
-    .dashboard-header { padding: 0 12px; height: 44px; }
-    .btn-label { display: none; }
-    .btn.btn-compact { padding: 6px 10px; }
-    .logo-text { display: none; }
-}
+      
 
       .dashboard-header {
     background: #161b22;
@@ -1396,7 +1360,106 @@
 }
 
 /* Automatically stack vertically on mobile screens */
-@media (max-width: 850px) {
+/* ── Responsive ───────────────────────────────────────────────── */
+
+/* ✅ Small Phones */
+@media (max-width: 480px) {
+    .dashboard-header { 
+        padding: 0 12px; 
+        height: 44px; 
+    }
+
+    .logo-text, .header-label, .student-name-label { 
+        display: none; 
+    }
+
+    .main-layout { 
+        padding: 12px; 
+        gap: 12px; 
+    }
+
+    .header {
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+    }
+
+    .logo-section {
+        gap: 10px;
+    }
+
+    .git-logo {
+        width: 36px;
+        height: 36px;
+    }
+
+    .logo-text .brand-name {
+        font-size: 20px;
+    }
+
+    .user-info {
+        padding: 6px 10px;
+    }
+
+    .section-header {
+        padding: 14px 16px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .assignment {
+        padding: 14px;
+    }
+
+    .assignment-desc {
+        padding-left: 0;
+    }
+
+    .assignment-meta {
+        padding-left: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .assignment-subtitle {
+        padding-left: 0;
+    }
+
+    .submit-repo-btn, .repo-submitted-pill {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+        margin-top: 8px;
+    }
+
+    .modal-content {
+        margin: 12% auto;
+        padding: 18px;
+        width: calc(100vw - 24px);
+    }
+
+    .github-input-group {
+        flex-direction: column;
+    }
+
+    .summary-chip {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* ✅ Large Phones */
+@media (max-width: 700px) {
+    .top-bar-row {
+        gap: 12px;
+    }
+    .classroom-info-name-card {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+
     .activities-grid {
         grid-template-columns: 1fr;
     }
@@ -1408,13 +1471,149 @@
     }
 }
 
-@media (max-width: 700px) {
-    .top-bar-row {
-        gap: 12px;
+/* ✅ Tablets / Half screen desktop */
+@media (max-width: 1024px) {
+    .main-layout { 
+        grid-template-columns: 1fr; 
     }
-    .classroom-info-name-card {
-        order: 3;
+
+    .back-to-dashboard {
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+
+    .back-to-dashboard a {
         width: 100%;
         justify-content: center;
     }
+
+    .large-modal {
+        width: calc(100vw - 48px);
+    }
+}
+
+/* ✅ Extra large desktop screens */
+@media (min-width: 1400px) {
+    .main-layout {
+        max-width: 1600px;
+    }
+
+    .activities-grid {
+        max-width: 1600px;
+    }
+}
+
+/* ✅ Modern phone safe area support */
+@supports (padding: max(0px)) {
+    .dashboard-header {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-top: max(0px, env(safe-area-inset-top));
+    }
+
+    .main-layout {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(32px, env(safe-area-inset-bottom));
+    }
+
+    .activities-grid {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+}
+
+/* ✅ Mobile touch device fixes */
+.assignment,
+.submission-item,
+.btn,
+.submit-repo-btn,
+.repo-submitted-pill,
+.modal,
+.modal-content,
+.status-pill,
+.summary-chip,
+.repo-link {
+    transition: all 0.15s cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+/* Perfect click feedback for all buttons */
+.btn:active, 
+.submit-repo-btn:active,
+.action-btn:active {
+    transform: scale(0.97);
+}
+
+/* Skeleton loader */
+.skeleton {
+    background: linear-gradient(90deg, #161b22 25%, #1c2128 50%, #161b22 75%);
+    background-size: 200% 100%;
+    animation: skeleton 1.5s infinite;
+    border-radius: 6px;
+}
+
+@keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Modal animations perfectly matched to dashboard */
+.modal {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal[style*="display: block"] {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal[style*="display: block"] .modal-content {
+    animation: modalIn 0.22s cubic-bezier(0.17, 0.67, 0.3, 0.99);
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Disable text selection on buttons */
+.btn, 
+.submit-repo-btn, 
+.close-btn {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Perfect notification slide out animation */
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(100%); opacity: 0; }
+}
+
+/* Hover lift effect */
+.assignment:hover {
+    transform: translateY(-1px);
+}
+
+/* Disabled button state */
+.btn:disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    transform: none !important;
+}
+
+/* Focus states for accessibility */
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #1f6feb;
+    outline-offset: 1px;
 }

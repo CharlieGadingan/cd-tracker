@@ -285,7 +285,7 @@ async function loadInitialData() {
       "error",
     );
   }
-}
+
 
 async function loadUserProfile() {
   try {
@@ -585,7 +585,7 @@ function renderActivities() {
                     <div class="assignment-actions">
                         <button class="btn btn-primary btn-small" data-action="view-submissions" data-activity-id="${escapeHtml(activityId)}">
                             <i class="fas fa-list-check"></i>
-                            View Submissions
+                            <span>View Submissions</span>
                         </button>
                         <button class="btn btn-secondary btn-icon" data-action="edit-activity" data-activity-id="${escapeHtml(activityId)}" title="Edit Activity">
                             <i class="fas fa-pen"></i>
@@ -1176,6 +1176,7 @@ async function handleSubmitGrade() {
 }
 
 async function handleCreateActivity() {
+  if (this.disabled) return;
   const title = asString(getInputValue("activityTitle"));
   const description = asString(getInputValue("activityDescription"));
   const dueDate = asString(getInputValue("dueDate"));
@@ -1438,34 +1439,54 @@ function statusClass(value) {
   return "none";
 }
 
+// ✅ MODAL FUNCTIONS EXACTLY LIKE DASHBOARD
 function openModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (!modal) return;
-  modal.classList.add("active");
-  document.body.classList.add("modal-open");
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    // Reset scroll position BEFORE opening
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) modalContent.scrollTop = 0;
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+    document.body.classList.add('modal-open');
+
+    // Focus first input automatically
+    setTimeout(() => {
+        const firstInput = modal.querySelector('input, textarea, button:not(.close-btn)');
+        if (firstInput) firstInput.focus();
+    }, 100);
 }
 
 function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (!modal) return;
-  modal.classList.remove("active");
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
 
-  const stillOpen = document.querySelector(".modal.active");
-  if (!stillOpen) {
-    document.body.classList.remove("modal-open");
-  }
+    modal.classList.remove('active');
+    setTimeout(() => {
+        modal.style.display = 'none';
+
+        const stillOpen = document.querySelector('.modal.active');
+        if (!stillOpen) {
+            document.body.classList.remove('modal-open');
+        }
+    }, 220);
 }
 
 function showNotification(message, type = "info") {
-  const note = document.createElement("div");
-  note.className = `notification ${type}`;
-  note.textContent = message;
-  document.body.appendChild(note);
+    // Remove existing notification first
+    document.querySelector('.notification')?.remove();
 
-  setTimeout(() => {
-    note.style.opacity = "0";
-    setTimeout(() => note.remove(), 220);
-  }, 2600);
+    const note = document.createElement("div");
+    note.className = `notification ${type}`;
+    note.textContent = message;
+    document.body.appendChild(note);
+
+    setTimeout(() => {
+        note.style.animation = 'slideOut 0.22s ease-in';
+        setTimeout(() => note.remove(), 220);
+    }, 3000);
 }
 
 function asString(value) {
@@ -1594,6 +1615,7 @@ function getInputValue(id) {
  */
 
 function navigateToSyntaxAnalyzer(repoUrl, activityTitle, studentName) {
+
   // Get the current classroom ID from state
   const classroomId = state.classroomId;
 
@@ -2030,4 +2052,58 @@ function closeModal(modalId) {
     modal.classList.remove("active");
     document.body.classList.remove("modal-open");
   }
+}
+
+    // Store the data in localStorage for the syntax page to use
+    const analysisData = {
+        repoUrl: repoUrl,
+        activityTitle: activityTitle || 'Activity',
+        studentName: studentName || 'Student',
+        timestamp: new Date().toISOString(),
+        source: 'professor_dashboard'
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('pendingAnalysis', JSON.stringify(analysisData));
+    
+    // Also store in sessionStorage as backup
+    sessionStorage.setItem('pendingAnalysis', JSON.stringify(analysisData));
+    
+    // Show notification
+    showNotification(`Navigating to analyzer for: ${studentName}`, 'info');
+    
+    // Navigate to syntax.html
+    // Adjust the path based on your file structure
+    window.location.href = '/Syntax.html';
+    // If Syntax.html is in the same directory, use:
+    // window.location.href = 'Syntax.html';
+    // If it's in a different folder, adjust accordingly:
+    // window.location.href = '/frontend/Syntax.html';
+}
+
+function renderLoadingSkeleton() {
+    const assignments = document.getElementById('assignmentsList');
+    const students = document.getElementById('studentsList');
+
+    if (assignments) {
+        assignments.innerHTML = Array(3).fill(`
+            <div class="assignment-card">
+                <div style="height: 18px; width: 60%; margin-bottom: 10px;" class="skeleton"></div>
+                <div style="height: 12px; width: 40%; margin-bottom: 14px;" class="skeleton"></div>
+                <div style="height: 16px; width: 100%;" class="skeleton"></div>
+            </div>
+        `).join('');
+    }
+
+    if (students) {
+        students.innerHTML = Array(5).fill(`
+            <div class="student-card">
+                <div style="width: 34px; height: 34px; border-radius: 50%;" class="skeleton"></div>
+                <div style="flex: 1;">
+                    <div style="height: 12px; width: 70%; margin-bottom: 6px;" class="skeleton"></div>
+                    <div style="height: 10px; width: 40%;" class="skeleton"></div>
+                </div>
+            </div>
+        `).join('');
+    }
 }

@@ -270,6 +270,31 @@ function loadClassroomInfo() {
     }
   }
 
+  function renderLoadingSkeleton() {
+    const unsubmitted = document.getElementById('unsubmittedAssignments');
+    const submitted = document.getElementById('submittedAssignments');
+
+    if (unsubmitted) {
+        unsubmitted.innerHTML = `
+            <div class="section-header">
+                <i class="fas fa-paper-plane"></i> Needs Repository Submission
+                <span class="section-count">(...)</span>
+            </div>
+            ${Array(2).fill(`
+                <div class="assignment">
+                    <div style="height: 18px; width: 60%; margin-bottom: 10px;" class="skeleton"></div>
+                    <div style="height: 12px; width: 40%; margin-bottom: 14px;" class="skeleton"></div>
+                    <div style="height: 16px; width: 100%;" class="skeleton"></div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    if (submitted) {
+        submitted.innerHTML = '';
+    }
+}
+
   function setStudentProfile(data) {
     const firstName = data.firstName || '';
     const lastName = data.lastName || '';
@@ -510,8 +535,8 @@ function renderAssignmentCard(activity) {
     const activity = state.activities.find(item => getActivityId(item) === activityId);
 
     if (!activity) {
-      window.AppDialog.alert('Activity not found.', { title: 'Missing Activity' });
-      return;
+        window.AppDialog.alert('Activity not found.', { title: 'Missing Activity' });
+        return;
     }
 
     state.currentActivity = activity;
@@ -521,21 +546,32 @@ function renderAssignmentCard(activity) {
 
     const repoSelect = document.getElementById('repoSelect');
     if (repoSelect) {
-      repoSelect.innerHTML = '<option value="">— Select a repository —</option>';
-      repoSelect.disabled = false;
+        repoSelect.innerHTML = '<option value="">— Select a repository —</option>';
+        repoSelect.disabled = false;
     }
 
     if (submissionModal) {
-      submissionModal.style.display = 'block';
+        // ✅ Reset scroll position BEFORE opening
+        const modalContent = submissionModal.querySelector('.modal-content');
+        if (modalContent) modalContent.scrollTop = 0;
+
+        submissionModal.style.display = 'block';
+
+        // Auto focus first input
+        setTimeout(() => submissionModeSelect?.focus(), 100);
     }
 }
 
-  function closeSubmissionModal() {
-    if (submissionModal) {
-      submissionModal.style.display = 'none';
-    }
-    setSubmitButtonState('idle');
-  }
+function closeSubmissionModal() {
+    if (!submissionModal) return;
+
+    submissionModal.style.opacity = '0';
+    setTimeout(() => {
+        submissionModal.style.display = 'none';
+        submissionModal.style.opacity = '';
+        setSubmitButtonState('idle');
+    }, 220);
+}
 
 
 
@@ -638,6 +674,7 @@ function renderAssignmentCard(activity) {
   }
 
   async function submitAssignment() {
+    if (submitAssignmentBtn.disabled) return;
     const activity = state.currentActivity;
     const submissionMode = submissionModeSelect?.value === 'new' ? 'new' : 'existing';
     const submissionNote = document.getElementById('submissionNote')?.value.trim() || '';
@@ -728,6 +765,7 @@ function renderAssignmentCard(activity) {
    * This marks an activity as submitted without a specific repository
    */
   async function submitActivityGeneral(activityId) {
+    if (this?.disabled) return;
     const activity = state.activities.find(item => getActivityId(item) === activityId);
 
     if (!activity) {
@@ -883,14 +921,22 @@ function renderAssignmentCard(activity) {
   }
 
   function init() {
+    // ✅ Show loading skeleton immediately
+    renderLoadingSkeleton();
+
     attachEventHandlers();
     renderActivities();
-  }
+}
 
   async function initializeAsync() {
     await loadStudentProfile();
     await loadActivities();
     await loadClassroomInfo();
+
+    // ✅ Small smooth delay for skeleton fade out
+    await new Promise(r => setTimeout(r, 120));
+
+    renderActivities();
   }
 
   init();

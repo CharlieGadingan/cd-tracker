@@ -1,3 +1,15 @@
+/* Global responsive fixes */
+* {
+    max-width: 100%;
+    min-width: 0;
+}
+
+html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    
+}
+
 /* ── Reset ────────────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -6,6 +18,8 @@ body {
     background: #0d1117;
     color: #c9d1d9;
     min-height: 100vh;
+    overflow-x: hidden;
+    min-width: 320px;
 }
 
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
@@ -207,16 +221,6 @@ body.modal-open {
     overflow: hidden;
 }
 
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(3px);
-}
 
 .back-to-dashboard a {
     display: inline-flex;
@@ -668,8 +672,30 @@ body.modal-open {
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
 }
-.modal.active { display: flex; }
+.modal.active {
+     display: flex;
+    opacity: 1;
+    pointer-events: all;
+ }
+
+
+ .modal.active .modal-content {
+    animation: modalIn 0.22s cubic-bezier(0.17, 0.67, 0.3, 0.99);
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
 
 .modal-content > div {
     margin-bottom: 10px;
@@ -1085,78 +1111,7 @@ body.modal-open {
 .empty-state p { font-size: 13px; }
 
 /* ── Responsive ───────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-    .main-layout { grid-template-columns: 1fr; }
-    .left-column { order: 1; }
-    .right-column { order: 2; }
 
-    .back-to-dashboard {
-        margin-top: 0;
-        margin-bottom: 12px;
-    }
-}
-
-@media (max-width: 768px) {
-    .header { padding: 0 12px; height: 44px; }
-    .main-layout { padding: 12px; gap: 12px; }
-    .logo-text,
-    .header-label { display: none; }
-    .professor-name { display: none; }
-    .assignment-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
-    .form-row { grid-template-columns: 1fr; }
-
-    .section-header {
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .back-to-dashboard a {
-        width: 100%;
-        justify-content: center;
-    }
-
-    #unsubmittedModal .modal-content,
-    #submittedDetailModal .modal-content {
-        width: calc(100vw - 16px);
-        max-width: calc(100vw - 16px);
-        max-height: calc(100vh - 16px);
-        padding: 12px;
-        border-radius: 10px;
-    }
-
-    #unsubmittedModal .modal-header,
-    #submittedDetailModal .modal-header,
-    #unsubmittedModal .modal-footer,
-    #submittedDetailModal .modal-footer {
-        padding: 10px 12px;
-    }
-
-    #unsubmittedModal .modal-body,
-    #submittedDetailModal .modal-body {
-        padding: 12px;
-    }
-
-    #unsubmittedModal .modal-header h2,
-    #submittedDetailModal .modal-header h2 {
-        font-size: 14px;
-        line-height: 1.35;
-        min-width: 0;
-        word-break: break-word;
-    }
-}
-
-@media (max-width: 480px) {
-    .section,
-    .students-section,
-    .activity-section { padding: 12px; }
-    .create-activity-btn { width: 100%; justify-content: center; }
-
-    #unsubmittedSubtitle {
-        margin-bottom: 12px !important;
-        font-size: 12px;
-        line-height: 1.4;
-    }
-}
 
 .form-group input,
 .form-group textarea,
@@ -1968,35 +1923,125 @@ a.submission-repo-link:hover {
     font-size: 10px;
 }
 
-@media (max-width: 640px) {
-    .submitted-detail-grid {
-        grid-template-columns: 1fr;
+/* ── Responsive ───────────────────────────────────────────────── */
+
+/* ✅ Small Phones */
+@media (max-width: 480px) {
+
+    .activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+    .header { 
+    padding: 6px 12px; 
+    height: auto; 
+}
+
+    .logo-text, .header-label, .professor-name { 
+        display: none; 
     }
 
-    .submitted-detail-value,
-    .submitted-url-value {
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-        word-break: break-word;
+    .main-layout { 
+        padding: 12px; 
+        gap: 12px; 
     }
 
-    .submitted-preview-container,
-    .submitted-url-container {
-        align-items: flex-start;
+    .section,
+.students-section,
+.activity-section { 
+    padding: 14px;   /* slightly bigger */
+    margin-bottom: 12px; /* add spacing between cards */
+}
+
+    .create-activity-btn {
+    width: auto;              /* FIX: no full width */
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;      /* prevent text break */
+}
+
+    .assignment-meta { 
+        flex-direction: column; 
+        align-items: flex-start; 
+        gap: 6px; 
+    }
+
+    .form-row { 
+        grid-template-columns: 1fr; 
+    }
+
+    .back-to-dashboard a {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .unsubmitted-item {
+        flex-wrap: wrap;
+    }
+
+    .unsubmitted-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 
     .submitted-details-grid {
         grid-template-columns: 1fr;
     }
 
+    .submitted-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .submission-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .assignment-actions .btn {
+    padding: 6px 8px;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.class-card,
+.assignment-card {
+    padding: 14px;
+}
+
+.activity-header h2 {
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.btn.btn-primary span {
+    display: none;
+}
+}
+
+/* ✅ Large Phones */
+@media (max-width: 640px) {
+    .submitted-item {
+        grid-template-columns: 1fr;
+    }
+
+    .submitted-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .submitted-time-chip {
+        white-space: normal;
+    }
+
     .submitted-toolbar {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .submitted-toolbar-meta {
-        text-align: left;
     }
 
     .submitted-search-input {
@@ -2012,30 +2057,144 @@ a.submission-repo-link:hover {
         justify-content: center;
     }
 
-    .submitted-item {
-        grid-template-columns: 1fr;
-    }
-
-    .submitted-avatar {
-        width: 36px;
-        height: 36px;
-    }
-
-    .submitted-header-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .submitted-time-chip {
+    .submitted-detail-value,
+    .submitted-url-value {
         white-space: normal;
-    }
-
-    .submitted-actions-row {
-        width: 100%;
+        overflow: visible;
+        word-break: break-word;
     }
 
     .submission-repo-link {
         width: 100%;
         justify-content: center;
     }
+
+    .status-row {
+        gap: 6px;
+    }
+}
+
+/* ✅ Tablets / Half screen desktop */
+@media (max-width: 1024px) {
+    .main-layout { 
+        grid-template-columns: 1fr; 
+    }
+    .left-column { order: 1; }
+    .right-column { order: 2; }
+
+    .back-to-dashboard {
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+
+    .activity-list {
+        max-height: 300px;
+    }
+
+    #unsubmittedModal .modal-content,
+    #submittedDetailModal .modal-content {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        max-height: calc(100vh - 24px);
+    }
+
+    .modal-content {
+        padding: 16px;
+    }
+}
+
+/* ✅ Extra large desktop screens */
+@media (min-width: 1400px) {
+    .main-layout {
+        max-width: 1600px;
+    }
+}
+
+/* ✅ Modern phone safe area support */
+@supports (padding: max(0px)) {
+    .header {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-top: max(0px, env(safe-area-inset-top));
+    }
+
+    .main-layout {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(32px, env(safe-area-inset-bottom));
+    }
+}
+
+.assignment-card,
+.student-card,
+.submission-card,
+.btn,
+.action-btn,
+.modal,
+.modal-content,
+.status-pill,
+.status-chip,
+.notification,
+.repo-link {
+    transition: all 0.15s cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+.btn:active, .action-btn:active {
+    transform: scale(0.97);
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #161b22 25%, #1c2128 50%, #161b22 75%);
+    background-size: 200% 100%;
+    animation: skeleton 1.5s infinite;
+    border-radius: 6px;
+}
+
+@keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Disable text selection on buttons */
+.btn, .action-btn, .close-btn {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.btn:focus-visible,
+.action-btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #1f6feb;
+    outline-offset: 1px;
+}
+
+/* Perfect notification animation same as dashboard */
+.notification {
+    animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+
+/* Hover lift effect on cards */
+.assignment-card:hover,
+.student-card:hover,
+.submission-card:hover {
+    transform: translateY(-1px);
+}
+
+/* Disabled button style */
+.btn:disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    transform: none !important;
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(100%); opacity: 0; }
 }
