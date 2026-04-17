@@ -90,11 +90,8 @@
     return String(path || "").startsWith("/auth/");
   }
 
-  async function refreshToken(deviceId) {
-    if (!deviceId || !deviceId.trim()) {
-      console.error("Cannot refresh token: invalid device ID");
-      return false;
-    }
+ async function refreshToken() {
+    // REMOVED the deviceId null check that was failing
 
     if (isRefreshing && refreshPromise) {
       return refreshPromise;
@@ -104,7 +101,7 @@
 
     refreshPromise = (async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/refresh/${encodeURIComponent(deviceId)}`, {
+        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
           method: "POST",
           credentials: "include",
           headers: {
@@ -145,7 +142,6 @@
     async function makeRequest() {
       const response = await fetch(`${API_BASE_URL}${path}`, {
         credentials: "include",
-        ...options
       });
 
       const body = await parseResponseBody(response);
