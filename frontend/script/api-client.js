@@ -206,7 +206,7 @@
   }
 
   async function checkSessionState() {
-    try {
+    async function fetchAuthCheck() {
       const response = await fetch(`${API_BASE_URL}/auth/check`, {
         method: "GET",
         credentials: "include",
@@ -217,9 +217,28 @@
 
       const data = await parseResponseBody(response);
       return {
+        response,
+        data,
         authenticated: data?.authenticated === true,
-        fullyInitialized: data?.fullyInitialized === true,
-        data
+        fullyInitialized: data?.fullyInitialized === true
+      };
+    }
+
+    try {
+      let checkResult = await fetchAuthCheck();
+
+      // If /auth/check reports unauthenticated, force a token refresh once and retry /auth/check.
+      if (!checkResult.authenticated) {
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          checkResult = await fetchAuthCheck();
+        }
+      }
+
+      return {
+        authenticated: checkResult.authenticated,
+        fullyInitialized: checkResult.fullyInitialized,
+        data: checkResult.data
       };
     } catch (error) {
       console.error("Auth check error:", error);
