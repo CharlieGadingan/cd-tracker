@@ -140,8 +140,13 @@
     let retried = false;
 
     async function makeRequest() {
+      const requestOptions = {
+        ...options,
+        credentials: "include"
+      };
+
       const response = await fetch(`${API_BASE_URL}${path}`, {
-        credentials: "include",
+        ...requestOptions
       });
 
       const body = await parseResponseBody(response);
@@ -157,14 +162,8 @@
       if (Date.now() - lastRefreshSucceededAt < REFRESH_COOLDOWN_MS) {
         console.warn(`Skipping refresh for ${path}; refreshed too recently.`);
       } else {
-        const deviceId = getDeviceId();
-        if (!deviceId) {
-          logoutAndRedirect();
-          throw new Error("Missing device ID");
-        }
-
         console.log(`Received 401 on ${path}, attempting token refresh`);
-        const refreshed = await refreshToken(deviceId);
+        const refreshed = await refreshToken();
 
         if (refreshed) {
           ({ response, body } = await makeRequest());
