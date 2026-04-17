@@ -140,8 +140,13 @@
     let retried = false;
 
     async function makeRequest() {
+      const requestOptions = {
+        ...options,
+        credentials: "include"
+      };
+
       const response = await fetch(`${API_BASE_URL}${path}`, {
-        credentials: "include",
+        ...requestOptions
       });
 
       const body = await parseResponseBody(response);
