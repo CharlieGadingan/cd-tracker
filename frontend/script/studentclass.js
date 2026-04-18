@@ -41,8 +41,8 @@
   function formatDate(value) {
     if (!value) return '';
 
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
+    const date = parseApiDate(value);
+    if (!date) return '';
 
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -54,11 +54,30 @@
   function getDaysLeft(value) {
     if (!value) return null;
 
-    const dueDate = new Date(value);
-    if (Number.isNaN(dueDate.getTime())) return null;
+    const dueDate = parseApiDate(value);
+    if (!dueDate) return null;
 
-    const diffMs = dueDate.setHours(23, 59, 59, 999) - Date.now();
+    dueDate.setHours(23, 59, 59, 999);
+    const diffMs = dueDate.getTime() - Date.now();
     return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }
+
+  function parseApiDate(value) {
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+
+    const direct = new Date(raw);
+    if (!Number.isNaN(direct.getTime())) {
+      return direct;
+    }
+
+    const withoutZoneRegion = raw.replace(/\[[^\]]+\]$/, '');
+    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(withoutZoneRegion)
+      ? `${withoutZoneRegion}T00:00:00`
+      : withoutZoneRegion;
+
+    const parsed = new Date(normalized);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   function getActivityId(activity) {
@@ -419,7 +438,11 @@ function loadClassroomInfo() {
       }
     });
 
-    unsubmitted.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+    unsubmitted.sort((a, b) => {
+      const aTime = parseApiDate(a.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+      const bTime = parseApiDate(b.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+      return aTime - bTime;
+    });
 
 
     const unsubmittedContainer = document.getElementById('unsubmittedAssignments');
