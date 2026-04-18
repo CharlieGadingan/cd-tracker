@@ -1,4 +1,6 @@
 const apiRequest = window.ApiClient?.request;
+const ACTIVITY_TIME_ZONE = "Asia/Singapore";
+const ACTIVITY_TIME_ZONE_OFFSET = "+08:00";
 
 const state = {
   classroomId: null,
@@ -1615,18 +1617,6 @@ function buildZonedDateTime(value) {
     return normalized;
   }
 
-  const zone =
-    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const offsetMinutes = -parsed.getTimezoneOffset();
-  const offsetSign = offsetMinutes >= 0 ? "+" : "-";
-  const absoluteOffsetMinutes = Math.abs(offsetMinutes);
-  const offsetHours = String(Math.floor(absoluteOffsetMinutes / 60)).padStart(
-    2,
-    "0",
-  );
-  const offsetRemainder = String(absoluteOffsetMinutes % 60).padStart(2, "0");
-  const offset = `${offsetSign}${offsetHours}:${offsetRemainder}`;
-
   const yyyy = parsed.getFullYear();
   const mm = String(parsed.getMonth() + 1).padStart(2, "0");
   const dd = String(parsed.getDate()).padStart(2, "0");
@@ -1634,7 +1624,7 @@ function buildZonedDateTime(value) {
   const min = String(parsed.getMinutes()).padStart(2, "0");
   const ss = String(parsed.getSeconds()).padStart(2, "0");
 
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}${offset}[${zone}]`;
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}${ACTIVITY_TIME_ZONE_OFFSET}[${ACTIVITY_TIME_ZONE}]`;
 }
 
 async function copyTextWithFeedback(value, successMessage) {
