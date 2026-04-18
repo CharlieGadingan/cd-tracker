@@ -525,7 +525,7 @@ function isEntryNewer(next, current) {
 
 function getSubmissionTimestamp(entry) {
   const raw = entry?.updatedAt || entry?.submittedAt || entry?.createdAt || "";
-  const parsed = new Date(raw).getTime();
+  const parsed = parseApiDate(raw)?.getTime();
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -542,7 +542,8 @@ function renderOverview() {
   const now = new Date();
   const dueSoonCount = state.activities.filter((activity) => {
     if (!activity?.dueDate) return false;
-    const due = new Date(activity.dueDate);
+    const due = parseApiDate(activity.dueDate);
+    if (!due) return false;
     const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
     return diffDays >= 0 && diffDays <= 7;
   }).length;
@@ -1196,7 +1197,7 @@ async function handleCreateActivity() {
   const payload = {
     title,
     description: description || null,
-    dueDate: dueDate ? `${dueDate}T23:59:00` : null,
+    dueDate: buildZonedDateTime(dueDate),
     maxScore: null,
     status,
   };
@@ -1264,12 +1265,9 @@ function openEditActivityModal(activityId) {
   setInputValue("editActivityStatus", asString(activity.status) || "PUBLISHED");
 
   if (activity?.dueDate) {
-    const parsed = new Date(activity.dueDate);
-    if (!Number.isNaN(parsed.getTime())) {
-      const yyyy = parsed.getFullYear();
-      const mm = String(parsed.getMonth() + 1).padStart(2, "0");
-      const dd = String(parsed.getDate()).padStart(2, "0");
-      setInputValue("editDueDate", `${yyyy}-${mm}-${dd}`);
+    const formatted = formatDateInputValue(activity.dueDate);
+    if (formatted) {
+      setInputValue("editDueDate", formatted);
     } else {
       setInputValue("editDueDate", "");
     }
@@ -1302,7 +1300,7 @@ async function handleEditActivity() {
   const payload = {
     title,
     description: description || null,
-    dueDate: dueDate ? `${dueDate}T23:59:00` : null,
+    dueDate: buildZonedDateTime(dueDate),
     maxScore: null,
     status,
   };
@@ -1412,8 +1410,8 @@ function getDueInfo(dueDate) {
     return { label: "No due date" };
   }
 
-  const parsed = new Date(dueDate);
-  if (Number.isNaN(parsed.getTime())) {
+  const parsed = parseApiDate(dueDate);
+  if (!parsed) {
     return { label: "Invalid due date" };
   }
 
@@ -1517,8 +1515,8 @@ function getInitials(name, fallback) {
 }
 
 function formatDate(dateString) {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "N/A";
+  const date = parseApiDate(dateString);
+  if (!date) return "N/A";
   return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -1527,8 +1525,8 @@ function formatDate(dateString) {
 }
 
 function formatDateTime(dateString) {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "N/A";
+  const date = parseApiDate(dateString);
+  if (!date) return "N/A";
   return date.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
@@ -1539,8 +1537,8 @@ function formatDateTime(dateString) {
 }
 
 function timeAgo(dateString) {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "recently";
+  const date = parseApiDate(dateString);
+  if (!date) return "recently";
 
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
@@ -1563,6 +1561,80 @@ function timeAgo(dateString) {
 
 function trimProtocol(url) {
   return asString(url).replace(/^https?:\/\//i, "");
+}
+
+function parseApiDate(value) {
+  const raw = asString(value);
+  if (!raw) return null;
+
+  const direct = new Date(raw);
+  if (!Number.isNaN(direct.getTime())) {
+    return direct;
+  }
+
+  const withoutZoneRegion = raw.replace(/\[[^\]]+\]$/, "");
+  const normalized =
+    /^\d{4}-\d{2}-\d{2}$/.test(withoutZoneRegion)
+      ? `${withoutZoneRegion}T00:00:00`
+      : withoutZoneRegion;
+
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatDateInputValue(value) {
+  const raw = asString(value);
+  if (!raw) return "";
+
+  const datePartMatch = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (datePartMatch) {
+    return datePartMatch[1];
+  }
+
+  const parsed = parseApiDate(raw);
+  if (!parsed) return "";
+
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function buildZonedDateTime(value) {
+  const raw = asString(value);
+  if (!raw) return null;
+
+  if (/\[[^\]]+\]$/.test(raw)) {
+    return raw;
+  }
+
+  const normalized =
+    /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T23:59:00` : raw;
+  const parsed = parseApiDate(normalized);
+  if (!parsed) {
+    return normalized;
+  }
+
+  const zone =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const offsetMinutes = -parsed.getTimezoneOffset();
+  const offsetSign = offsetMinutes >= 0 ? "+" : "-";
+  const absoluteOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = String(Math.floor(absoluteOffsetMinutes / 60)).padStart(
+    2,
+    "0",
+  );
+  const offsetRemainder = String(absoluteOffsetMinutes % 60).padStart(2, "0");
+  const offset = `${offsetSign}${offsetHours}:${offsetRemainder}`;
+
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  const hh = String(parsed.getHours()).padStart(2, "0");
+  const min = String(parsed.getMinutes()).padStart(2, "0");
+  const ss = String(parsed.getSeconds()).padStart(2, "0");
+
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}${offset}[${zone}]`;
 }
 
 async function copyTextWithFeedback(value, successMessage) {
