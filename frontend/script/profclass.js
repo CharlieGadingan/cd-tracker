@@ -1199,7 +1199,7 @@ async function handleCreateActivity() {
   const payload = {
     title,
     description: description || null,
-    dueDate: buildZonedDateTime(dueDate),
+    dueDate: dueDate ? `${dueDate}T23:59:00Z` : null,
     maxScore: null,
     status,
   };
