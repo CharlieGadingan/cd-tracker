@@ -302,7 +302,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     gap: 8px;
 }
 
-.btn:hover:not(:disabled) { background: #2ea043; }
+
+.btn:hover:not(:disabled) { background: rgb(224, 223, 223); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .spinner {
