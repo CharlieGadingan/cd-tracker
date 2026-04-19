@@ -1303,6 +1303,37 @@ html {
     margin: 0;
 }
 
+.leave-room-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid rgba(248, 81, 73, 0.38);
+    border-radius: 6px;
+    background: rgba(248, 81, 73, 0.1);
+    color: #f85149;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+.leave-room-btn:hover {
+    background: rgba(248, 81, 73, 0.18);
+    border-color: rgba(248, 81, 73, 0.58);
+    color: #ff7b72;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(248, 81, 73, 0.14);
+}
+
+.leave-room-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+    box-shadow: none;
+}
+
 .summary-chip.submitted-chip {
     border-color: rgba(46, 160, 67, 0.4);
     background: rgba(46, 160, 67, 0.08);
@@ -1369,7 +1400,7 @@ html {
         height: 44px; 
     }
 
-    .logo-text, .header-label, .student-name-label { 
+    .logo-text, .student-name-label { 
         display: none; 
     }
 
@@ -1456,6 +1487,12 @@ html {
     }
     .classroom-info-name-card {
         order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .classroom-info-code-card,
+    .leave-room-btn {
         width: 100%;
         justify-content: center;
     }
