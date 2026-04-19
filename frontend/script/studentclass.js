@@ -649,11 +649,27 @@ function closeSubmissionModal() {
         options: { method: 'POST' }
       },
       {
+        path: `/classrooms/${encodeURIComponent(classroomId)}/leave`,
+        options: { method: 'DELETE' }
+      },
+      {
         path: `/classrooms/${encodeURIComponent(classroomId)}/join`,
         options: { method: 'DELETE' }
       },
       {
+        path: `/classrooms/join/${encodeURIComponent(classroomId)}`,
+        options: { method: 'DELETE' }
+      },
+      {
+        path: `/classrooms/join/${encodeURIComponent(classroomId)}/leave`,
+        options: { method: 'POST' }
+      },
+      {
         path: `/classrooms/${encodeURIComponent(classroomId)}/students/me`,
+        options: { method: 'DELETE' }
+      },
+      {
+        path: `/classrooms/${encodeURIComponent(classroomId)}/members/me`,
         options: { method: 'DELETE' }
       }
     ];
@@ -673,8 +689,13 @@ function closeSubmissionModal() {
           message.includes('not found') ||
           message.includes('405') ||
           message.includes('method not allowed');
+        const looksLikeRejectedRoute =
+          message.includes('401') ||
+          message.includes('403') ||
+          message.includes('forbidden') ||
+          message.includes('unauthorized');
 
-        if (!looksLikeMissingRoute) {
+        if (!looksLikeMissingRoute && !looksLikeRejectedRoute) {
           throw error;
         }
       }
