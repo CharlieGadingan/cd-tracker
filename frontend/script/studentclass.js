@@ -643,65 +643,14 @@ function closeSubmissionModal() {
 }
 
   async function requestLeaveClassroom() {
-    const leaveAttempts = [
-      {
-        path: `/classrooms/${encodeURIComponent(classroomId)}/leave`,
-        options: { method: 'POST' }
-      },
-      {
-        path: `/classrooms/${encodeURIComponent(classroomId)}/leave`,
-        options: { method: 'DELETE' }
-      },
-      {
-        path: `/classrooms/${encodeURIComponent(classroomId)}/join`,
-        options: { method: 'DELETE' }
-      },
-      {
-        path: `/classrooms/join/${encodeURIComponent(classroomId)}`,
-        options: { method: 'DELETE' }
-      },
-      {
-        path: `/classrooms/join/${encodeURIComponent(classroomId)}/leave`,
-        options: { method: 'POST' }
-      },
-      {
-        path: `/classrooms/${encodeURIComponent(classroomId)}/students/me`,
-        options: { method: 'DELETE' }
-      },
-      {
-        path: `/classrooms/${encodeURIComponent(classroomId)}/members/me`,
-        options: { method: 'DELETE' }
+    return apiClient.request(`/classrooms/${encodeURIComponent(classroomId)}/leave`, {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json'
       }
-    ];
-
-    let lastError = null;
-
-    for (const attempt of leaveAttempts) {
-      try {
-        return await apiClient.request(attempt.path, attempt.options, {
-          redirectOnUnauthorized: false
-        });
-      } catch (error) {
-        lastError = error;
-        const message = String(error?.message || '').toLowerCase();
-        const looksLikeMissingRoute =
-          message.includes('404') ||
-          message.includes('not found') ||
-          message.includes('405') ||
-          message.includes('method not allowed');
-        const looksLikeRejectedRoute =
-          message.includes('401') ||
-          message.includes('403') ||
-          message.includes('forbidden') ||
-          message.includes('unauthorized');
-
-        if (!looksLikeMissingRoute && !looksLikeRejectedRoute) {
-          throw error;
-        }
-      }
-    }
-
-    throw lastError || new Error('No leave classroom endpoint is available.');
+    }, {
+      redirectOnUnauthorized: false
+    });
   }
 
   async function leaveClassroom() {
