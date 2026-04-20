@@ -300,6 +300,16 @@ html {
         color: var(--color-fg-default);
       }
 
+      .summary-chip-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .summary-chip-label {
+        display: block;
+      }
+
       .summary-chip.pending {
         border-color: rgba(248, 81, 73, 0.4);
         background: rgba(248, 81, 73, 0.08);
@@ -1654,6 +1664,42 @@ html {
         width: 100%;
         height: 1px;
         margin: 8px 0;
+    }
+
+    .assignment-summary-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .summary-chip {
+        width: 100%;
+        border-radius: 8px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 12px 14px;
+        font-size: 11px;
+        gap: 10px;
+    }
+
+    .summary-chip i {
+        font-size: 13px;
+        margin-top: 2px;
+    }
+
+    .summary-chip-copy {
+        min-width: 0;
+    }
+
+    .summary-chip-label {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    .summary-chip strong {
+        display: block;
+        margin-top: 2px;
+        font-size: 20px;
+        line-height: 1.1;
     }
 
 }
