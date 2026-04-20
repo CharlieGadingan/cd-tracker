@@ -1506,15 +1506,18 @@ html {
     .welcome-container h1 { font-size: 22px; }
     .welcome-container p { font-size: 14px; }
 
-    .tabs-container { 
-        overflow-x: auto; 
-        -webkit-overflow-scrolling: touch;
-        justify-content: flex-start;
+    .tabs-container {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow-x: hidden;
+        justify-content: stretch;
     }
-    .tab-button { 
-        white-space: nowrap; 
-        padding: 7px 12px; 
-        font-size: 12px; 
+    .tab-button {
+        width: 100%;
+        justify-content: center;
+        white-space: nowrap;
+        padding: 7px 12px;
+        font-size: 12px;
     }
 
     .classroom-grid { 

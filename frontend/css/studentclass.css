@@ -1203,6 +1203,13 @@ html {
     
 }
 
+.left-column,
+.right-column,
+.students-section,
+.section {
+    min-width: 0;
+}
+
 #assignmentsList {
     width: 100%;
     border-radius: 8px;
@@ -1232,6 +1239,7 @@ html {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    flex: 0 1 auto;
     padding: 8px 12px;
     background: rgba(93, 108, 33, 0.3);
     border: 1px solid #a6f036;
@@ -1396,16 +1404,43 @@ html {
 /* ✅ Small Phones */
 @media (max-width: 480px) {
     .dashboard-header { 
-        padding: 0 12px; 
-        height: 44px; 
+        padding: 10px 12px; 
+        min-height: 56px;
+        height: auto;
+        align-items: flex-start;
     }
 
     .logo-text, .student-name-label { 
         display: none; 
     }
 
+    .header-left,
+    .header-right,
+    .profile {
+        min-width: 0;
+    }
+
+    .header-left {
+        gap: 8px;
+        flex: 1 1 auto;
+    }
+
+    .header-label {
+        font-size: 15px;
+    }
+
+    .header-divider {
+        height: 16px;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        margin-left: 0;
+    }
+
     .main-layout { 
-        padding: 12px; 
+        padding: 10px 12px 20px; 
         gap: 12px; 
     }
 
@@ -1438,12 +1473,62 @@ html {
         gap: 10px;
     }
 
+    #assignmentsList,
+    .activities-grid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .top-bar-row {
+        margin-top: 8px;
+        margin-bottom: 16px;
+        gap: 10px;
+    }
+
+    .top-bar-spacer {
+        display: none;
+    }
+
+    .back-to-dashboard,
+    .classroom-info-name-card,
+    .classroom-info-code-card,
+    .leave-room-btn {
+        width: 100%;
+    }
+
+    .back-to-dashboard a,
+    .classroom-info-name-card,
+    .classroom-info-code-card,
+    .leave-room-btn {
+        justify-content: center;
+    }
+
+    .classroom-info-name-card,
+    .classroom-info-code-card {
+        padding: 10px 12px;
+        white-space: normal;
+        text-align: center;
+    }
+
     .assignment {
         padding: 14px;
+        border-radius: 14px;
+        margin-bottom: 12px;
+    }
+
+    .assignment-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .assignment-status {
+        width: 100%;
+        justify-content: center;
     }
 
     .assignment-desc {
         padding-left: 0;
+        font-size: 13px;
     }
 
     .assignment-meta {
@@ -1464,10 +1549,36 @@ html {
         margin-top: 8px;
     }
 
+    .assignment-due,
+    .points,
+    .assignment-repo-badge {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
     .modal-content {
-        margin: 12% auto;
+        margin: 8vh auto;
         padding: 18px;
         width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+    }
+
+    .modal-header {
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .modal-header h2 {
+        font-size: 18px;
+        line-height: 1.3;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
     }
 
     .github-input-group {
@@ -1482,23 +1593,61 @@ html {
 
 /* ✅ Large Phones */
 @media (max-width: 700px) {
+    .dashboard-header {
+        min-height: 56px;
+    }
+
     .top-bar-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
         gap: 12px;
     }
-    .classroom-info-name-card {
+
+    .back-to-dashboard {
+        order: 1;
+        grid-column: 1 / -1;
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .top-bar-spacer {
+        display: none;
+    }
+
+    .leave-room-btn {
+        order: 2;
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .classroom-info-code-card {
         order: 3;
         width: 100%;
         justify-content: center;
     }
 
-    .classroom-info-code-card,
-    .leave-room-btn {
+    .classroom-info-name-card {
+        order: 4;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .classroom-info-name-card,
+    .classroom-info-code-card {
+        white-space: normal;
+        text-align: center;
+    }
+
+    .back-to-dashboard a {
         width: 100%;
         justify-content: center;
     }
 
     .activities-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .activities-divider {
@@ -1506,12 +1655,45 @@ html {
         height: 1px;
         margin: 8px 0;
     }
+
+    .assignment-summary-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .summary-chip {
+        width: 100%;
+        min-height: 52px;
+        justify-content: flex-start;
+        padding: 12px 14px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    .summary-chip i {
+        flex: 0 0 18px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .summary-chip strong {
+        margin-left: auto;
+        flex-shrink: 0;
+        padding-left: 12px;
+        font-size: 15px;
+    }
 }
 
 /* ✅ Tablets / Half screen desktop */
 @media (max-width: 1024px) {
     .main-layout { 
         grid-template-columns: 1fr; 
+    }
+
+    .section-header.assignments-header,
+    .students-section .section-header {
+        width: 100%;
     }
 
     .back-to-dashboard {
