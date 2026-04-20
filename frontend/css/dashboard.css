@@ -1488,10 +1488,15 @@ html {
 
     .logo { font-size: 15px; }
     .logo i { font-size: 18px; }
+    .logo-text { display: none; }
 
     .header-divider, .header-label, .user-info { display: none; }
-    .btn-label { display: none; }
-    .action-buttons { gap: 4px; }
+    .header-right { gap: 8px; }
+    .btn-label { display: inline; }
+    .action-buttons {
+        gap: 4px;
+        flex-shrink: 0;
+    }
 
     .dashboard-main { padding: 10px 12px 20px; }
 
@@ -1554,11 +1559,12 @@ html {
 
     .btn.create-class, 
 .btn.join-class {
-    padding: 6px 10px;   /* smaller */
-    font-size: 11px;     /* smaller text */
-    line-height: 1;      /* removes extra vertical space */
-    height: auto;        /* let it shrink */
-    min-height: unset;   /* override any default */
+    padding: 6px 8px;
+    font-size: 11px;
+    gap: 4px;
+    line-height: 1;
+    height: auto;
+    min-height: unset;
 }
 }
 
