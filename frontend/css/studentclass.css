@@ -1658,11 +1658,13 @@ html {
 
     .assignment-summary-row {
         flex-direction: column;
+        align-items: center;
         gap: 10px;
     }
 
     .summary-chip {
-        width: 100%;
+        width: min(100%, 620px);
+        flex: none;
         min-height: 52px;
         display: grid;
         grid-template-columns: 20px 1fr auto;
@@ -1672,6 +1674,7 @@ html {
         font-size: 13px;
         line-height: 1.35;
         column-gap: 12px;
+        margin: 0 auto;
     }
 
     .summary-chip i {
