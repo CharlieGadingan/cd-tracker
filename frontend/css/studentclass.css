@@ -1668,10 +1668,13 @@ html {
 
     .assignment-summary-row {
         flex-direction: column;
+        flex-wrap: nowrap;
         gap: 10px;
+        width: 100%;
     }
 
     .summary-chip {
+        display: flex;
         width: 100%;
         border-radius: 8px;
         align-items: flex-start;
@@ -1679,6 +1682,7 @@ html {
         padding: 12px 14px;
         font-size: 11px;
         gap: 10px;
+        box-sizing: border-box;
     }
 
     .summary-chip i {
