@@ -1509,10 +1509,18 @@ html {
     .tabs-container {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
         justify-content: stretch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .tabs-container::-webkit-scrollbar {
+        display: none;
     }
     .tab-button {
+        min-width: 0;
         width: 100%;
         justify-content: center;
         white-space: nowrap;

@@ -1664,24 +1664,26 @@ html {
     .summary-chip {
         width: 100%;
         min-height: 52px;
-        justify-content: flex-start;
+        display: grid;
+        grid-template-columns: 20px 1fr auto;
+        align-items: center;
         padding: 12px 14px;
         border-radius: 14px;
         font-size: 13px;
         line-height: 1.35;
+        column-gap: 12px;
     }
 
     .summary-chip i {
-        flex: 0 0 18px;
         text-align: center;
         font-size: 14px;
     }
 
     .summary-chip strong {
-        margin-left: auto;
         flex-shrink: 0;
-        padding-left: 12px;
         font-size: 15px;
+        min-width: 20px;
+        text-align: center;
     }
 }
 
