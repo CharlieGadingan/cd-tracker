@@ -2044,13 +2044,22 @@ a.submission-repo-link:hover {
   }
 
   .assignment-actions {
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
   }
-
 }
 
-
+@media (max-width: 360px) {
+  .assignment-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .assignment-actions .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}
 
 /* ✅ Large Phones */
 @media (max-width: 640px) {
