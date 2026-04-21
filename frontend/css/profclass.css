@@ -2044,7 +2044,7 @@ a.submission-repo-link:hover {
   }
 
   .assignment-actions {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
   }
 
