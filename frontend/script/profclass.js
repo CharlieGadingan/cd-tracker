@@ -11,6 +11,7 @@ const state = {
   currentSubmissionsActivityId: null,
   currentSubmissionRows: [],
   submissionFilter: "ALL",
+  activityFilter: "all",
   currentDetailRow: null,
 };
 
@@ -83,6 +84,7 @@ function setupEventListeners() {
   const gradeAnalyzeBtn = document.getElementById("gradeAnalyzeBtn");
   const backBtn = document.getElementById("backDashboardBtn");
   const submissionFilter = document.getElementById("submissionFilter");
+  const activityFilter = document.getElementById("activityFilter");
 
   if (createBtn) {
     createBtn.addEventListener("click", () => {
@@ -143,6 +145,13 @@ function setupEventListeners() {
         event.target.value || "ALL",
       ).toUpperCase();
       renderSubmissionRows();
+    });
+  }
+
+  if (activityFilter) {
+    activityFilter.addEventListener("change", (event) => {
+      state.activityFilter = asString(event.target.value).toLowerCase() || "all";
+      renderRecentActivity();
     });
   }
 
@@ -302,6 +311,7 @@ async function loadInitialData() {
     renderStudents();
     renderActivities();
     renderOverview();
+    renderRecentActivity();
   } catch (error) {
     console.error("Failed to load initial data:", error);
     showNotification(
@@ -671,6 +681,151 @@ function renderStudents() {
         `;
     })
     .join("");
+}
+
+function renderRecentActivity() {
+  const container = document.getElementById("activityList");
+  if (!container) return;
+
+  const selectedFilter = state.activityFilter || "all";
+  const items = buildRecentActivityItems().filter(
+    (item) => selectedFilter === "all" || item.type === selectedFilter,
+  );
+
+  if (items.length === 0) {
+    const emptyCopy =
+      selectedFilter === "activities"
+        ? "No created activities yet"
+        : selectedFilter === "submissions"
+          ? "No submissions yet"
+          : selectedFilter === "joins"
+            ? "No students have joined yet"
+            : "No activity yet";
+
+    container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-history"></i>
+                <p>${escapeHtml(emptyCopy)}</p>
+            </div>
+        `;
+    return;
+  }
+
+  container.innerHTML = items
+    .map((item) => {
+      const avatar = item.profileUrl
+        ? `<img src="${escapeHtml(item.profileUrl)}" alt="${escapeHtml(item.actor)}">`
+        : escapeHtml(getInitials(item.actor, item.actorFallback || "AC"));
+
+      return `
+            <article class="activity-item">
+                <div class="activity-avatar ${item.avatarClass || ""}">${avatar}</div>
+                <div class="activity-content">
+                    <div class="activity-user">
+                        ${escapeHtml(item.actor)}
+                        <span class="activity-badge ${escapeHtml(item.badgeClass)}">${escapeHtml(item.badgeLabel)}</span>
+                    </div>
+                    <div class="activity-text">${escapeHtml(item.text)}</div>
+                    ${item.details ? `<div class="activity-details"><i class="${escapeHtml(item.detailsIcon || "fas fa-info-circle")}"></i>${escapeHtml(item.details)}</div>` : ""}
+                    <div class="activity-time">
+                        <i class="far fa-clock"></i>
+                        <span>${escapeHtml(item.timeLabel)}</span>
+                    </div>
+                </div>
+            </article>
+        `;
+    })
+    .join("");
+}
+
+function buildRecentActivityItems() {
+  const items = [];
+  const professorName =
+    `${asString(state.currentUser?.firstName)} ${asString(state.currentUser?.lastName)}`.trim() ||
+    "Professor";
+
+  state.students.forEach((student) => {
+    const joinedAt = student.joinedAt || student.createdAt || "";
+    const joinedDate = parseApiDate(joinedAt);
+    if (!joinedDate) return;
+
+    items.push({
+      type: "joins",
+      actor: student.displayName || "Student",
+      actorFallback: "ST",
+      profileUrl: student.profileUrl || "",
+      badgeLabel: "Joined",
+      badgeClass: "badge-joined",
+      text: "joined the classroom",
+      details: joinedDate ? `Joined on ${formatDateTime(joinedAt)}` : "",
+      detailsIcon: "fas fa-user-plus",
+      avatarClass: "",
+      timestamp: joinedDate.getTime(),
+      timeLabel: timeAgo(joinedAt),
+    });
+  });
+
+  state.activities.forEach((activity) => {
+    const createdAt =
+      asString(activity?.createdAt) ||
+      asString(activity?.updatedAt);
+    const createdDate = parseApiDate(createdAt);
+
+    items.push({
+      type: "activities",
+      actor: professorName,
+      actorFallback: "PR",
+      profileUrl: asString(state.currentUser?.profileUrl),
+      badgeLabel: "Activity",
+      badgeClass: "badge-created",
+      text: `created "${getActivityTitle(activity)}"`,
+      details: asString(activity?.description) || `Status: ${asString(activity?.status) || "Unknown"}`,
+      detailsIcon: "fas fa-plus-circle",
+      avatarClass: "professor",
+      timestamp: createdDate ? createdDate.getTime() : 0,
+      timeLabel: createdDate ? timeAgo(createdAt) : "Date unavailable",
+    });
+  });
+
+  Object.values(state.submittedByActivity).forEach((perActivity) => {
+    Object.values(perActivity || {}).forEach((entry) => {
+      const submissionDateRaw =
+        asString(entry?.submittedAt) ||
+        asString(entry?.updatedAt) ||
+        asString(entry?.createdAt);
+      const submissionDate = parseApiDate(submissionDateRaw);
+      if (!submissionDate) return;
+
+      const student = state.students.find(
+        (item) => item.userId === asString(entry?.userId),
+      );
+      const actor = student?.displayName || asString(entry?.displayName) || "Student";
+      const profileUrl = student?.profileUrl || asString(entry?.profileUrl);
+      const activityTitle = asString(entry?.title) || "an activity";
+      const repositoryLabel =
+        asString(entry?.repositoryName) ||
+        trimProtocol(asString(entry?.repositoryUrl)) ||
+        "Repository linked";
+
+      items.push({
+        type: "submissions",
+        actor,
+        actorFallback: "ST",
+        profileUrl,
+        badgeLabel: "Submission",
+        badgeClass: "badge-submitted",
+        text: `submitted "${activityTitle}"`,
+        details: repositoryLabel,
+        detailsIcon: "fab fa-github",
+        avatarClass: "",
+        timestamp: submissionDate.getTime(),
+        timeLabel: timeAgo(submissionDateRaw),
+      });
+    });
+  });
+
+  items.sort((a, b) => b.timestamp - a.timestamp);
+  return items;
 }
 
 function computeActivityStats(activityId) {
@@ -1198,6 +1353,7 @@ async function handleSubmitGrade() {
     await loadSubmittedActivities();
     renderActivities();
     renderOverview();
+    renderRecentActivity();
     renderSubmissionsModal();
   } catch (error) {
     console.error("Failed to grade submission:", error);
@@ -1264,6 +1420,7 @@ async function handleCreateActivity() {
     await loadActivities();
     renderActivities();
     renderOverview();
+    renderRecentActivity();
   } catch (error) {
     console.error("Failed to create activity:", error);
     showNotification(error?.message || "Failed to create activity.", "error");
@@ -1367,6 +1524,7 @@ async function handleEditActivity() {
     await loadActivities();
     renderActivities();
     renderOverview();
+    renderRecentActivity();
 
     if (state.currentSubmissionsActivityId === activityId) {
       renderSubmissionsModal();
@@ -1414,6 +1572,7 @@ async function deleteActivity(activityId) {
     await loadSubmittedActivities();
     renderActivities();
     renderOverview();
+    renderRecentActivity();
 
     if (state.currentSubmissionsActivityId === activityId) {
       closeModal("submissionsModal");
@@ -2162,6 +2321,7 @@ function proceedToAnalyzer(repoUrl, activityTitle, studentName) {
 function renderLoadingSkeleton() {
     const assignments = document.getElementById('assignmentsList');
     const students = document.getElementById('studentsList');
+    const activityList = document.getElementById('activityList');
 
     if (assignments) {
         assignments.innerHTML = Array(3).fill(`
@@ -2180,6 +2340,19 @@ function renderLoadingSkeleton() {
                 <div style="flex: 1;">
                     <div style="height: 12px; width: 70%; margin-bottom: 6px;" class="skeleton"></div>
                     <div style="height: 10px; width: 40%;" class="skeleton"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    if (activityList) {
+        activityList.innerHTML = Array(4).fill(`
+            <div class="activity-item">
+                <div style="width: 30px; height: 30px; border-radius: 50%;" class="skeleton"></div>
+                <div style="flex: 1;">
+                    <div style="height: 12px; width: 48%; margin-bottom: 8px;" class="skeleton"></div>
+                    <div style="height: 11px; width: 72%; margin-bottom: 8px;" class="skeleton"></div>
+                    <div style="height: 10px; width: 38%;" class="skeleton"></div>
                 </div>
             </div>
         `).join('');
