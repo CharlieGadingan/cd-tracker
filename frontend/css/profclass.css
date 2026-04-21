@@ -1980,7 +1980,7 @@ a.submission-repo-link:hover {
     }
 
     .professor-name {
-        padding-right: 6px;
+        margin-right: 6px;
     }
 
     .main-layout { 
@@ -2098,11 +2098,6 @@ a.submission-repo-link:hover {
     .submitted-header-row {
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .professor-name {
-
-        padding-right: 6px;
     }
 
     .submitted-time-chip {
