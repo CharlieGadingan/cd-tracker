@@ -1424,7 +1424,7 @@ html {
     }
 
     .logo-text, .student-name-label { 
-        display: none; 
+        display: block; 
     }
 
     .header-left,

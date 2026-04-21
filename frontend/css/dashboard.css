@@ -1488,7 +1488,7 @@ html {
 
     .logo { font-size: 15px; }
     .logo i { font-size: 18px; }
-    .logo-text { display: none; }
+    .logo-text { display: block; }
 
     .header-divider, .header-label, .user-info { display: none; }
     .header-right { gap: 8px; }

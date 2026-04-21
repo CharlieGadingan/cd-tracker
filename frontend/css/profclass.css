@@ -1952,7 +1952,7 @@ a.submission-repo-link:hover {
 }
 
     .logo-text, .header-label, .professor-name { 
-        display: none; 
+        display: block; 
     }
 
     .main-layout { 
