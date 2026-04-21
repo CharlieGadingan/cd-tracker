@@ -80,6 +80,7 @@ function setupEventListeners() {
   const saveCreateBtn = document.getElementById("saveActivityBtn");
   const saveEditBtn = document.getElementById("saveEditActivityBtn");
   const saveGradeBtn = document.getElementById("saveGradeBtn");
+  const gradeAnalyzeBtn = document.getElementById("gradeAnalyzeBtn");
   const backBtn = document.getElementById("backDashboardBtn");
   const submissionFilter = document.getElementById("submissionFilter");
 
@@ -108,6 +109,24 @@ function setupEventListeners() {
   if (saveGradeBtn) {
     saveGradeBtn.addEventListener("click", async () => {
       await handleSubmitGrade();
+    });
+  }
+
+  if (gradeAnalyzeBtn) {
+    gradeAnalyzeBtn.addEventListener("click", async () => {
+      const repoUrl = gradeAnalyzeBtn.getAttribute("data-repo-url");
+      const activityTitle = gradeAnalyzeBtn.getAttribute("data-activity-title");
+      const studentName = gradeAnalyzeBtn.getAttribute("data-student-name");
+
+      if (repoUrl) {
+        await validateAndNavigateToAnalyzer(
+          repoUrl,
+          activityTitle,
+          studentName,
+        );
+      } else {
+        showNotification("No repository URL available for analysis.", "error");
+      }
     });
   }
 
@@ -837,16 +856,6 @@ function renderSubmissionRows() {
                 <i class="fas fa-award"></i>
                 Grade
             </button>
-            ${
-              row.repositoryUrl
-                ? `
-                <button class="btn btn-secondary btn-small" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
-                    <i class="fas fa-code"></i>
-                    Analyze
-                </button>
-            `
-                : ""
-            }
         </div>
     `;
       } else if (row.status === "GRADED") {
@@ -1069,6 +1078,7 @@ function openGradeModal(activityId, studentUserId) {
   }
 
   const info = document.getElementById("gradeStudentInfo");
+  const gradeAnalyzeBtn = document.getElementById("gradeAnalyzeBtn");
   if (info) {
     const repoLink = row.repositoryUrl
       ? `<a href="${escapeHtml(row.repositoryUrl)}" target="_blank" rel="noopener noreferrer" class="repo-link">${escapeHtml(row.repositoryName || trimProtocol(row.repositoryUrl))}</a>`
@@ -1094,6 +1104,23 @@ function openGradeModal(activityId, studentUserId) {
             </div>
             ${row.description ? `<div class="grade-activity-description">${escapeHtml(row.description)}</div>` : ""}
         `;
+  }
+
+  if (gradeAnalyzeBtn) {
+    if (row.repositoryUrl) {
+      gradeAnalyzeBtn.style.display = "";
+      gradeAnalyzeBtn.setAttribute("data-repo-url", row.repositoryUrl);
+      gradeAnalyzeBtn.setAttribute(
+        "data-activity-title",
+        row.title || "Activity",
+      );
+      gradeAnalyzeBtn.setAttribute("data-student-name", row.displayName);
+    } else {
+      gradeAnalyzeBtn.style.display = "none";
+      gradeAnalyzeBtn.removeAttribute("data-repo-url");
+      gradeAnalyzeBtn.removeAttribute("data-activity-title");
+      gradeAnalyzeBtn.removeAttribute("data-student-name");
+    }
   }
 
   openModal("gradeModal");
