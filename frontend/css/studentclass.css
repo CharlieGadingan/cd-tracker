@@ -868,58 +868,106 @@ html {
 
       /* Modal styles */
       .modal {
-        display: none;
-        position: fixed;
-        z-index: 999;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.75);
-        backdrop-filter: blur(4px);
-      }
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    
+    /* ✅ Allow modal to scroll naturally on small screens */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    
+    /* Animation state */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+
+.modal[style*="display: block"] {
+    opacity: 1;
+    pointer-events: all;
+}
 
       .modal-content {
-        background: #111;
-        color: #f5f5f5;
-        width: 500px;
-        max-width: 90%;
-        margin: 8% auto;
-        padding: 30px;
-        border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-        animation: fadeIn 0.3s ease;
-        border: 1px solid #222;
-      }
+    background: #111;
+    color: #f5f5f5;
+    width: 520px;
+    max-width: 92vw;
+    
+    /* ✅ Never go off screen, always have safe margins */
+    margin: 16px auto;
+    min-height: fit-content;
+    max-height: calc(100dvh - 32px);
+    
+    /* ✅ Make content inside scroll if it's too long */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+    border: 1px solid #2b2b2b;
+
+    /* ✅ Perfect smooth entry animation */
+    transform: translateY(12px) scale(0.97);
+    transition: transform 0.22s cubic-bezier(0.17, 0.67, 0.3, 0.99);
+}
+
+.modal[style*="display: block"] .modal-content {
+    transform: translateY(0) scale(1);
+}
 
       .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #333;
-      }
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #2b2b2b;
+    
+    /* ✅ Sticky header always stays visible */
+    position: sticky;
+    top: 0;
+    background: #111;
+    z-index: 10;
+    margin-top: -4px;
+    padding-top: 4px;
+}
 
-      .modal-header h2 {
-        font-size: 20px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+.modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.3;
+}
 
-      .modal-header h2 i {
-        color: var(--color-accent-fg);
-      }
+.modal-header h2 i {
+    color: var(--color-accent-fg);
+}
 
-      .close-btn {
-        font-size: 24px;
-        cursor: pointer;
-        color: #aaa;
-        transition: 0.3s;
-      }
+.close-btn {
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    transition: 0.2s;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
 
-      .close-btn:hover {
-        color: #fff;
-      }
+.close-btn:hover {
+    color: #fff;
+    background: #1f2937;
+}
 
       .large-modal {
         width: 700px;
@@ -928,15 +976,16 @@ html {
       }
 
       .modal-body {
-        margin-bottom: 25px;
-      }
+    margin-bottom: 0;
+    padding-bottom: 8px;
+}
 
       .modal-body p {
-        color: #ccc;
-        line-height: 1.6;
-        margin-bottom: 20px;
-        font-size: 14px;
-      }
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
 
       .assignment-detail {
         background: #1a1a1a;
@@ -1036,13 +1085,25 @@ html {
       }
 
       .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid #333;
-      }
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #2b2b2b;
+
+    /* ✅ Sticky footer always stays visible */
+    position: sticky;
+    bottom: 0;
+    background: #111;
+    z-index: 10;
+    margin-left: -24px;
+    margin-right: -24px;
+    padding-left: 24px;
+    padding-right: 24px;
+    margin-bottom: -4px;
+    padding-bottom: 4px;
+}
 
       @keyframes fadeIn {
         from {
@@ -1601,6 +1662,53 @@ html {
     .summary-chip {
         flex: 1;
         justify-content: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .modal-content {
+        width: calc(100vw - 24px);
+        max-width: calc(100vw - 24px);
+        max-height: calc(100dvh - 24px);
+        margin: 12px auto;
+        padding: 18px;
+        border-radius: 20px;
+    }
+
+    .modal-header {
+        margin-left: -18px;
+        margin-right: -18px;
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .modal-footer {
+        margin-left: -18px;
+        margin-right: -18px;
+        padding-left: 18px;
+        padding-right: 18px;
+        flex-direction: column-reverse;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+        height: 48px;
+        font-size: 15px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        min-height: 48px;
+        font-size: 16px; /* ✅ Prevents unwanted iOS zoom on focus */
+    }
+}
+
+/* ✅ iPhone safe area support */
+@supports (padding: max(0px)) {
+    .modal-content {
+        margin-top: max(12px, env(safe-area-inset-top));
+        margin-bottom: max(12px, env(safe-area-inset-bottom));
     }
 }
 
