@@ -80,6 +80,7 @@ function setupEventListeners() {
   const saveCreateBtn = document.getElementById("saveActivityBtn");
   const saveEditBtn = document.getElementById("saveEditActivityBtn");
   const saveGradeBtn = document.getElementById("saveGradeBtn");
+  const gradeAnalyzeBtn = document.getElementById("gradeAnalyzeBtn");
   const backBtn = document.getElementById("backDashboardBtn");
   const submissionFilter = document.getElementById("submissionFilter");
 
@@ -108,6 +109,24 @@ function setupEventListeners() {
   if (saveGradeBtn) {
     saveGradeBtn.addEventListener("click", async () => {
       await handleSubmitGrade();
+    });
+  }
+
+  if (gradeAnalyzeBtn) {
+    gradeAnalyzeBtn.addEventListener("click", async () => {
+      const repoUrl = gradeAnalyzeBtn.getAttribute("data-repo-url");
+      const activityTitle = gradeAnalyzeBtn.getAttribute("data-activity-title");
+      const studentName = gradeAnalyzeBtn.getAttribute("data-student-name");
+
+      if (repoUrl) {
+        await validateAndNavigateToAnalyzer(
+          repoUrl,
+          activityTitle,
+          studentName,
+        );
+      } else {
+        showNotification("No repository URL available for analysis.", "error");
+      }
     });
   }
 
@@ -837,16 +856,6 @@ function renderSubmissionRows() {
                 <i class="fas fa-award"></i>
                 Grade
             </button>
-            ${
-              row.repositoryUrl
-                ? `
-                <button class="btn btn-secondary btn-small" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
-                    <i class="fas fa-code"></i>
-                    Analyze
-                </button>
-            `
-                : ""
-            }
         </div>
     `;
       } else if (row.status === "GRADED") {
@@ -859,7 +868,7 @@ function renderSubmissionRows() {
             ${
               row.repositoryUrl
                 ? `
-                <button class="btn btn-secondary btn-small" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
+                <button class="btn btn-secondary btn-small analyze-btn" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
                     <i class="fas fa-code"></i>
                     Analyze
                 </button>
@@ -1069,6 +1078,7 @@ function openGradeModal(activityId, studentUserId) {
   }
 
   const info = document.getElementById("gradeStudentInfo");
+  const gradeAnalyzeBtn = document.getElementById("gradeAnalyzeBtn");
   if (info) {
     const repoLink = row.repositoryUrl
       ? `<a href="${escapeHtml(row.repositoryUrl)}" target="_blank" rel="noopener noreferrer" class="repo-link">${escapeHtml(row.repositoryName || trimProtocol(row.repositoryUrl))}</a>`
@@ -1094,6 +1104,23 @@ function openGradeModal(activityId, studentUserId) {
             </div>
             ${row.description ? `<div class="grade-activity-description">${escapeHtml(row.description)}</div>` : ""}
         `;
+  }
+
+  if (gradeAnalyzeBtn) {
+    if (row.repositoryUrl) {
+      gradeAnalyzeBtn.style.display = "";
+      gradeAnalyzeBtn.setAttribute("data-repo-url", row.repositoryUrl);
+      gradeAnalyzeBtn.setAttribute(
+        "data-activity-title",
+        row.title || "Activity",
+      );
+      gradeAnalyzeBtn.setAttribute("data-student-name", row.displayName);
+    } else {
+      gradeAnalyzeBtn.style.display = "none";
+      gradeAnalyzeBtn.removeAttribute("data-repo-url");
+      gradeAnalyzeBtn.removeAttribute("data-activity-title");
+      gradeAnalyzeBtn.removeAttribute("data-student-name");
+    }
   }
 
   openModal("gradeModal");
@@ -1908,9 +1935,6 @@ function showNoCppWarning(
                     <button class="btn btn-secondary" id="closeCppWarningBtn">
                         <i class="fas fa-times"></i> Close
                     </button>
-                    <button class="btn btn-primary" id="forceAnalyzeBtn">
-                        <i class="fas fa-code-branch"></i> Analyze Anyway
-                    </button>
                 </div>
             </div>
         `;
@@ -1922,32 +1946,41 @@ function showNoCppWarning(
       styles.id = "warningModalStyles";
       styles.textContent = `
                 .warning-modal {
-                    max-width: 500px;
-                    width: 90%;
+                    max-width: 440px;
+                    width: 86%;
                     background: var(--bg-card);
                     border-radius: 16px;
                     border: 1px solid var(--border);
                     overflow: hidden;
+                    opacity: 1;
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
+                    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
                 }
                 .modal-header {
                     padding: 20px;
-                    background: rgba(210, 153, 34, 0.1);
+                    background: #171b22;
                     border-bottom: 1px solid var(--border);
                     display: flex;
                     align-items: center;
                     gap: 12px;
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .modal-header h3 {
                     margin: 0;
                     color: var(--accent-yellow);
                 }
                 .modal-body {
-                    padding: 24px;
+                    padding: 20px;
+                    background: var(--bg-card);
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .warning-icon-large {
                     text-align: center;
-                    font-size: 48px;
-                    margin-bottom: 20px;
+                    font-size: 42px;
+                    margin-bottom: 16px;
                     color: var(--accent-yellow);
                 }
                 .warning-icon-large i {
@@ -1955,15 +1988,17 @@ function showNoCppWarning(
                 }
                 .warning-message {
                     text-align: center;
-                    margin-bottom: 20px;
-                    font-size: 1.1rem;
+                    margin-bottom: 16px;
+                    font-size: 1rem;
                 }
                 .repo-info-box {
-                    background: var(--bg-input);
-                    padding: 16px;
+                    background: #12161d;
+                    padding: 14px;
                     border-radius: 8px;
-                    margin: 16px 0;
+                    margin: 14px 0;
                     border: 1px solid var(--border);
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .repo-info-box p {
                     margin: 8px 0;
@@ -1976,7 +2011,7 @@ function showNoCppWarning(
                     color: var(--accent-blue);
                 }
                 .detected-languages {
-                    margin: 16px 0;
+                    margin: 14px 0;
                 }
                 .language-tags {
                     display: flex;
@@ -1985,18 +2020,20 @@ function showNoCppWarning(
                     margin-top: 8px;
                 }
                 .lang-tag {
-                    background: rgba(88, 166, 255, 0.15);
+                    background: #1b2a3d;
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 0.85rem;
                     color: var(--accent-blue);
                 }
                 .warning-suggestions {
-                    background: rgba(248, 81, 73, 0.1);
-                    padding: 16px;
+                    background: #2a1719;
+                    padding: 14px;
                     border-radius: 8px;
-                    margin-top: 16px;
+                    margin-top: 14px;
                     border-left: 3px solid var(--accent-yellow);
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .warning-suggestions ul {
                     margin: 8px 0 0 20px;
@@ -2006,11 +2043,14 @@ function showNoCppWarning(
                     margin: 4px 0;
                 }
                 .modal-footer {
-                    padding: 16px 20px;
+                    padding: 14px 20px;
+                    background: #171b22;
                     border-top: 1px solid var(--border);
                     display: flex;
                     justify-content: flex-end;
                     gap: 12px;
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .btn-primary {
                     background: var(--accent-blue);
@@ -2042,29 +2082,15 @@ function showNoCppWarning(
     }
   }
 
-  // Store data for force analyze
-  modal.setAttribute("data-repo-url", repoUrl);
-  modal.setAttribute("data-activity-title", activityTitle);
-  modal.setAttribute("data-student-name", studentName);
-
   // Setup event listeners
   const closeBtn = document.getElementById("closeCppWarningBtn");
-  const forceBtn = document.getElementById("forceAnalyzeBtn");
 
   // Remove old listeners and add new ones
   const newCloseBtn = closeBtn.cloneNode(true);
-  const newForceBtn = forceBtn.cloneNode(true);
   closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-  forceBtn.parentNode.replaceChild(newForceBtn, forceBtn);
 
   newCloseBtn.addEventListener("click", () => {
     closeModal("noCppWarningModal");
-  });
-
-  newForceBtn.addEventListener("click", () => {
-    closeModal("noCppWarningModal");
-    // Proceed anyway (for cases where GitHub API might have missed C++ files)
-    proceedToAnalyzer(repoUrl, activityTitle, studentName);
   });
 
   // Close modal when clicking outside

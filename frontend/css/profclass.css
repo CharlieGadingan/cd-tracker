@@ -179,6 +179,26 @@ body {
     background: #21262d;
 }
 
+.analyze-btn {
+    background: #ffffff !important;
+    color: #b4232f !important;
+    border: 1px solid #d0d7de !important;
+}
+
+.analyze-btn i {
+    color: #b4232f !important;
+}
+
+.analyze-btn:hover {
+    background: #f6f8fa !important;
+    color: #9f1f2a !important;
+    border-color: #c9d1d9 !important;
+}
+
+.analyze-btn:hover i {
+    color: #9f1f2a !important;
+}
+
 .professor-avatar {
     width: 30px;
     height: 30px;
