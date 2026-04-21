@@ -868,7 +868,7 @@ function renderSubmissionRows() {
             ${
               row.repositoryUrl
                 ? `
-                <button class="btn btn-secondary btn-small" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
+                <button class="btn btn-secondary btn-small analyze-btn" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
                     <i class="fas fa-code"></i>
                     Analyze
                 </button>
