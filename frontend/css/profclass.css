@@ -1968,8 +1968,8 @@ a.submission-repo-link:hover {
 
     .header { 
     padding: 10px 12px; 
-    height: auto; 
-    min-height: 56px
+    height: 48px;; 
+    
 }
 
 .header-label {

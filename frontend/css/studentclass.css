@@ -1418,8 +1418,7 @@ html {
 @media (max-width: 480px) {
     .dashboard-header { 
         padding: 10px 12px; 
-    height: auto; 
-    min-height: 56px
+    height: 48px;
 
     }
 
