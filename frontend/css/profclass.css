@@ -2086,7 +2086,7 @@ a.submission-repo-link:hover {
 }
 
 /* ✅ Large Phones */
-@media (max-width: 640px) {
+@media (max-width: 700px) {
     .submitted-item {
         grid-template-columns: 1fr;
     }
@@ -2132,6 +2132,10 @@ a.submission-repo-link:hover {
 
     .status-row {
         gap: 6px;
+    }
+
+    .professor-avatar {
+        margin-left: 6px;
     }
 }
 
