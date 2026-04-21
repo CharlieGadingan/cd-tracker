@@ -868,26 +868,31 @@ html {
 
       /* Modal styles */
       .modal {
-        display: none;
-        position: fixed;
-        z-index: 999;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.75);
-        backdrop-filter: blur(4px);
-      }
+    display: none;
+    position: fixed;
+    z-index: 999;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+
+    overflow-y: auto;   /* ✅ THIS FIXES SCROLL */
+}
 
       .modal-content {
-        background: #111;
-        color: #f5f5f5;
-        width: 500px;
-        max-width: 90%;
-        margin: 8% auto;
-        padding: 30px;
-        border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-        animation: fadeIn 0.3s ease;
-        border: 1px solid #222;
-      }
+    background: #111;
+    color: #f5f5f5;
+    width: 500px;
+    max-width: 90%;
+
+    margin: 5vh auto;        /* better spacing */
+    padding: 30px;
+
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+
+    max-height: 90vh;        /* ✅ LIMIT HEIGHT */
+    overflow-y: auto;        /* ✅ ENABLE INTERNAL SCROLL */
+}
 
       .modal-header {
         display: flex;
