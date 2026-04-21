@@ -1967,11 +1967,16 @@ a.submission-repo-link:hover {
 }
 
     .header { 
-    padding: 6px 12px; 
-    height: auto; 
+    padding: 10px 12px; 
+        min-height: 56px;
+        height: auto;
+        align-items: flex-start;
 }
 
-    .logo-text, .header-label, .professor-name { 
+.header-label {
+    display: none;
+}
+    .logo-text, .professor-name { 
         display: block; 
     }
 
