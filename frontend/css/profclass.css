@@ -1979,6 +1979,10 @@ a.submission-repo-link:hover {
         display: block; 
     }
 
+    .professor-name {
+        margin-right: 6px;
+    }
+
     .main-layout { 
         padding: 12px; 
         gap: 12px; 
@@ -2096,6 +2100,10 @@ a.submission-repo-link:hover {
         align-items: flex-start;
     }
 
+    .professor-name {
+        margin-right: 6px;
+    }
+    
     .submitted-time-chip {
         white-space: normal;
     }
@@ -2133,10 +2141,7 @@ a.submission-repo-link:hover {
     .status-row {
         gap: 6px;
     }
-
-    .professor-avatar {
-        margin-left: 6px;
-    }
+    
 }
 
 /* ✅ Tablets / Half screen desktop */
