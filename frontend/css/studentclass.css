@@ -203,7 +203,7 @@ html {
       .section-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 14px;
         padding: 18px 20px;
         background: #161b22;
@@ -282,10 +282,11 @@ html {
         gap: 10px;
         flex-wrap: wrap;
         margin-top: 4px;
+        justify-content: center;
       }
 
       .summary-chip {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
         padding: 8px 12px;
@@ -302,8 +303,10 @@ html {
 
       .summary-chip-copy {
         display: flex;
-        flex-direction: column;
-        gap: 2px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
 
       .summary-chip-label {
