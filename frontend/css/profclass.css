@@ -2042,7 +2042,7 @@ a.submission-repo-link:hover {
 }
 
 .btn.btn-primary span {
-    display: inline !important; /* Show the text */
+    display: none !important; /* Show the text */
 }
 
 .btn {
@@ -2058,7 +2058,6 @@ a.submission-repo-link:hover {
     justify-content: center; /* Center the buttons horizontally */
     flex-wrap: wrap; /* Allow wrapping if needed */
   }
-  
 }
 
 /* ✅ Large Phones */
