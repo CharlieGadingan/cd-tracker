@@ -35,7 +35,7 @@ const maxStudentsInput     = document.getElementById('maxStudentsInput');
 const passcodeToggle       = document.getElementById('passcodeToggle');
 const passcodeSection      = document.getElementById('passcodeSection');
 const passcodeInput        = document.getElementById('passcodeInput');
-const requireApprovalInput = document.getElementById('requireApprovalInput');
+
 
 // Form inputs — Join Class
 const classCodeInput       = document.getElementById('classCodeInput');
@@ -491,7 +491,7 @@ function closeModal(modal) {
         passcodeSection.style.display = 'none';
         passcodeInput.value        = '';
         passcodeInput.required     = false;
-        requireApprovalInput.checked = false;
+        
     } else if (modal === joinModal) {
         classCodeInput.value = '';
         resetJoinPasscodeRequirement();
@@ -927,7 +927,7 @@ async function handleCreateClass() {
     const name            = classNameInput?.value.trim() || '';
     const description     = classDescInput?.value.trim() || '';
     const maxStudents     = parseInt(maxStudentsInput?.value || '50');
-    const requireApproval = requireApprovalInput?.checked || false;
+    
     const passcode        = passcodeToggle?.checked ? passcodeInput?.value.trim() : null;
 
     if (!name) {
