@@ -1418,9 +1418,7 @@ html {
 @media (max-width: 480px) {
     .dashboard-header { 
         padding: 10px 12px; 
-        min-height: 56px;
-        height: auto;
-        align-items: flex-start;
+    height: auto; 
     }
 
     .logo-text, .student-name-label { 
