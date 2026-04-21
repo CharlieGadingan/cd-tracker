@@ -2018,7 +2018,12 @@ a.submission-repo-link:hover {
     padding: 6px 8px;
     font-size: 11px;
     line-height: 1;
+    align-items: center;
 }
+
+.assignment-actions {
+    align-items: center;
+  }
 
 .class-card,
 .assignment-card {
