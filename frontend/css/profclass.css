@@ -1980,7 +1980,7 @@ a.submission-repo-link:hover {
     }
 
     .professor-name {
-        margin-right: 6px;
+        padding-right: 6px;
     }
 
     .main-layout { 
@@ -2101,9 +2101,10 @@ a.submission-repo-link:hover {
     }
 
     .professor-name {
-        margin-right: 6px;
+
+        padding-right: 6px;
     }
-    
+
     .submitted-time-chip {
         white-space: normal;
     }
