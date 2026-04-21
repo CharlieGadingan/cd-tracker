@@ -2018,12 +2018,9 @@ a.submission-repo-link:hover {
     padding: 6px 8px;
     font-size: 11px;
     line-height: 1;
-    align-items: center;
+    width: 100%;
+    max-width: 200px;
 }
-
-.assignment-actions {
-    align-items: center;
-  }
 
 .class-card,
 .assignment-card {
@@ -2045,7 +2042,15 @@ a.submission-repo-link:hover {
     justify-content: center;
     text-align: center;
   }
+
+  .assignment-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
 }
+
+
 
 /* ✅ Large Phones */
 @media (max-width: 640px) {
