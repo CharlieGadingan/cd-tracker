@@ -1935,9 +1935,6 @@ function showNoCppWarning(
                     <button class="btn btn-secondary" id="closeCppWarningBtn">
                         <i class="fas fa-times"></i> Close
                     </button>
-                    <button class="btn btn-primary" id="forceAnalyzeBtn">
-                        <i class="fas fa-code-branch"></i> Analyze Anyway
-                    </button>
                 </div>
             </div>
         `;
@@ -1949,8 +1946,8 @@ function showNoCppWarning(
       styles.id = "warningModalStyles";
       styles.textContent = `
                 .warning-modal {
-                    max-width: 500px;
-                    width: 90%;
+                    max-width: 440px;
+                    width: 86%;
                     background: var(--bg-card);
                     border-radius: 16px;
                     border: 1px solid var(--border);
@@ -1969,12 +1966,12 @@ function showNoCppWarning(
                     color: var(--accent-yellow);
                 }
                 .modal-body {
-                    padding: 24px;
+                    padding: 20px;
                 }
                 .warning-icon-large {
                     text-align: center;
-                    font-size: 48px;
-                    margin-bottom: 20px;
+                    font-size: 42px;
+                    margin-bottom: 16px;
                     color: var(--accent-yellow);
                 }
                 .warning-icon-large i {
@@ -1982,14 +1979,14 @@ function showNoCppWarning(
                 }
                 .warning-message {
                     text-align: center;
-                    margin-bottom: 20px;
-                    font-size: 1.1rem;
+                    margin-bottom: 16px;
+                    font-size: 1rem;
                 }
                 .repo-info-box {
                     background: var(--bg-input);
-                    padding: 16px;
+                    padding: 14px;
                     border-radius: 8px;
-                    margin: 16px 0;
+                    margin: 14px 0;
                     border: 1px solid var(--border);
                 }
                 .repo-info-box p {
@@ -2003,7 +2000,7 @@ function showNoCppWarning(
                     color: var(--accent-blue);
                 }
                 .detected-languages {
-                    margin: 16px 0;
+                    margin: 14px 0;
                 }
                 .language-tags {
                     display: flex;
@@ -2020,9 +2017,9 @@ function showNoCppWarning(
                 }
                 .warning-suggestions {
                     background: rgba(248, 81, 73, 0.1);
-                    padding: 16px;
+                    padding: 14px;
                     border-radius: 8px;
-                    margin-top: 16px;
+                    margin-top: 14px;
                     border-left: 3px solid var(--accent-yellow);
                 }
                 .warning-suggestions ul {
@@ -2033,7 +2030,7 @@ function showNoCppWarning(
                     margin: 4px 0;
                 }
                 .modal-footer {
-                    padding: 16px 20px;
+                    padding: 14px 20px;
                     border-top: 1px solid var(--border);
                     display: flex;
                     justify-content: flex-end;
@@ -2069,29 +2066,15 @@ function showNoCppWarning(
     }
   }
 
-  // Store data for force analyze
-  modal.setAttribute("data-repo-url", repoUrl);
-  modal.setAttribute("data-activity-title", activityTitle);
-  modal.setAttribute("data-student-name", studentName);
-
   // Setup event listeners
   const closeBtn = document.getElementById("closeCppWarningBtn");
-  const forceBtn = document.getElementById("forceAnalyzeBtn");
 
   // Remove old listeners and add new ones
   const newCloseBtn = closeBtn.cloneNode(true);
-  const newForceBtn = forceBtn.cloneNode(true);
   closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-  forceBtn.parentNode.replaceChild(newForceBtn, forceBtn);
 
   newCloseBtn.addEventListener("click", () => {
     closeModal("noCppWarningModal");
-  });
-
-  newForceBtn.addEventListener("click", () => {
-    closeModal("noCppWarningModal");
-    // Proceed anyway (for cases where GitHub API might have missed C++ files)
-    proceedToAnalyzer(repoUrl, activityTitle, studentName);
   });
 
   // Close modal when clicking outside
