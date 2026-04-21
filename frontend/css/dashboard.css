@@ -1532,9 +1532,17 @@ html {
         grid-template-columns: 1fr; 
         gap: 10px; 
     }
-    .class-card { padding: 12px; }
+    .class-card { padding: 12px;
+    display: flex;
+        flex-direction: column; }
     .class-name { font-size: 14px; }
-    .class-actions { flex-direction: column; }
+    .class-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #21262d;
+    }
 
     .modal-content { 
         width: 95%; 
