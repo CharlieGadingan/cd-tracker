@@ -1952,14 +1952,20 @@ function showNoCppWarning(
                     border-radius: 16px;
                     border: 1px solid var(--border);
                     overflow: hidden;
+                    opacity: 1;
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
+                    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
                 }
                 .modal-header {
                     padding: 20px;
-                    background: rgba(210, 153, 34, 0.1);
+                    background: #171b22;
                     border-bottom: 1px solid var(--border);
                     display: flex;
                     align-items: center;
                     gap: 12px;
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .modal-header h3 {
                     margin: 0;
@@ -1967,6 +1973,9 @@ function showNoCppWarning(
                 }
                 .modal-body {
                     padding: 20px;
+                    background: var(--bg-card);
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .warning-icon-large {
                     text-align: center;
@@ -1983,11 +1992,13 @@ function showNoCppWarning(
                     font-size: 1rem;
                 }
                 .repo-info-box {
-                    background: var(--bg-input);
+                    background: #12161d;
                     padding: 14px;
                     border-radius: 8px;
                     margin: 14px 0;
                     border: 1px solid var(--border);
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .repo-info-box p {
                     margin: 8px 0;
@@ -2009,18 +2020,20 @@ function showNoCppWarning(
                     margin-top: 8px;
                 }
                 .lang-tag {
-                    background: rgba(88, 166, 255, 0.15);
+                    background: #1b2a3d;
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 0.85rem;
                     color: var(--accent-blue);
                 }
                 .warning-suggestions {
-                    background: rgba(248, 81, 73, 0.1);
+                    background: #2a1719;
                     padding: 14px;
                     border-radius: 8px;
                     margin-top: 14px;
                     border-left: 3px solid var(--accent-yellow);
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .warning-suggestions ul {
                     margin: 8px 0 0 20px;
@@ -2031,10 +2044,13 @@ function showNoCppWarning(
                 }
                 .modal-footer {
                     padding: 14px 20px;
+                    background: #171b22;
                     border-top: 1px solid var(--border);
                     display: flex;
                     justify-content: flex-end;
                     gap: 12px;
+                    backdrop-filter: none;
+                    -webkit-backdrop-filter: none;
                 }
                 .btn-primary {
                     background: var(--accent-blue);
