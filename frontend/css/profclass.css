@@ -1935,17 +1935,7 @@ a.submission-repo-link:hover {
 /* ── Responsive ───────────────────────────────────────────────── */
 
 /* ✅ Small Phones */
-@media (max-width: 360px) {
-  .assignment-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .assignment-actions .btn {
-    width: 100%;
-    max-width: 200px;
-  }
-}
+
 
 @media (max-width: 480px) {
 
@@ -2025,10 +2015,9 @@ a.submission-repo-link:hover {
     }
 
     .assignment-actions .btn {
-    padding: 8px 12px; /* Increase padding for better touch targets */
-    font-size: 12px;
-    line-height: 1.2;
-    min-height: 36px; /* Ensure consistent height */
+    padding: 6px 8px;
+    font-size: 11px;
+    line-height: 1;
 }
 
 .class-card,
@@ -2042,7 +2031,7 @@ a.submission-repo-link:hover {
 }
 
 .btn.btn-primary span {
-    display: none !important; /* Show the text */
+    display: none;
 }
 
 .btn {
@@ -2050,13 +2039,6 @@ a.submission-repo-link:hover {
     align-items: center;
     justify-content: center;
     text-align: center;
-  }
-
-  .assignment-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: center; /* Center the buttons horizontally */
-    flex-wrap: wrap; /* Allow wrapping if needed */
   }
 }
 
