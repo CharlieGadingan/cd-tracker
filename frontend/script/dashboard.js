@@ -927,7 +927,7 @@ async function handleCreateClass() {
     const name            = classNameInput?.value.trim() || '';
     const description     = classDescInput?.value.trim() || '';
     const maxStudents     = parseInt(maxStudentsInput?.value || '50');
-    
+    const requireApproval = false;
     const passcode        = passcodeToggle?.checked ? passcodeInput?.value.trim() : null;
 
     if (!name) {
