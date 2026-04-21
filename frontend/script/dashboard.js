@@ -1184,7 +1184,7 @@ function createClassCard(classroom, isCreated) {
                     ${requireApproval ? '<span class="setting-badge"><i class="fas fa-user-check"></i> Approval</span>' : ''}
                 </div>` : ''}
             <div class="class-actions">
-                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}" data-class-name="${escapeHtml(className)}" data-class-code="${escapeHtml(String(classCode))}">${isCreated ? 'View Class' : 'Go to Class'}</button>
+                <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}" data-class-name="${escapeHtml(className)}" data-class-code="${escapeHtml(String(classCode))}">${isCreated ? 'View Class' : 'See Class'}</button>
                 ${isCreated ? `<button class="btn btn-secondary manage-class" data-class-id="${escapeHtml(classId)}">Manage</button>` : ''}
             </div>
         </div>
