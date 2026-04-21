@@ -1419,6 +1419,8 @@ html {
     .dashboard-header { 
         padding: 10px 12px; 
     height: auto; 
+    min-height: 56px
+
     }
 
     .logo-text, .student-name-label { 
