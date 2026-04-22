@@ -11,6 +11,17 @@
   min-width: 0;
 }
 
+/* Disable drag/highlight text selection across the app */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input, textarea, select, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 html {
   overflow-x: hidden;
   scroll-behavior: smooth;
