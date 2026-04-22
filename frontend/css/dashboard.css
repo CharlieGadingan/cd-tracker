@@ -213,41 +213,52 @@ html {
         gap: 8px;
     }
     /* ── Tabs ─────────────────────────────────────────────────────── */
-    .tabs-container {
-        display: flex;
-        gap: 2px;
+.tabs-container {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
         margin-bottom: 14px;
-        border-bottom: 1px solid #21262d;
-        justify-content: center;
+        background: #11161d;
+        border: 1px solid #2b3340;
+        border-radius: 10px;
+        padding: 6px;
     }
 
     .tab-button {
-        padding: 8px 16px;
+        padding: 10px 14px;
         background: transparent;
         border: none;
-        color: #8b949e;
+        color: #9aa6b2;
         cursor: pointer;
         font-size: 13px;
-        font-weight: 500;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -1px;
-        transition: color 0.12s;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.18s ease;
         display: flex;
         align-items: center;
-        gap: 5px;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
     }
-    .tab-button:hover  { color: #c9d1d9; }
-    .tab-button.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+    .tab-button:hover  { color: #dce6f0; background: #1a2230; }
+    .tab-button.active {
+        color: #f0f6fc;
+        background: linear-gradient(180deg, #2d4158 0%, #24384d 100%);
+        box-shadow: inset 0 0 0 1px rgba(88, 166, 255, 0.45);
+    }
 
     .tab-count {
-        background: #21262d;
-        padding: 0 6px;
-        border-radius: 8px;
-        font-size: 10px;
+        background: rgba(88, 166, 255, 0.16);
+        color: #8ec5ff;
+        padding: 0 7px;
+        border-radius: 999px;
+        font-size: 11px;
         font-weight: 600;
-        line-height: 18px;
+        line-height: 20px;
+        min-width: 20px;
+        text-align: center;
     }
-    .tab-button.active .tab-count { background: #1f6feb; color: white; }
+    .tab-button.active .tab-count { background: #58a6ff; color: #06121f; }
 
     /* ── Grid ─────────────────────────────────────────────────────── */
     .classroom-grid {
@@ -1494,21 +1505,28 @@ html {
 
 .welcome-hide-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    border: 1px solid #30363d;
-    background: #0d1117;
-    color: #c9d1d9;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 12px;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #3a4553;
+    background: #0f1620;
+    color: #94a3b8;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .welcome-hide-btn:hover {
-    background: #21262d;
+    background: #1f2a38;
     color: #fff;
+    border-color: #55677d;
 }
 
     
@@ -1568,25 +1586,12 @@ html {
     .welcome-container h1 { font-size: 22px; }
     .welcome-container p { font-size: 14px; }
 
-    .tabs-container {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-        justify-content: stretch;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-    .tabs-container::-webkit-scrollbar {
-        display: none;
-    }
     .tab-button {
         min-width: 0;
         width: 100%;
         justify-content: center;
         white-space: nowrap;
-        padding: 7px 12px;
+        padding: 8px 10px;
         font-size: 12px;
     }
 
