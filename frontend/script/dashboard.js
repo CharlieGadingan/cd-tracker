@@ -35,7 +35,7 @@ const maxStudentsInput     = document.getElementById('maxStudentsInput');
 const passcodeToggle       = document.getElementById('passcodeToggle');
 const passcodeSection      = document.getElementById('passcodeSection');
 const passcodeInput        = document.getElementById('passcodeInput');
-
+const requireApprovalInput = document.getElementById('requireApprovalInput');
 
 // Form inputs — Join Class
 const classCodeInput       = document.getElementById('classCodeInput');
@@ -491,7 +491,7 @@ function closeModal(modal) {
         passcodeSection.style.display = 'none';
         passcodeInput.value        = '';
         passcodeInput.required     = false;
-        
+        requireApprovalInput.checked = false;
     } else if (modal === joinModal) {
         classCodeInput.value = '';
         resetJoinPasscodeRequirement();
@@ -927,7 +927,7 @@ async function handleCreateClass() {
     const name            = classNameInput?.value.trim() || '';
     const description     = classDescInput?.value.trim() || '';
     const maxStudents     = parseInt(maxStudentsInput?.value || '50');
-    
+    const requireApproval = requireApprovalInput?.checked || false;
     const passcode        = passcodeToggle?.checked ? passcodeInput?.value.trim() : null;
 
     if (!name) {
@@ -1185,7 +1185,7 @@ function createClassCard(classroom, isCreated) {
                 </div>` : ''}
             <div class="class-actions">
                 <button class="btn btn-primary view-class" data-class-id="${escapeHtml(classId)}" data-role="${isCreated ? 'prof' : 'student'}" data-class-name="${escapeHtml(className)}" data-class-code="${escapeHtml(String(classCode))}">${isCreated ? 'View Class' : 'See Class'}</button>
-                ${isCreated ? `<button class="btn btn-secondary manage-class" data-class-id="${escapeHtml(classId)}">Manage</button>` : ''}
+                ${isCreated ? `<button class="btn btn-secondary manage-class" data-class-id="${escapeHtml(classId)}">Manage</button>` : `<button class="btn btn-secondary leave-room" data-class-id="${escapeHtml(classId)}" data-class-name="${escapeHtml(className)}"><i class="fas fa-right-from-bracket"></i> Leave</button>`}
             </div>
         </div>
     `;
@@ -1205,6 +1205,13 @@ function attachClassCardHandlers() {
         btn.addEventListener('click', e => {
             const classId = e.currentTarget.dataset.classId;
             if (classId) manageClassroom(classId);
+        });
+    });
+    document.querySelectorAll('.leave-room').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const classId   = e.currentTarget.dataset.classId;
+            const className = e.currentTarget.dataset.className;
+            if (classId) leaveJoinedClassroom(classId, className);
         });
     });
 }
@@ -1231,6 +1238,50 @@ function manageClassroom(classId) {
         openManageModal(classId);
     } else {
         showNotification('Invalid classroom ID', 'error');
+    }
+}
+
+async function leaveJoinedClassroom(classId, className) {
+    if (!classId || classId === 'unknown') {
+        showNotification('Invalid classroom ID', 'error');
+        return;
+    }
+
+    const roomName = className || 'this classroom';
+    const confirmed = await window.AppDialog.confirm(
+        `Leave ${roomName}? You will lose access to this room until you join again.`,
+        {
+            title: 'Leave Room',
+            confirmText: 'Leave Room',
+            danger: true
+        }
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await apiRequest(`/classrooms/${encodeURIComponent(classId)}/leave`, {
+            method: 'PUT',
+            headers: {
+                Accept: 'application/json'
+            }
+        }, {
+            redirectOnUnauthorized: false
+        });
+
+        await window.AppDialog.alert('You have left the classroom.', {
+            title: 'Room Left'
+        });
+
+        // Reload the dashboard to refresh the classes list
+        await loadClasses();
+        renderClasses();
+    } catch (error) {
+        console.error('Error leaving classroom:', error);
+        await window.AppDialog.alert(error?.message || 'Failed to leave the classroom.', {
+            title: 'Leave Failed',
+            danger: true
+        });
     }
 }
 

@@ -10,7 +10,6 @@
   const pendingCount = document.getElementById('pendingCount');
   const activityStatusFilter = document.getElementById('activityStatusFilter');
   const submitAssignmentBtn = document.getElementById('submitAssignmentBtn');
-  const leaveRoomBtn = document.getElementById('leaveRoomBtn');
 
   const params = new URLSearchParams(window.location.search);
   const classroomId = params.get('classroomId') || params.get('id') || '';
@@ -349,19 +348,6 @@ function loadClassroomInfo() {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  function setLeaveRoomButtonState(mode) {
-    if (!leaveRoomBtn) return;
-
-    leaveRoomBtn.disabled = mode === 'loading';
-
-    if (mode === 'loading') {
-      leaveRoomBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Leaving...';
-      return;
-    }
-
-    leaveRoomBtn.innerHTML = '<i class="fas fa-right-from-bracket"></i> Leave Room';
-  }
-
   function setSubmitButtonState(mode) {
     if (!submitAssignmentBtn) return;
 
@@ -642,66 +628,7 @@ function closeSubmissionModal() {
     if (isExisting) loadGithubRepos();
 }
 
-  async function requestLeaveClassroom() {
-    return apiClient.request(`/classrooms/${encodeURIComponent(classroomId)}/leave`, {
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json'
-      }
-    }, {
-      redirectOnUnauthorized: false
-    });
-  }
 
-  async function leaveClassroom() {
-    if (!leaveRoomBtn || leaveRoomBtn.disabled) return;
-
-    if (!classroomId) {
-      await window.AppDialog.alert('Missing classroom id in the page URL.', {
-        title: 'Missing Classroom'
-      });
-      return;
-    }
-
-    const roomName = document.getElementById('classroomInfoName')?.textContent?.trim() || 'this classroom';
-    const confirmed = await window.AppDialog.confirm(
-      `Leave ${roomName}? You will lose access to this room until you join again.`,
-      {
-        title: 'Leave Room',
-        confirmText: 'Leave Room',
-        danger: true
-      }
-    );
-
-    if (!confirmed) return;
-
-    setLeaveRoomButtonState('loading');
-
-    try {
-      await requestLeaveClassroom();
-
-      try {
-        localStorage.removeItem(storageKey);
-      } catch (error) {
-        console.warn('Failed to clear local classroom submission cache:', error);
-      }
-
-      await window.AppDialog.alert('You have left the classroom.', {
-        title: 'Room Left'
-      });
-
-      window.location.href = '/dashboard/';
-    } catch (error) {
-      console.error('Error leaving classroom:', error);
-      await window.AppDialog.alert(error?.message || 'Failed to leave the classroom.', {
-        title: 'Leave Failed',
-        danger: true
-      });
-      setLeaveRoomButtonState('idle');
-    }
-  }
-
-  
   function buildLocalSubmission(payload, activity, repositoryUrl, mode) {
     const modeLabel = mode === 'new' ? 'New repository' : 'Existing repository';
 
@@ -978,11 +905,6 @@ function closeSubmissionModal() {
 
     if (submitAssignmentBtn) {
       submitAssignmentBtn.addEventListener('click', submitAssignment);
-    }
-
-    if (leaveRoomBtn) {
-      leaveRoomBtn.addEventListener('click', leaveClassroom);
-      setLeaveRoomButtonState('idle');
     }
 
     if (activityStatusFilter) {
