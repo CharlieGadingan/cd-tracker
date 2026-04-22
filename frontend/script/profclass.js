@@ -158,25 +158,55 @@ function setupEventListeners() {
   if (assignmentsList) {
     assignmentsList.addEventListener("click", async (event) => {
       const actionButton = event.target.closest("[data-action]");
+      const card = event.target.closest(".assignment-card[data-activity-id]");
+
+      if (!actionButton && card && !event.target.closest(".assignment-menu")) {
+        closeAllActivityMenus();
+        await openSubmissionsModal(card.getAttribute("data-activity-id"));
+        return;
+      }
+
       if (!actionButton) return;
 
       const action = actionButton.getAttribute("data-action");
-      const activityId = actionButton.getAttribute("data-activity-id");
+      const activityId =
+        actionButton.getAttribute("data-activity-id") ||
+        card?.getAttribute("data-activity-id");
       if (!activityId) return;
 
+      if (action === "toggle-activity-menu") {
+        event.stopPropagation();
+        toggleActivityMenu(activityId);
+        return;
+      }
+
       if (action === "view-submissions") {
+        closeAllActivityMenus();
         await openSubmissionsModal(activityId);
         return;
       }
 
       if (action === "edit-activity") {
+        closeAllActivityMenus();
         openEditActivityModal(activityId);
         return;
       }
 
       if (action === "delete-activity") {
+        closeAllActivityMenus();
         await deleteActivity(activityId);
       }
+    });
+
+    assignmentsList.addEventListener("keydown", async (event) => {
+      const card = event.target.closest(".assignment-card[data-activity-id]");
+      if (!card) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      if (event.target.closest(".assignment-menu")) return;
+
+      event.preventDefault();
+      closeAllActivityMenus();
+      await openSubmissionsModal(card.getAttribute("data-activity-id"));
     });
   }
 
@@ -276,10 +306,30 @@ function setupEventListeners() {
   });
 
   window.addEventListener("click", (event) => {
+    if (!event.target.closest(".assignment-menu")) {
+      closeAllActivityMenus();
+    }
     const modal = event.target.closest(".modal");
     if (!modal || event.target !== modal) return;
     closeModal(modal.id);
   });
+}
+
+function closeAllActivityMenus() {
+  document.querySelectorAll(".assignment-menu").forEach((menu) => {
+    menu.classList.remove("open");
+  });
+}
+
+function toggleActivityMenu(activityId) {
+  const menu = document.querySelector(
+    `.assignment-menu[data-activity-id="${CSS.escape(activityId)}"]`,
+  );
+  if (!menu) return;
+
+  const isOpen = menu.classList.contains("open");
+  closeAllActivityMenus();
+  if (!isOpen) menu.classList.add("open");
 }
 
 async function loadInitialData() {
@@ -608,27 +658,30 @@ function renderActivities() {
         activity?.maxScore != null ? Number(activity.maxScore) : null;
 
       return `
-            <article class="assignment-card">
+            <article class="assignment-card" data-action="view-submissions" data-activity-id="${escapeHtml(activityId)}" tabindex="0" role="button" aria-label="View submissions for ${escapeHtml(getActivityTitle(activity))}">
                 <div class="assignment-top-row">
-                    <div>
-                        <h3>${escapeHtml(getActivityTitle(activity))}</h3>
+                    <div class="assignment-title-wrap">
+                        <h3 class="assignment-card-title">${escapeHtml(getActivityTitle(activity))}</h3>
                         <div class="assignment-meta-line">
                             <span class="activity-status-chip ${statusClass(activity?.status)}">${escapeHtml(asString(activity?.status) || "UNKNOWN")}</span>
                             <span><i class="fas fa-calendar-alt"></i> ${escapeHtml(due.label)}</span>
                             ${maxScore != null ? `<span><i class="fas fa-star"></i> ${escapeHtml(String(maxScore))} points</span>` : ""}
                         </div>
                     </div>
-                    <div class="assignment-actions">
-                        <button class="btn btn-primary btn-small" data-action="view-submissions" data-activity-id="${escapeHtml(activityId)}">
-                            <i class="fas fa-list-check"></i>
-                            <span>View Submissions</span>
+                    <div class="assignment-menu" data-activity-id="${escapeHtml(activityId)}">
+                        <button class="btn btn-secondary btn-icon assignment-menu-trigger" data-action="toggle-activity-menu" data-activity-id="${escapeHtml(activityId)}" title="Activity options" aria-label="Activity options">
+                            <i class="fas fa-bars"></i>
                         </button>
-                        <button class="btn btn-secondarys btn-icon" data-action="edit-activity" data-activity-id="${escapeHtml(activityId)}" title="Edit Activity">
-                            <i class="fas fa-pen"></i>
-                        </button>
-                        <button class="btn btn-danger btn-icon" data-action="delete-activity" data-activity-id="${escapeHtml(activityId)}" title="Delete Activity">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <div class="assignment-menu-dropdown">
+                            <button class="assignment-menu-item" data-action="edit-activity" data-activity-id="${escapeHtml(activityId)}">
+                                <i class="fas fa-pen"></i>
+                                <span>Edit Activity</span>
+                            </button>
+                            <button class="assignment-menu-item danger" data-action="delete-activity" data-activity-id="${escapeHtml(activityId)}">
+                                <i class="fas fa-trash"></i>
+                                <span>Delete Activity</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
