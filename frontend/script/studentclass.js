@@ -25,7 +25,7 @@
     needsSubmissionByActivityId: {},
     needsSubmissionLoaded: false,
     currentActivity: null,
-    filters: { status: 'ALL' },
+    filters: { trackedSubmission: 'ALL' },
     currentActivityTab: 'needs-submission'
   };
 
@@ -94,14 +94,6 @@
 
   function getPendingActivities() {
     return state.activities.filter(a => getActivitySubmissionState(getActivityId(a)) === 'NOT_SUBMITTED');
-  }
-
-  // ── Filter matching ───────────────────────────────────────────
-  function matchesActivityFilters(activity) {
-    const status = getActivityStatus(activity);
-    const sf = state.filters.status;
-    if (sf === 'NEEDS_SUBMISSION') return isNeedsRepositorySubmission(getActivityId(activity));
-    return sf === 'ALL' || status === sf;
   }
 
   // ── Badge helpers ─────────────────────────────────────────────
@@ -251,10 +243,8 @@
       return;
     }
 
-    const filteredActivities = state.activities.filter(matchesActivityFilters);
-
     // Update stat counters
-    if (assignmentCount) assignmentCount.textContent = String(filteredActivities.length);
+    if (assignmentCount) assignmentCount.textContent = String(state.activities.length);
     if (pendingCount)    pendingCount.textContent    = String(getPendingActivities().length);
 
     const submittedCountEl = document.getElementById('submittedCount');
@@ -283,15 +273,25 @@
     if (needsBadge)   needsBadge.textContent   = unsubmitted.length;
     if (trackedBadge) trackedBadge.textContent = submitted.length;
 
+    const trackedFilterGroup = document.getElementById('trackedFilterGroup');
+    if (trackedFilterGroup) trackedFilterGroup.style.display = state.currentActivityTab === 'tracked' ? 'flex' : 'none';
+
     // Render active tab
     if (state.currentActivityTab === 'needs-submission') {
       activitiesContainer.innerHTML = unsubmitted.length === 0
         ? renderEmptyState('All caught up!', 'Every assignment already has a repository attached.', 'fas fa-check-double')
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
-      activitiesContainer.innerHTML = submitted.length === 0
+      const trackedSubmissionFilter = state.filters.trackedSubmission;
+      const trackedActivities = submitted.filter(activity => {
+        const isSubmitted = isActivitySubmittedToInstructor(getActivityId(activity));
+        if (trackedSubmissionFilter === 'SUBMITTED') return isSubmitted;
+        if (trackedSubmissionFilter === 'NOT_SUBMITTED') return !isSubmitted;
+        return true;
+      });
+      activitiesContainer.innerHTML = trackedActivities.length === 0
         ? renderEmptyState('No tracked activities yet', 'Activities will appear here once you submit them.', 'fas fa-tasks')
-        : submitted.map(renderAssignmentCard).join('');
+        : trackedActivities.map(renderAssignmentCard).join('');
     }
   }
 
@@ -326,9 +326,13 @@
       ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repo</button>`
       : '';
 
-    const canSubmitActivity = !needsSubmission && !isActivitySubmittedToInstructor(activityId);
+    const isPublished = getActivityStatus(activity) === 'PUBLISHED';
+    const canSubmitActivity = !needsSubmission && !isActivitySubmittedToInstructor(activityId) && isPublished;
+    const isSubmitBlockedByStatus = !needsSubmission && !isActivitySubmittedToInstructor(activityId) && !isPublished;
     const activitySubmitAction = canSubmitActivity
       ? `<button type="button" class="submit-repo-btn" data-submit-activity-only-id="${escapeHtml(activityId)}"><i class="fas fa-upload"></i> Submit activity</button>`
+      : isSubmitBlockedByStatus
+        ? `<button type="button" class="submit-repo-btn is-disabled" disabled title="Only published activities can be submitted."><i class="fas fa-ban"></i> Submit activity</button>`
       : '';
 
     const activitySubmittedPill = (!needsSubmission && isActivitySubmittedToInstructor(activityId))
@@ -684,46 +688,17 @@
       if (actBtn) { submitActivityGeneral(String(actBtn.getAttribute('data-submit-activity-only-id'))); }
     });
 
-    // ── Filter dropdown ─────────────────────────────────────────
-    const filterBtn    = document.getElementById('filterBtn');
-    const filterMenu   = document.getElementById('filterMenu');
-    const filterLabel  = document.getElementById('filterLabel');
-    const filterWrap   = document.getElementById('filterWrap');
-
-    const filterLabels = { ALL: 'All', PUBLISHED: 'Published', CLOSED: 'Closed', NEEDS_SUBMISSION: 'Needs Submission' };
-
-    function closeFilter() {
-      filterMenu?.classList.remove('is-open');
-      filterBtn?.classList.remove('is-open');
-      filterBtn?.setAttribute('aria-expanded', 'false');
-    }
-    function openFilter() {
-      filterMenu?.classList.add('is-open');
-      filterBtn?.classList.add('is-open');
-      filterBtn?.setAttribute('aria-expanded', 'true');
-    }
-
-    filterBtn?.addEventListener('click', e => {
-      e.stopPropagation();
-      filterMenu?.classList.contains('is-open') ? closeFilter() : openFilter();
-    });
-
-    filterMenu?.querySelectorAll('.filter-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const value = item.getAttribute('data-filter-value') || 'ALL';
-        state.filters.status = value;
-        filterMenu.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        if (filterLabel) filterLabel.textContent = filterLabels[value] || 'All';
-        closeFilter();
+    // ── Tracked filter buttons ──────────────────────────────────
+    document.querySelectorAll('[data-tracked-filter]').forEach(filterBtn => {
+      filterBtn.addEventListener('click', () => {
+        const value = String(filterBtn.getAttribute('data-tracked-filter') || 'ALL');
+        state.filters.trackedSubmission = value;
+        document.querySelectorAll('[data-tracked-filter]').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-tracked-filter') === value);
+        });
         renderActivities();
       });
     });
-
-    document.addEventListener('click', e => {
-      if (!filterWrap?.contains(e.target)) closeFilter();
-    });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilter(); });
   }
 
   // ── Init ──────────────────────────────────────────────────────
