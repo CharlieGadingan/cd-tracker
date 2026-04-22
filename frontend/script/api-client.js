@@ -85,6 +85,9 @@
   let refreshPromise = null;
   let lastRefreshSucceededAt = 0;
   const REFRESH_COOLDOWN_MS = 10000;
+  let authLockActive = false;
+  let authLockPromptShown = false;
+  let authLockOverlay = null;
 
   function isAuthEndpoint(path) {
     return String(path || "").startsWith("/auth/");
@@ -174,7 +177,7 @@
     if (!response.ok) {
       if (redirectOnUnauthorized && response.status === 401) {
         if (!isOnLoginPage()) {
-          logoutAndRedirect();
+          await promptSessionExpired();
         }
         throw new Error("Authentication required");
       }
@@ -203,6 +206,38 @@
     } catch (_) {
       window.location.href = "/";
     }
+  }
+
+  function lockToReadOnlyState() {
+    if (authLockActive) return;
+    authLockActive = true;
+
+    if (!authLockOverlay && document?.body) {
+      const overlay = document.createElement("div");
+      overlay.className = "ct-auth-lock-overlay";
+      overlay.innerHTML = `
+        <div class="ct-auth-lock-box" role="status" aria-live="polite">
+          <h3>Session expired</h3>
+          <p>You are now in read-only mode. Please log in again to continue using actions.</p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      authLockOverlay = overlay;
+    } else if (authLockOverlay) {
+      authLockOverlay.hidden = false;
+    }
+
+    document.documentElement.classList.add("ct-auth-locked");
+    document.body?.classList.add("ct-auth-locked");
+
+    const lockPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    try {
+      window.history.pushState({ ctAuthLocked: true }, "", lockPath);
+      window.addEventListener("popstate", () => {
+        if (!authLockActive) return;
+        window.history.pushState({ ctAuthLocked: true }, "", lockPath);
+      });
+    } catch (_) {}
   }
 
   async function checkSessionState() {
@@ -403,6 +438,38 @@
         background: #f85149;
         border-color: #f85149;
       }
+      .ct-auth-locked {
+        overflow: hidden !important;
+      }
+      .ct-auth-lock-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 10001;
+        background: rgba(1, 4, 9, 0.82);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      .ct-auth-lock-box {
+        width: min(560px, 100%);
+        border-radius: 12px;
+        border: 1px solid #30363d;
+        background: #0d1117;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+        padding: 20px;
+      }
+      .ct-auth-lock-box h3 {
+        margin: 0 0 8px;
+        color: #e6edf3;
+        font-size: 18px;
+      }
+      .ct-auth-lock-box p {
+        margin: 0;
+        color: #8b949e;
+        line-height: 1.5;
+      }
     `;
 
     const overlay = document.createElement("div");
@@ -511,6 +578,27 @@
       });
     }
   };
+
+  async function promptSessionExpired() {
+    if (authLockPromptShown) return;
+    authLockPromptShown = true;
+
+    const shouldGoToLogin = await dialog.confirm(
+      "Your session can no longer be refreshed.\n\nDo you want to go to login now?",
+      {
+        title: "Session expired",
+        confirmText: "Go to login",
+        cancelText: "Stay here"
+      }
+    );
+
+    if (shouldGoToLogin) {
+      logoutAndRedirect();
+      return;
+    }
+
+    lockToReadOnlyState();
+  }
 
   const user = {
     register(payload, profileFile) {
