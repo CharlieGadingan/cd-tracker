@@ -124,6 +124,18 @@ body {
   color: var(--fg-muted);
   font-weight: 500;
 }
+.student-name-label.is-loading::after {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 8px;
+  border: 2px solid rgba(88, 166, 255, 0.35);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: studentclass-spin 0.75s linear infinite;
+  vertical-align: middle;
+}
 
 .user-avatar {
   width: 28px;
@@ -640,6 +652,29 @@ body {
 @keyframes skeleton-sweep {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+.studentclass-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--fg-muted);
+  font-size: 13px;
+  padding: 10px 0 16px;
+}
+
+.studentclass-loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(88, 166, 255, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: studentclass-spin 0.75s linear infinite;
+}
+
+@keyframes studentclass-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Modal ────────────────────────────────────────────────────── */

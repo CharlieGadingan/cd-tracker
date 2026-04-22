@@ -26,7 +26,11 @@
     needsSubmissionLoaded: false,
     currentActivity: null,
     filters: { trackedSubmission: 'ALL' },
-    currentActivityTab: 'needs-submission'
+    currentActivityTab: 'needs-submission',
+    loading: {
+      profile: false,
+      activities: false
+    }
   };
 
   // ── Utilities ─────────────────────────────────────────────────
@@ -222,7 +226,12 @@
   function renderLoadingSkeleton() {
     const container = document.getElementById('activitiesContainer');
     if (!container) return;
-    container.innerHTML = Array(3).fill(`
+    container.innerHTML = `
+      <div class="studentclass-loading">
+        <span class="studentclass-loading-spinner" aria-hidden="true"></span>
+        <span>Loading class activities...</span>
+      </div>
+    ` + Array(3).fill(`
       <div class="assignment">
         <div style="height:16px;width:55%;margin-bottom:10px;" class="skeleton"></div>
         <div style="height:12px;width:35%;margin-bottom:14px;" class="skeleton"></div>
@@ -240,6 +249,11 @@
         'Open this page from a classroom to load its activities.',
         'fas fa-link'
       );
+      return;
+    }
+
+    if (state.loading.activities) {
+      renderLoadingSkeleton();
       return;
     }
 
@@ -385,6 +399,7 @@
     const nameEl   = document.getElementById('studentName');
     const avatarEl = document.getElementById('studentAvatar');
     if (nameEl) nameEl.textContent = fullName;
+    nameEl?.classList.toggle('is-loading', state.loading.profile);
     if (avatarEl) {
       avatarEl.innerHTML = profileUrl
         ? `<img src="${escapeHtml(profileUrl)}" alt="${escapeHtml(fullName)}">`
@@ -502,6 +517,9 @@
 
   // ── API calls ─────────────────────────────────────────────────
   async function loadStudentProfile() {
+    state.loading.profile = true;
+    const nameEl = document.getElementById('studentName');
+    nameEl?.classList.add('is-loading');
     try {
       if (!apiClient?.request) throw new Error('API client not initialized.');
       const data = await apiClient.request('/users/profile', { method: 'GET' }, { redirectOnUnauthorized: false });
@@ -512,11 +530,20 @@
       renderActivities();
     } catch {
       setStudentProfile({});
+    } finally {
+      state.loading.profile = false;
+      nameEl?.classList.remove('is-loading');
     }
   }
 
   async function loadActivities() {
-    if (!apiClient?.request || !classroomId) { renderActivities(); return; }
+    state.loading.activities = true;
+    renderActivities();
+    if (!apiClient?.request || !classroomId) {
+      state.loading.activities = false;
+      renderActivities();
+      return;
+    }
     try {
       const result = await apiClient.request(
         `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
@@ -530,6 +557,8 @@
       state.activities = [];
       state.needsSubmissionByActivityId = {};
       state.needsSubmissionLoaded = false;
+    } finally {
+      state.loading.activities = false;
       renderActivities();
     }
   }

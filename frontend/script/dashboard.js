@@ -50,6 +50,7 @@ let joinPasscodeClassCode = '';
 // Tab state
 let currentTab = 'created';
 let classroomsData = { created: [], joined: [] };
+let classLoadState = { created: false, joined: false };
 
 // Manage modal state
 let currentManageClassId = null;
@@ -516,7 +517,9 @@ function closeModal(modal) {
         passcodeSection.style.display = 'none';
         passcodeInput.value        = '';
         passcodeInput.required     = false;
-        requireApprovalInput.checked = false;
+        if (requireApprovalInput) {
+            requireApprovalInput.checked = false;
+        }
     } else if (modal === joinModal) {
         classCodeInput.value = '';
         resetJoinPasscodeRequirement();
@@ -1115,73 +1118,81 @@ async function loadClasses() {
     const container = document.getElementById('classroomGrid');
     if (!container) return;
 
-    container.innerHTML = '<p class="loading-message">Loading your classes...</p>';
- 
-    let createdClasses = [];
-    let joinedClasses = [];
-
-    // Created and joined are loaded independently so one failing endpoint
-    // does not wipe the other tab.
-    try {
-        const createdResult = await apiRequest('/classrooms/me', { method: 'GET' });
-        const createdRaw = Array.isArray(createdResult) ? createdResult : createdResult?.data || [];
-        createdClasses = Array.isArray(createdRaw)
-            ? createdRaw.map(item => normalizeClassroomPayload(item))
-            : [];
-    } catch (error) {
-        console.warn('Failed to load created classrooms:', error);
-    }
-
-    try {
-        const joinedData = await apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false });
-        const joinedRaw = Array.isArray(joinedData) ? joinedData : joinedData?.data || [];
-        joinedClasses = Array.isArray(joinedRaw)
-            ? joinedRaw.map(item => {
-                const normalized = normalizeClassroomPayload(item);
-                const resolvedMax = resolveMaxStudents({
-                    ...normalized,
-                    maxStudent:
-                        item?.maxStudent ??
-                        item?.classroom?.maxStudent ??
-                        item?.classroomData?.maxStudent ??
-                        item?.maxStudents ??
-                        item?.classroom?.maxStudents ??
-                        item?.classroomData?.maxStudents ??
-                        normalized.maxStudent ??
-                        normalized.maxStudents,
-                    maxStudents:
-                        item?.maxStudents ??
-                        item?.classroom?.maxStudents ??
-                        item?.classroomData?.maxStudents ??
-                        item?.maxStudent ??
-                        item?.classroom?.maxStudent ??
-                        item?.classroomData?.maxStudent ??
-                        normalized.maxStudents ??
-                        normalized.maxStudent
-                }, 50);
-
-                return {
-                    ...normalized,
-                    studentCount:
-                        item?.studentCount ??
-                        item?.classroom?.studentCount ??
-                        item?.classroomData?.studentCount ??
-                        normalized.studentCount ??
-                        0,
-                    maxStudent: resolvedMax,
-                    maxStudents: resolvedMax
-                };
-            })
-            : [];
-    } catch (error) {
-        console.warn('Failed to load joined classrooms:', error);
-    }
-
-    classroomsData.created = createdClasses;
-    classroomsData.joined  = joinedClasses;
-
+    classLoadState.created = true;
+    classLoadState.joined = true;
     updateTabCounts();
     renderClasses();
+
+    const createdRequest = apiRequest('/classrooms/me', { method: 'GET' })
+        .then((createdResult) => {
+            const createdRaw = Array.isArray(createdResult) ? createdResult : createdResult?.data || [];
+            classroomsData.created = Array.isArray(createdRaw)
+                ? createdRaw.map(item => normalizeClassroomPayload(item))
+                : [];
+        })
+        .catch((error) => {
+            console.warn('Failed to load created classrooms:', error);
+            classroomsData.created = [];
+        })
+        .finally(() => {
+            classLoadState.created = false;
+            updateTabCounts();
+            renderClasses();
+        });
+
+    const joinedRequest = apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false })
+        .then((joinedData) => {
+            const joinedRaw = Array.isArray(joinedData) ? joinedData : joinedData?.data || [];
+            classroomsData.joined = Array.isArray(joinedRaw)
+                ? joinedRaw.map(item => {
+                    const normalized = normalizeClassroomPayload(item);
+                    const resolvedMax = resolveMaxStudents({
+                        ...normalized,
+                        maxStudent:
+                            item?.maxStudent ??
+                            item?.classroom?.maxStudent ??
+                            item?.classroomData?.maxStudent ??
+                            item?.maxStudents ??
+                            item?.classroom?.maxStudents ??
+                            item?.classroomData?.maxStudents ??
+                            normalized.maxStudent ??
+                            normalized.maxStudents,
+                        maxStudents:
+                            item?.maxStudents ??
+                            item?.classroom?.maxStudents ??
+                            item?.classroomData?.maxStudents ??
+                            item?.maxStudent ??
+                            item?.classroom?.maxStudent ??
+                            item?.classroomData?.maxStudent ??
+                            normalized.maxStudents ??
+                            normalized.maxStudent
+                    }, 50);
+
+                    return {
+                        ...normalized,
+                        studentCount:
+                            item?.studentCount ??
+                            item?.classroom?.studentCount ??
+                            item?.classroomData?.studentCount ??
+                            normalized.studentCount ??
+                            0,
+                        maxStudent: resolvedMax,
+                        maxStudents: resolvedMax
+                    };
+                })
+                : [];
+        })
+        .catch((error) => {
+            console.warn('Failed to load joined classrooms:', error);
+            classroomsData.joined = [];
+        })
+        .finally(() => {
+            classLoadState.joined = false;
+            updateTabCounts();
+            renderClasses();
+        });
+
+    await Promise.allSettled([createdRequest, joinedRequest]);
 }
 
 function switchTab(tab) {
@@ -1196,13 +1207,28 @@ function switchTab(tab) {
 function updateTabCounts() {
     const createdTab = document.querySelector('[data-tab="created"]');
     const joinedTab  = document.querySelector('[data-tab="joined"]');
-    if (createdTab) createdTab.innerHTML = `My Classes <span class="tab-count">${classroomsData.created.length}</span>`;
-    if (joinedTab)  joinedTab.innerHTML  = `Joined Classes <span class="tab-count">${classroomsData.joined.length}</span>`;
+    const createdCount = classLoadState.created ? '…' : classroomsData.created.length;
+    const joinedCount = classLoadState.joined ? '…' : classroomsData.joined.length;
+    if (createdTab) createdTab.innerHTML = `My Classes <span class="tab-count">${createdCount}</span>`;
+    if (joinedTab)  joinedTab.innerHTML  = `Joined Classes <span class="tab-count">${joinedCount}</span>`;
 }
 
 function renderClasses() {
     const container = document.getElementById('classroomGrid');
     if (!container) return;
+
+    if (classLoadState[currentTab]) {
+        const loadingLabel = currentTab === 'created'
+            ? 'Loading your classes...'
+            : 'Loading joined classes...';
+        container.innerHTML = `
+            <div class="loading-message loading-state">
+                <span class="loading-spinner" aria-hidden="true"></span>
+                <span>${loadingLabel}</span>
+            </div>
+        `;
+        return;
+    }
 
     const classes   = classroomsData[currentTab] || [];
     const isCreated = currentTab === 'created';
