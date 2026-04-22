@@ -436,6 +436,28 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+async function copyTextToClipboard(text) {
+    const value = String(text || '');
+    if (!value) return false;
+
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return true;
+    }
+
+    const tempInput = document.createElement('input');
+    tempInput.value = value;
+    tempInput.setAttribute('readonly', '');
+    tempInput.style.position = 'absolute';
+    tempInput.style.left = '-9999px';
+    document.body.appendChild(tempInput);
+    tempInput.select();
+
+    const copied = document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    return copied;
+}
+
 function normalizeClassCodeForJoin(value) {
     return String(value || '').trim().toUpperCase();
 }
@@ -1177,7 +1199,18 @@ function createClassCard(classroom, isCreated) {
                 </div>
                 <div class="info-item">
                     <i class="fas fa-code"></i>
-                    <span>Code: <strong>${escapeHtml(String(classCode))}</strong></span>
+                    <span class="info-code-row">
+                        <span>Code: <strong>${escapeHtml(String(classCode))}</strong></span>
+                        <button
+                            type="button"
+                            class="copy-code-btn"
+                            data-class-code="${escapeHtml(String(classCode))}"
+                            aria-label="Copy class code"
+                            title="Copy class code"
+                        >
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </span>
                 </div>
             </div>
             ${hasPasscode || requireApproval ? `
@@ -1207,6 +1240,18 @@ function attachClassCardHandlers() {
         btn.addEventListener('click', e => {
             const classId = e.currentTarget.dataset.classId;
             if (classId) manageClassroom(classId);
+        });
+    });
+    document.querySelectorAll('.copy-code-btn').forEach(btn => {
+        btn.addEventListener('click', async e => {
+            const classCode = e.currentTarget.dataset.classCode || '';
+            try {
+                const copied = await copyTextToClipboard(classCode);
+                if (!copied) throw new Error('Copy failed');
+                showNotification(`Class code copied: ${classCode}`, 'success');
+            } catch {
+                showNotification('Unable to copy class code.', 'error');
+            }
         });
     });
     document.querySelectorAll('.leave-room').forEach(btn => {
