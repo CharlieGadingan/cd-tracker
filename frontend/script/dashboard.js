@@ -1218,13 +1218,9 @@ function renderClasses() {
     if (!container) return;
 
     if (classLoadState[currentTab]) {
-        const loadingLabel = currentTab === 'created'
-            ? 'Loading your classes...'
-            : 'Loading joined classes...';
         container.innerHTML = `
-            <div class="loading-message loading-state">
+            <div class="loading-message loading-state" aria-live="polite" aria-label="Loading classes">
                 <span class="loading-spinner" aria-hidden="true"></span>
-                <span>${loadingLabel}</span>
             </div>
         `;
         return;

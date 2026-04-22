@@ -583,21 +583,16 @@
     if (authLockPromptShown) return;
     authLockPromptShown = true;
 
-    const shouldGoToLogin = await dialog.confirm(
-      "Your session can no longer be refreshed.\n\nDo you want to go to login now?",
+    await dialog.alert(
+      "Your session has expired and can no longer be refreshed.\n\nPress the button below to continue to login.",
       {
         title: "Session expired",
         confirmText: "Go to login",
-        cancelText: "Stay here"
+        danger: true
       }
     );
 
-    if (shouldGoToLogin) {
-      logoutAndRedirect();
-      return;
-    }
-
-    lockToReadOnlyState();
+    logoutAndRedirect();
   }
 
   const user = {
