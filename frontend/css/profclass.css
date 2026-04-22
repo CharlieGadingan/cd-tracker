@@ -2061,29 +2061,13 @@ a.submission-repo-link:hover {
 
     .header { 
     padding: 10px 12px; 
-    height: 48px;
-    justify-content: center;
-    position: relative;
+    height: 48px;; 
+    
 }
 
 .header-label {
     display: none;
 }
-
-.header-divider {
-    display: none;
-}
-
-.header-left {
-    width: 100%;
-    justify-content: center;
-}
-
-.header-right {
-    position: absolute;
-    right: 12px;
-}
-
     .logo-text, .professor-name { 
         display: block; 
     }
