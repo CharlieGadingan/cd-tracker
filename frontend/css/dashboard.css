@@ -280,6 +280,24 @@ html {
         border: 1px solid #21262d;
     }
     .error-message { color: #f85149; border-color: #da3633; }
+    .loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(88, 166, 255, 0.25);
+        border-top-color: #58a6ff;
+        border-radius: 50%;
+        animation: spin-loading 0.8s linear infinite;
+        flex-shrink: 0;
+    }
+    @keyframes spin-loading {
+        to { transform: rotate(360deg); }
+    }
 
     /* ── Cards ────────────────────────────────────────────────────── */
     .class-card {
