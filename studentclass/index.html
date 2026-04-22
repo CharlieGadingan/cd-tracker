@@ -97,43 +97,17 @@
                 <span class="tab-badge" id="tabTrackedCount">0</span>
               </button>
             </div>
-
-            <!-- Filter dropdown -->
-            <div class="filter-wrap" id="filterWrap">
-              <button class="filter-btn" id="filterBtn" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-sliders"></i>
-                <span id="filterLabel">All</span>
-                <i class="fas fa-chevron-down filter-chevron"></i>
-              </button>
-              <div class="filter-menu" id="filterMenu" role="menu">
-                <div class="filter-menu-header">Filter by status</div>
-                <button class="filter-item active" data-filter-value="ALL" role="menuitem">
-                  <i class="fas fa-border-all"></i>
-                  All Assignments
-                  <i class="fas fa-check filter-check"></i>
-                </button>
-                <button class="filter-item" data-filter-value="PUBLISHED" role="menuitem">
-                  <i class="fas fa-circle-dot"></i>
-                  Published
-                  <i class="fas fa-check filter-check"></i>
-                </button>
-                <button class="filter-item" data-filter-value="CLOSED" role="menuitem">
-                  <i class="fas fa-lock"></i>
-                  Closed
-                  <i class="fas fa-check filter-check"></i>
-                </button>
-                <button class="filter-item" data-filter-value="NEEDS_SUBMISSION" role="menuitem">
-                  <i class="fas fa-code-branch"></i>
-                  Needs Submission
-                  <i class="fas fa-check filter-check"></i>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
         <!-- Assignment cards render here -->
         <div id="assignmentsList">
+          <div class="tracked-filter-group" id="trackedFilterGroup">
+            <span class="tracked-filter-label">Tracked filter:</span>
+            <button class="tracked-filter-btn active" data-tracked-filter="ALL">All</button>
+            <button class="tracked-filter-btn" data-tracked-filter="SUBMITTED">Submitted</button>
+            <button class="tracked-filter-btn" data-tracked-filter="NOT_SUBMITTED">Not Submitted</button>
+          </div>
           <div id="activitiesContainer" class="activities-container"></div>
         </div>
 

@@ -371,102 +371,38 @@ body {
   color: #fff;
 }
 
-/* ── Filter Dropdown ──────────────────────────────────────────── */
-.filter-wrap {
-  position: relative;
-}
-
-.filter-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--fg-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-  white-space: nowrap;
-}
-.filter-btn:hover, .filter-btn.is-open {
-  color: var(--accent);
-  border-color: var(--accent-border);
-  background: var(--accent-dim);
-}
-.filter-btn i { font-size: 11px; }
-.filter-chevron {
-  font-size: 10px !important;
-  opacity: 0.6;
-  transition: transform 0.18s ease;
-}
-.filter-btn.is-open .filter-chevron { transform: rotate(180deg); }
-
-.filter-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  min-width: 188px;
-  background: var(--bg-overlay);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.25);
-  z-index: 300;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(-6px) scale(0.98);
-  pointer-events: none;
-  transition: opacity 0.16s ease, transform 0.16s ease;
-}
-.filter-menu.is-open {
-  opacity: 1;
-  transform: none;
-  pointer-events: all;
-}
-
-.filter-menu-header {
-  padding: 8px 12px 6px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--fg-subtle);
-  border-bottom: 1px solid var(--border-muted);
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 9px 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border-muted);
-  color: var(--fg-muted);
-  font-size: 13px;
-  font-weight: 400;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s, color 0.12s;
-}
-.filter-item:last-child { border-bottom: none; }
-.filter-item:hover { background: rgba(255,255,255,0.04); color: var(--fg); }
-.filter-item.active { color: var(--accent); }
-.filter-item i:first-child { font-size: 11px; width: 14px; text-align: center; }
-.filter-check {
-  margin-left: auto;
-  font-size: 11px;
-  opacity: 0;
-  color: var(--accent);
-}
-.filter-item.active .filter-check { opacity: 1; }
-
 /* ── Assignment Cards ─────────────────────────────────────────── */
 #assignmentsList {
   padding: 16px;
+}
+
+.tracked-filter-group {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tracked-filter-label {
+  font-size: 12px;
+  color: var(--fg-subtle);
+  font-weight: 600;
+}
+
+.tracked-filter-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--fg-muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tracked-filter-btn.active {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
 }
 
 .activities-container {
@@ -644,6 +580,12 @@ body {
   background: rgba(88,166,255,0.22);
   border-color: rgba(88,166,255,0.5);
   box-shadow: 0 2px 8px rgba(88,166,255,0.15);
+}
+.submit-repo-btn.is-disabled,
+.submit-repo-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .repo-submitted-pill {
