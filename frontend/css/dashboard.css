@@ -1594,8 +1594,8 @@ html {
         height: 44px; 
     }
 
-    .logo { font-size: 15px; }
-    .logo i { font-size: 18px; }
+    .logo { font-size: 16px; }
+    .logo i { font-size: 19px; }
     .logo-text { display: block; }
 
     .header-divider, .header-label, .user-info { display: none; }
