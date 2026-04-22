@@ -29,7 +29,7 @@
     currentActivityTab: 'needs-submission',
     loading: {
       profile: false,
-      activities: false
+      activities: true
     }
   };
 
@@ -229,7 +229,6 @@
     container.innerHTML = `
       <div class="studentclass-loading">
         <span class="studentclass-loading-spinner" aria-hidden="true"></span>
-        <span>Loading class activities...</span>
       </div>
     ` + Array(3).fill(`
       <div class="assignment">
