@@ -345,6 +345,37 @@ html {
     }
     .info-item i      { color: #484f58; width: 12px; text-align: center; font-size: 10px; }
     .info-item strong { color: #c9d1d9; font-weight: 600; }
+    .info-code-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .copy-code-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: 1px solid #30363d;
+        border-radius: 4px;
+        background: #161b22;
+        color: #8b949e;
+        cursor: pointer;
+        transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+    }
+    .copy-code-btn i {
+        width: auto;
+        color: inherit;
+        font-size: 10px;
+    }
+    .copy-code-btn:hover,
+    .copy-code-btn:focus-visible {
+        background: #21262d;
+        border-color: #58a6ff;
+        color: #c9d1d9;
+        outline: none;
+    }
 
     .class-settings {
         display: flex;
