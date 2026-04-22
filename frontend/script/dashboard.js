@@ -1029,7 +1029,7 @@ async function handleCreateClass() {
                 name,
                 description: description || null,
                 maxStudents,
-                requireApproval,
+                requireApproval: false,
                 passcode: passcode || null
             })
         });
