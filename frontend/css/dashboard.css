@@ -1671,8 +1671,8 @@ html {
     }
 
     .profile-modal-content {
-        width: calc(100vw - 20px) !important;
-        max-height: calc(100vh - 26px);
+        width: min(92vw, 420px) !important;
+        max-height: min(88dvh, 700px);
         border-radius: 12px !important;
     }
     .profile-modal-header {
@@ -1705,7 +1705,7 @@ html {
     }
     .profile-info-section {
         padding: 12px 12px 14px;
-        max-height: calc(100vh - 290px);
+        max-height: min(56dvh, 460px);
     }
     .profile-form-group label {
         font-size: 12px;
@@ -1761,8 +1761,8 @@ html {
     }
 
     .profile-modal-content {
-        width: min(96vw, 680px) !important;
-        max-height: calc(100vh - 24px);
+        width: min(92vw, 460px) !important;
+        max-height: min(88dvh, 720px);
     }
     .profile-modal-body { flex-direction: column; padding: 0; }
     .profile-picture-section {
@@ -1805,7 +1805,7 @@ html {
 
 @media (max-width: 360px) {
     .profile-modal-content {
-        width: calc(100vw - 10px) !important;
+        width: min(94vw, 360px) !important;
     }
     .profile-modal-header {
         padding: 10px;
@@ -1823,18 +1823,20 @@ html {
 /* Profile modal UX refinements */
 @media (max-width: 768px) {
     .profile-modal-content {
-        height: min(96vh, 760px);
-        overflow: hidden;
+        height: auto;
+        max-height: min(88dvh, 720px);
+        overflow-y: auto;
     }
 
     .profile-modal-body {
         max-height: calc(100% - 56px);
-        overflow: hidden;
+        overflow-y: auto;
     }
 
     .profile-info-section {
         flex: 1 1 auto;
         min-height: 0;
+        max-height: none;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 18px;
@@ -1849,9 +1851,14 @@ html {
 }
 
 @media (max-width: 480px) {
+    .modal {
+        padding: 10px 8px;
+    }
+
     .profile-modal-content {
-        width: calc(100vw - 12px) !important;
-        height: calc(100vh - 12px);
+        width: min(94vw, 380px) !important;
+        height: auto;
+        max-height: min(86dvh, 680px);
         border-radius: 10px !important;
     }
 
@@ -1867,6 +1874,7 @@ html {
 
     .profile-info-section {
         padding: 10px 10px 14px;
+        max-height: none;
     }
 }
 
