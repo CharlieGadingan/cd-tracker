@@ -26,7 +26,8 @@
     currentActivity: null,
     filters: {
       status: 'ALL'
-    }
+    },
+    currentActivityTab: 'needs-submission'
   };
 
   function escapeHtml(value) {
@@ -384,19 +385,18 @@ function loadClassroomInfo() {
 
   
   function renderActivities() {
-    if (!assignmentsList) return;
+    const activitiesContainer = document.getElementById('activitiesContainer');
+    if (!activitiesContainer) return;
 
     if (!classroomId) {
-      document.getElementById('unsubmittedAssignments').innerHTML = renderEmptyState(
+      activitiesContainer.innerHTML = renderEmptyState(
         'Missing classroom id',
         'Open this page from a classroom to load its activities.',
         'fas fa-link'
       );
-      document.getElementById('submittedAssignments').innerHTML = '';
       return;
     }
 
-    // ✅ ALL YOUR ORIGINAL LOGIC REMAINS 100% UNCHANGED HERE
     const filteredActivities = state.activities.filter(matchesActivityFilters);
 
     if (assignmentCount) {
@@ -414,23 +414,11 @@ function loadClassroomInfo() {
         submittedCountEl.textContent = String(submittedCount);
     }
 
-    if (filteredActivities.length === 0) {
-      const isNeedsFilter = state.filters.status === 'NEEDS_SUBMISSION';
-      document.getElementById('unsubmittedAssignments').innerHTML = renderEmptyState(
-        isNeedsFilter ? 'No assignments need repository submission' : 'No activities match the filter',
-        isNeedsFilter
-          ? 'Every assignment in this classroom already has a repository attached, or data is still loading.'
-          : 'Try a different status filter.',
-        isNeedsFilter ? 'fas fa-code-branch' : 'fas fa-tasks'
-      );
-      document.getElementById('submittedAssignments').innerHTML = '';
-      return;
-    }
-
-
+    // Split activities into needs submission and tracked
     const unsubmitted = [];
     const submitted = [];
-    filteredActivities.forEach(activity => {
+    
+    state.activities.forEach(activity => {
       if (isNeedsRepositorySubmission(getActivityId(activity))) {
         unsubmitted.push(activity);
       } else {
@@ -444,37 +432,48 @@ function loadClassroomInfo() {
       return aTime - bTime;
     });
 
+    // Update tab counts
+    const needsTab = document.querySelector('[data-tab="needs-submission"] .tab-count');
+    const trackedTab = document.querySelector('[data-tab="tracked"] .tab-count');
+    if (needsTab) needsTab.textContent = unsubmitted.length;
+    if (trackedTab) trackedTab.textContent = submitted.length;
 
-    const unsubmittedContainer = document.getElementById('unsubmittedAssignments');
-    unsubmittedContainer.innerHTML = `
-      <div class="section-header">
-        <i class="fas fa-paper-plane"></i> Needs Repository Submission
-        <span class="section-count">(${unsubmitted.length})</span>
-      </div>
-    `;
-
-    if (unsubmitted.length === 0) {
-      unsubmittedContainer.innerHTML += `<div class="section-empty"><i class="fas fa-check-double"></i> All assignments have been submitted 🎉</div>`;
+    // Render based on active tab
+    if (state.currentActivityTab === 'needs-submission') {
+      if (unsubmitted.length === 0) {
+        activitiesContainer.innerHTML = renderEmptyState(
+          'All assignments submitted!',
+          'Every assignment in this classroom already has a repository attached.',
+          'fas fa-check-double'
+        );
+      } else {
+        activitiesContainer.innerHTML = `<div class="activities-grid">${unsubmitted.map(renderAssignmentCard).join('')}</div>`;
+      }
     } else {
-      unsubmittedContainer.innerHTML += unsubmitted.map(renderAssignmentCard).join('');
+      if (submitted.length === 0) {
+        activitiesContainer.innerHTML = renderEmptyState(
+          'No tracked activities yet',
+          'Activities will appear here as you submit them.',
+          'fas fa-tasks'
+        );
+      } else {
+        activitiesContainer.innerHTML = `<div class="activities-grid">${submitted.map(renderAssignmentCard).join('')}</div>`;
+      }
     }
+  }
 
-
-    // Render Submitted section
-    const submittedContainer = document.getElementById('submittedAssignments');
-    submittedContainer.innerHTML = `
-      <div class="section-header">
-        <i class="fas fa-check"></i> Tracked Activities
-        <span class="section-count">(${submitted.length})</span>
-      </div>
-    `;
-
-    if (submitted.length === 0) {
-      submittedContainer.innerHTML += `<div class="section-empty">No submitted assignments yet</div>`;
-    } else {
-      submittedContainer.innerHTML += submitted.map(renderAssignmentCard).join('');
-    }
-}
+  function switchActivityTab(tabName) {
+    state.currentActivityTab = tabName;
+    
+    // Update button states
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+    
+    // Re-render activities for the new tab
+    renderActivities();
+  }
 
 
 // ✅ We moved your original card template into this clean reusable helper!
@@ -866,6 +865,14 @@ function closeSubmissionModal() {
     setSubmitButtonState('idle');
     const existingRepoGroup = document.getElementById('existingRepoGroup');
     const newRepoGroup = document.getElementById('newRepoGroup');
+
+    // Tab button listeners
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        switchActivityTab(tabName);
+      });
+    });
 
     if (closeModalBtn) closeModalBtn.addEventListener('click', closeSubmissionModal);
     if (cancelSubmitBtn) cancelSubmitBtn.addEventListener('click', closeSubmissionModal);

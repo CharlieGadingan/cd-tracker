@@ -99,9 +99,9 @@ html {
     .btn.join-class         { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
     .btn.join-class:hover   { background: #30363d; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-    .btn-primary            { background: white; color: black; flex: 1; }
+    .btn-primary            { background: white; color: black; flex: 1;transition: all 0.2s ease; }
     .btn-primary:hover      { background: rgb(224, 223, 223); }
-    .btn-secondary          { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; flex: 1; }
+    .btn-secondary          { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; flex: 1;transition: all 0.2s ease; }
     .btn-secondary:hover    { background: #30363d; border-color: #484f58; }
     .btn.leave-room          { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid #dc3545; flex: 1; transition: all 0.2s ease; }
     .btn.leave-room:hover    { background: #dc3545; border-color: #dc3545; color: #fff;  }

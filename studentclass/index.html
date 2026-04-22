@@ -109,16 +109,20 @@
         </div>
     </div>
 
-    <div id="assignmentsList">
-
-    <!-- Just replace everything inside with this -->
-    <div class="activities-grid">
-        <div id="unsubmittedAssignments" class="activities-column"></div>
-        <div class="activities-divider"></div>
-        <div id="submittedAssignments" class="activities-column"></div>
+    <!-- Tabs for Activities -->
+    <div class="tabs-container">
+        <button class="tab-button active" data-tab="needs-submission">
+            Needs Repository <span class="tab-count">0</span>
+        </button>
+        <button class="tab-button" data-tab="tracked">
+            Tracked Activities <span class="tab-count">0</span>
+        </button>
     </div>
 
-</div>
+    <div id="assignmentsList">
+        <!-- Content will be rendered here based on active tab -->
+        <div id="activitiesContainer" class="activities-container"></div>
+    </div>
     <!-- Submission Modal -->
     <div class="modal" id="submissionModal">
       <div class="modal-content">

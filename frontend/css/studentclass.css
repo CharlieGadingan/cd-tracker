@@ -1378,10 +1378,52 @@ html {
 
 
 
+.tabs-container {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #21262d;
+    justify-content: flex-start;
+    margin: 0 0 16px 0;
+}
+
+.tab-button {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.tab-button:hover  { color: #c9d1d9; }
+.tab-button.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+.tab-count {
+    background: #21262d;
+    padding: 0 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 18px;
+}
+.tab-button.active .tab-count { background: #1f6feb; color: white; }
+
+.activities-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .activities-grid {
-    display: grid;
-    /* Change this one line */
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    /* Changed from grid */
+    flex-direction: column;
     gap: 16px; /* increased gap a little so it doesn't feel cramped */
     width: 100%;
     padding: 12px 20px;
