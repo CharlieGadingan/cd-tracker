@@ -3,196 +3,198 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeTracker - GitHub Project Tracking System</title>
+    <title>CodeTracker - Classroom</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" type="image/png" href="/frontend/asset/git.png">
     <link rel="stylesheet" href="/frontend/css/studentclass.css">
   </head>
   <body>
 
+    <!-- ── Top Navigation Bar ─────────────────────────────── -->
     <header class="dashboard-header">
-        <div class="header-left">
-            <div class="logo">
-                <i class="fa-brands fa-github"></i>
-                <span class="logo-text">CodeTracker</span>
-            </div>
-            <span class="header-divider"></span>
-            <span class="header-label" id="welcomeMsg">Classroom</span>
+      <div class="header-left">
+        <div class="logo">
+          <i class="fa-brands fa-github"></i>
+          <span class="logo-text">CodeTracker</span>
         </div>
-
-        <div class="header-right">
-            
-
-            <div class="profile">
-                     <span class="student-name-label" id="studentName">Loading...</span>
-                <div class="user-avatar" id="studentAvatar"></div>
-
-            </div>
-        </div>
+        <span class="header-divider"></span>
+        <span class="header-label">Classroom</span>
+      </div>
+      <div class="header-right">
+        <span class="student-name-label" id="studentName">Loading...</span>
+        <div class="user-avatar" id="studentAvatar"></div>
+      </div>
     </header>
 
-<div class="main-layout">
-        <!-- Left Column -->
-        <div class="left-column">
-            <div class="top-bar-row">
-    <div class="back-to-dashboard">
-        <a href="../dashboard/" id="backDashboardBtn">
-            <i class="fas fa-arrow-left"></i>
-            Back to Dashboard
+    <!-- ── Page Wrapper ───────────────────────────────────── -->
+    <div class="page-wrapper">
+
+      <!-- ── Page Top Bar: back + classroom info ─────────── -->
+      <div class="page-topbar">
+        <a href="../dashboard/" id="backDashboardBtn" class="back-btn">
+          <i class="fas fa-arrow-left"></i>
+          Back to Dashboard
         </a>
-    </div>
-    <span class="top-bar-spacer"></span>
+        <div class="classroom-meta">
+          <div class="classroom-meta-item">
+            <span class="meta-label">Room</span>
+            <span class="meta-value" id="classroomInfoName">—</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="classroom-meta-item">
+            <span class="meta-label">Code</span>
+            <strong class="meta-value accent" id="classroomInfoCode">—</strong>
+          </div>
+        </div>
+      </div>
 
-    <div class="classroom-info-name-card">
-        <span class="classroom-info-label">Room name:</span>
-        <span id="classroomInfoName">—</span>
-    </div>
-    <div class="classroom-info-code-card">
-        <span class="classroom-info-label">Classcode:</span>
-        <strong id="classroomInfoCode">—</strong>
-    </div>
-</div>
-            <div class="section">
-    <div class="section-header">
-        <div class="assignment-summary-row">
-            <div class="summary-chip">
-                <i class="fas fa-list-check"></i>
-                <span class="summary-chip-copy">
-                    <span class="summary-chip-label">Showing:</span>
-                    <strong id="assignmentCount">0</strong>
-                </span>
-            </div>
-            <div class="summary-chip pending">
+      <!-- ── Stats Row ───────────────────────────────────── -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon neutral"><i class="fas fa-list-check"></i></div>
+          <div class="stat-body">
+            <span class="stat-number" id="assignmentCount">0</span>
+            <span class="stat-label">Total</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon danger"><i class="fas fa-code-branch"></i></div>
+          <div class="stat-body">
+            <span class="stat-number" id="pendingCount">0</span>
+            <span class="stat-label">Needs Submission</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
+          <div class="stat-body">
+            <span class="stat-number" id="submittedCount">0</span>
+            <span class="stat-label">Submitted</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Assignments Section ─────────────────────────── -->
+      <div class="assignments-section">
+
+        <!-- Toolbar: title + tabs + filter all on one row -->
+        <div class="assignments-toolbar">
+          <h2 class="section-heading">
+            <i class="fas fa-tasks"></i>
+            Assignments
+          </h2>
+
+          <div class="toolbar-controls">
+            <!-- Tabs -->
+            <div class="tab-group">
+              <button class="tab-btn active" data-tab="needs-submission">
                 <i class="fas fa-code-branch"></i>
-                <span class="summary-chip-copy">
-                    <span class="summary-chip-label">Needs repository submission:</span>
-                    <strong id="pendingCount">0</strong>
-                </span>
-            </div>
-            <div class="summary-chip submitted-chip">
+                Needs Repo
+                <span class="tab-badge" id="tabNeedsCount">0</span>
+              </button>
+              <button class="tab-btn" data-tab="tracked">
                 <i class="fas fa-check-circle"></i>
-                <span class="summary-chip-copy">
-                    <span class="summary-chip-label">Repository submitted:</span>
-                    <strong id="submittedCount">0</strong>
-                </span>
+                Tracked
+                <span class="tab-badge" id="tabTrackedCount">0</span>
+              </button>
             </div>
-        </div>
-    </div>
-    <!-- This is YOUR existing container, leave this exactly as it is -->
-<!-- THIS OUTER DIV STAYS EXACTLY AS YOU ALREADY HAVE IT -->
 
-</div>
-              
-        </div>
-
-        <!-- Right Column -->
-        <div class="right-column">
-            <!-- Students Section -->
-            <div class="students-section">
-                <div class="section-header assignments-header">
-    <h3 class="section-title">
-        <i class="fas fa-tasks"></i>
-        Classroom Assignments
-    </h3>
-    <p class="section-subtitle">Assignments that need your attention, including repository submission status.</p>
-    <div class="assignment-filters">
-        <select id="activityStatusFilter" aria-label="Filter activities by status">
-            <option value="ALL">All assignments</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="CLOSED">Closed</option>
-            <option value="NEEDS_SUBMISSION">Needs repository submission</option>
-        </select>
-    </div>
-</div>
+            <!-- Filter dropdown -->
+            <div class="filter-wrap" id="filterWrap">
+              <button class="filter-btn" id="filterBtn" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-sliders"></i>
+                <span id="filterLabel">All</span>
+                <i class="fas fa-chevron-down filter-chevron"></i>
+              </button>
+              <div class="filter-menu" id="filterMenu" role="menu">
+                <div class="filter-menu-header">Filter by status</div>
+                <button class="filter-item active" data-filter-value="ALL" role="menuitem">
+                  <i class="fas fa-border-all"></i>
+                  All Assignments
+                  <i class="fas fa-check filter-check"></i>
+                </button>
+                <button class="filter-item" data-filter-value="PUBLISHED" role="menuitem">
+                  <i class="fas fa-circle-dot"></i>
+                  Published
+                  <i class="fas fa-check filter-check"></i>
+                </button>
+                <button class="filter-item" data-filter-value="CLOSED" role="menuitem">
+                  <i class="fas fa-lock"></i>
+                  Closed
+                  <i class="fas fa-check filter-check"></i>
+                </button>
+                <button class="filter-item" data-filter-value="NEEDS_SUBMISSION" role="menuitem">
+                  <i class="fas fa-code-branch"></i>
+                  Needs Submission
+                  <i class="fas fa-check filter-check"></i>
+                </button>
+              </div>
             </div>
-            
+          </div>
         </div>
-    </div>
 
-    <!-- Tabs for Activities -->
-    <div class="tabs-container">
-        <button class="tab-button active" data-tab="needs-submission">
-            Needs Repository <span class="tab-count">0</span>
-        </button>
-        <button class="tab-button" data-tab="tracked">
-            Tracked Activities <span class="tab-count">0</span>
-        </button>
-    </div>
+        <!-- Assignment cards render here -->
+        <div id="assignmentsList">
+          <div id="activitiesContainer" class="activities-container"></div>
+        </div>
 
-    <div id="assignmentsList">
-        <!-- Content will be rendered here based on active tab -->
-        <div id="activitiesContainer" class="activities-container"></div>
-    </div>
-    <!-- Submission Modal -->
+      </div>
+    </div><!-- end page-wrapper -->
+
+    <!-- ── Submission Modal ──────────────────────────────── -->
     <div class="modal" id="submissionModal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>
-            <i class="fas fa-paper-plane"></i>
-            Submit Assignment
-          </h2>
-          <span class="close-btn" id="closeModal">&times;</span>
+          <h2><i class="fas fa-paper-plane"></i> Submit Assignment</h2>
+          <button class="close-btn" id="closeModal" aria-label="Close">&times;</button>
         </div>
 
         <div class="modal-body">
-          <div class="assignment-detail" id="modalAssignmentDetail">
-            <!-- Will be filled dynamically -->
-          </div>
+          <div class="assignment-detail" id="modalAssignmentDetail"></div>
 
           <form id="submissionForm">
             <div class="form-group">
-  <label for="submissionMode">
-    <i class="fas fa-code-branch"></i>
-    Submission Type
-  </label>
-  <select id="submissionMode">
-    <option value="" disabled hidden>— Select submission type —</option>
-    <option value="existing">Submit existing repository</option>
-    <option value="new">Create and submit new repository</option>
-</select>
-</div>
+              <label for="submissionMode">
+                <i class="fas fa-code-branch"></i> Submission Type
+              </label>
+              <select id="submissionMode">
+                <option value="" disabled hidden>— Select submission type —</option>
+                <option value="existing">Submit existing repository</option>
+                <option value="new">Create and submit new repository</option>
+              </select>
+            </div>
 
-<div class="form-group" id="repoInputGroup">
-  <!-- For existing repos -->
-  <div id="existingRepoGroup" class="repo-input-variant" style="display: none;">
-    <label for="repoSelect">
-      <i class="fab fa-github"></i>
-      Select Repository
-      <span class="repo-hint">
-        <i class="fas fa-circle-question"></i>
-        <span class="repo-hint-tooltip">Wait about 5–10 seconds to load all of your repositories from GitHub</span>
-      </span>
-    </label>
-    <select id="repoSelect">
-      <option value="">— Select a repository —</option>
-    </select>
-  </div>
-  <!-- For new repos -->
-  <div id="newRepoGroup" class="repo-input-variant" style="display: none;">
-    <label for="repositoryName">
-      <i class="fas fa-folder-plus"></i>
-      Repository Name
-    </label>
-    <input
-      type="text"
-      id="repositoryName"
-      placeholder="my-awesome-project"
-      pattern="[a-zA-Z0-9_\\-]+"
-      title="Repository name can contain letters, numbers, hyphens, and underscores"
-    />
-  </div>
-</div>
+            <div class="form-group" id="repoInputGroup">
+              <div id="existingRepoGroup" class="repo-input-variant" style="display:none;">
+                <label for="repoSelect">
+                  <i class="fab fa-github"></i> Select Repository
+                  <span class="repo-hint">
+                    <i class="fas fa-circle-question"></i>
+                    <span class="repo-hint-tooltip">Wait 5–10 seconds to load all repositories from GitHub</span>
+                  </span>
+                </label>
+                <select id="repoSelect">
+                  <option value="">— Select a repository —</option>
+                </select>
+              </div>
+              <div id="newRepoGroup" class="repo-input-variant" style="display:none;">
+                <label for="repositoryName">
+                  <i class="fas fa-folder-plus"></i> Repository Name
+                </label>
+                <input
+                  type="text"
+                  id="repositoryName"
+                  placeholder="my-awesome-project"
+                  pattern="[a-zA-Z0-9_\-]+"
+                  title="Letters, numbers, hyphens, underscores only"
+                />
+              </div>
+            </div>
 
             <div class="form-group">
               <label for="submissionNote">
-                <i class="fas fa-comment"></i>
-                Note (Optional)
+                <i class="fas fa-comment"></i> Note <span class="label-optional">(Optional)</span>
               </label>
-              <textarea
-                id="submissionNote"
-                rows="3"
-                placeholder="Add a short note about your submission..."
-              ></textarea>
+              <textarea id="submissionNote" rows="3" placeholder="Add a short note about your submission..."></textarea>
             </div>
           </form>
         </div>
@@ -200,8 +202,7 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" id="cancelSubmitBtn">Cancel</button>
           <button class="btn btn-primary" id="submitAssignmentBtn">
-            <i class="fas fa-paper-plane"></i>
-            Submit Assignment
+            <i class="fas fa-paper-plane"></i> Submit Assignment
           </button>
         </div>
       </div>
