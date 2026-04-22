@@ -56,10 +56,11 @@
     <!-- ── Main ───────────────────────────────────────────────────────────── -->
     <main class="dashboard-main">
 
-        <div class="welcome-container">
-  <h1>Welcome, <span id="welcomeUser">User</span> 👋</h1>
-  <p>We're glad to see you in the Codetracker.</p>
-</div>
+        <div class="welcome-container" id="welcomeBanner">
+            <button type="button" class="welcome-hide-btn" id="hideWelcomeBtn">Hide</button>
+            <h1>Welcome, <span id="welcomeUser">User</span> 👋</h1>
+            <p>We're glad to see you in the Codetracker.</p>
+        </div>
         <!-- Tabs -->
         <div class="tabs-container">
             <button class="tab-button active" data-tab="created">
