@@ -1705,7 +1705,7 @@ html {
     }
     .profile-info-section {
         padding: 12px 12px 14px;
-        max-height: min(52dvh, 420px);
+        max-height: min(56dvh, 460px);
     }
     .profile-form-group label {
         font-size: 12px;
@@ -1825,17 +1825,18 @@ html {
     .profile-modal-content {
         height: auto;
         max-height: min(88dvh, 720px);
-        overflow: hidden;
+        overflow-y: auto;
     }
 
     .profile-modal-body {
         max-height: calc(100% - 56px);
-        overflow: hidden;
+        overflow-y: auto;
     }
 
     .profile-info-section {
         flex: 1 1 auto;
         min-height: 0;
+        max-height: none;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 18px;
@@ -1873,6 +1874,7 @@ html {
 
     .profile-info-section {
         padding: 10px 10px 14px;
+        max-height: none;
     }
 }
 
