@@ -226,11 +226,7 @@
   function renderLoadingSkeleton() {
     const container = document.getElementById('activitiesContainer');
     if (!container) return;
-    container.innerHTML = `
-      <div class="studentclass-loading">
-        <span class="studentclass-loading-spinner" aria-hidden="true"></span>
-      </div>
-    ` + Array(3).fill(`
+    container.innerHTML = Array(3).fill(`
       <div class="assignment">
         <div style="height:16px;width:55%;margin-bottom:10px;" class="skeleton"></div>
         <div style="height:12px;width:35%;margin-bottom:14px;" class="skeleton"></div>
