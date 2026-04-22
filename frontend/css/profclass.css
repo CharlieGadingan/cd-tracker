@@ -1755,6 +1755,16 @@ a.submission-repo-link:hover {
 .btn.btn-icon {
     padding: 6px 10px;
     font-size: 12px;
+    min-width: 38px;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn.btn-icon i {
+    margin: 0;
+    line-height: 1;
 }
 
 .btn.btn-danger {
@@ -2053,12 +2063,10 @@ a.submission-repo-link:hover {
         grid-template-columns: 1fr;
     }
 
-    .assignment-actions .btn {
+.assignment-actions .btn {
     padding: 6px 8px;
     font-size: 11px;
     line-height: 1;
-    width: 100%;
-    max-width: 200px;
 }
 
 .class-card,
@@ -2083,20 +2091,31 @@ a.submission-repo-link:hover {
   }
 
   .assignment-actions {
-    flex-direction: column;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     align-items: center;
+    gap: 6px;
+  }
+
+  .assignment-actions .btn.btn-small {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .assignment-actions .btn.btn-icon {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
   }
 }
 
 @media (max-width: 360px) {
-  .assignment-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .assignment-actions .btn {
-    width: 100%;
-    max-width: 200px;
+  .assignment-actions .btn.btn-small {
+    font-size: 10px;
   }
 }
 

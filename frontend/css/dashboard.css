@@ -290,6 +290,9 @@ html {
         border-radius: 8px;
         border: 1px solid #21262d;
     }
+    .loading-message {
+        min-height: 140px;
+    }
     .error-message { color: #f85149; border-color: #da3633; }
     .loading-state {
         display: flex;
@@ -987,7 +990,7 @@ html {
         display: flex;
         flex-direction: column;
         overflow-y: auto;
-
+        max-height: calc(100vh - 160px);
     }
 
     .profile-form {
@@ -1668,11 +1671,12 @@ html {
     }
 
     .profile-modal-content {
-        width: calc(100vw - 16px) !important;
-        max-height: calc(100vh - 18px);
+        width: calc(100vw - 20px) !important;
+        max-height: calc(100vh - 26px);
+        border-radius: 12px !important;
     }
     .profile-modal-header {
-        padding: 10px 12px;
+        padding: 12px 14px;
     }
     .profile-modal-header h2 {
         font-size: 14px;
@@ -1681,10 +1685,10 @@ html {
         padding: 0;
     }
     .profile-picture-section {
-        padding: 14px 12px;
+        padding: 12px 12px 10px;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
     .profile-picture-wrapper,
     .profile-picture-large {
@@ -1693,19 +1697,39 @@ html {
     }
     .profile-picture-actions {
         width: 100%;
+        max-width: 280px;
     }
     .btn-profile-action {
-        min-height: 40px;
+        min-height: 42px;
+        font-size: 12px;
     }
     .profile-info-section {
-        padding: 12px;
+        padding: 12px 12px 14px;
+        max-height: calc(100vh - 290px);
+    }
+    .profile-form-group label {
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+    .profile-form-group input,
+    .profile-form-group select,
+    .profile-form-group textarea {
+        min-height: 42px;
+    }
+    .profile-form-group textarea {
+        min-height: 72px;
     }
     .profile-form-actions {
         flex-direction: column-reverse;
+        position: sticky;
+        bottom: 0;
+        background: #0d1117;
+        padding-top: 10px;
     }
     .profile-form-actions .btn {
         width: 100%;
         justify-content: center;
+        min-height: 42px;
     }
 
     .floating-dropdown-btn {
@@ -1754,6 +1778,11 @@ html {
     .profile-picture-large { font-size: 24px; }
     .profile-picture-actions { flex-direction: column; width: min(260px, 100%); }
     .profile-info-section { padding: 12px; max-height: none; }
+    .profile-form-group input,
+    .profile-form-group select,
+    .profile-form-group textarea {
+        min-height: 40px;
+    }
     .profile-form-row { flex-direction: column; gap: 10px; }
 
     .manage-status-header {
