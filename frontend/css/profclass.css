@@ -1657,6 +1657,17 @@ a.submission-repo-link:hover {
     align-items: flex-start;
 }
 
+.assignment-title-wrap {
+    min-width: 0;
+}
+
+.assignment-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e6edf3;
+    line-height: 1.35;
+}
+
 .assignment-meta-line {
     display: flex;
     flex-wrap: wrap;
@@ -1671,6 +1682,67 @@ a.submission-repo-link:hover {
     margin-bottom: 10px;
     color: #c9d1d9;
     font-size: 13px;
+}
+
+.assignment-menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.assignment-menu-trigger {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+}
+
+.assignment-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    display: none;
+    min-width: 182px;
+    padding: 6px;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    background: #0d1117;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+    z-index: 20;
+}
+
+.assignment-menu.open .assignment-menu-dropdown {
+    display: block;
+}
+
+.assignment-menu-item {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #c9d1d9;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.assignment-menu-item:hover {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+.assignment-menu-item.danger {
+    color: #ff9b95;
+}
+
+.assignment-menu-item.danger:hover {
+    background: rgba(248, 81, 73, 0.12);
+    border-color: rgba(248, 81, 73, 0.4);
 }
 
 .activity-status-chip,
@@ -2090,26 +2162,22 @@ a.submission-repo-link:hover {
     text-align: center;
   }
 
-  .assignment-actions {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    align-items: center;
+  .assignment-top-row {
+    gap: 10px;
+  }
+
+  .assignment-card-title {
+    font-size: 14px;
+  }
+
+  .assignment-meta-line {
+    font-size: 11px;
     gap: 6px;
   }
 
-  .assignment-actions .btn.btn-small {
-    flex: 1 1 100%;
-    justify-content: center;
-  }
-
-  .assignment-actions .btn.btn-icon {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-    padding: 0;
+  .assignment-menu-dropdown {
+    right: -2px;
+    min-width: 170px;
   }
 }
 

@@ -1820,6 +1820,56 @@ html {
     }
 }
 
+/* Profile modal UX refinements */
+@media (max-width: 768px) {
+    .profile-modal-content {
+        height: min(96vh, 760px);
+        overflow: hidden;
+    }
+
+    .profile-modal-body {
+        max-height: calc(100% - 56px);
+        overflow: hidden;
+    }
+
+    .profile-info-section {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 18px;
+    }
+
+    .profile-form-actions {
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(13, 17, 23, 0.92), #0d1117 40%);
+        padding-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-modal-content {
+        width: calc(100vw - 12px) !important;
+        height: calc(100vh - 12px);
+        border-radius: 10px !important;
+    }
+
+    .profile-picture-section {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .profile-picture-actions {
+        width: 100%;
+        max-width: none;
+    }
+
+    .profile-info-section {
+        padding: 10px 10px 14px;
+    }
+}
+
 /* ✅ Tablets / Half screen desktop */
 @media (max-width: 1000px) {
     .tutorial-container {
