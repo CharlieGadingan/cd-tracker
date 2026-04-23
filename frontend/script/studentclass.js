@@ -3,6 +3,8 @@
 
   const submissionModal       = document.getElementById('submissionModal');
   const modalAssignmentDetail = document.getElementById('modalAssignmentDetail');
+  const detailsModal          = document.getElementById('activityDetailsModal');
+  const detailsContent        = document.getElementById('activityDetailsContent');
   const submissionModeSelect  = document.getElementById('submissionMode');
   const assignmentsList       = document.getElementById('assignmentsList');
   const assignmentCount       = document.getElementById('assignmentCount');
@@ -44,9 +46,12 @@
   function getActivityId(a) { return a?.activityId || ''; }
   function getActivityTitle(a) { return a?.title || 'Untitled activity'; }
   function getActivityDescription(a) { return a?.description || ''; }
+  function getActivityLifecycleStatus(a) {
+    return String(a?.activityStatus || a?.status || '').trim().toUpperCase();
+  }
 
   function getStatusBadgeClass(a) {
-    const s = String(a?.status || '').toUpperCase();
+    const s = getActivityLifecycleStatus(a);
     const d = getDaysLeft(a?.dueDate);
     if (s === 'ARCHIVED' || s === 'CLOSED') return 'expired';
     if (typeof d === 'number' && d <= 7) return 'due-soon';
@@ -54,7 +59,7 @@
   }
 
   function getStatusLabel(a) {
-    const s  = String(a?.status || '').toUpperCase();
+    const s  = getActivityLifecycleStatus(a);
     const d  = getDaysLeft(a?.dueDate);
     const fd = formatDate(a?.dueDate);
     if (s) return s;
@@ -109,6 +114,7 @@
 
     const trackedSubmissionStatus = getTrackedSubmissionStatus(activity);
     const submissionMeta = getSubmissionStatusMeta(trackedSubmissionStatus);
+    const lifecycleStatus = getActivityLifecycleStatus(activity);
 
     const submitRepoBtn = needsRepo
       ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(id)}"><i class="fas fa-paper-plane"></i> Submit repo</button>`
@@ -121,6 +127,7 @@
     const submitActivityBtn = trackedSubmissionStatus === 'PENDING' && !needsRepo
       ? `<button type="button" class="submit-activity-btn" data-submit-pending-activity-id="${escapeHtml(id)}"><i class="fas fa-check"></i> Submit activity</button>`
       : '';
+    const viewDetailsBtn = `<button type="button" class="assignment-detail-btn" data-view-activity-id="${escapeHtml(id)}"><i class="fas fa-circle-info"></i> More info</button>`;
 
     const hideActiveStatusPill = !needsRepo && statusLabel.trim().toUpperCase() === 'ACTIVE';
     const assignmentStatus = hideActiveStatusPill
@@ -132,7 +139,10 @@
         <div class="assignment-header">
           <div class="assignment-title-wrap">
             <div class="assignment-title"><i class="fas fa-project-diagram"></i> ${title}</div>
-            <div class="assignment-subtitle">${repoBadge}</div>
+            <div class="assignment-subtitle">
+              ${repoBadge}
+              ${lifecycleStatus ? `<span class="assignment-lifecycle-pill">${escapeHtml(lifecycleStatus)}</span>` : ''}
+            </div>
           </div>
           ${assignmentStatus}
         </div>
@@ -143,8 +153,58 @@
           ${submitRepoBtn}
           ${submitActivityBtn}
           ${submittedPill}
+          ${viewDetailsBtn}
         </div>
       </div>`;
+  }
+
+  function renderDetailsField(icon, label, value, isLink = false) {
+    const cleanValue = String(value ?? '').trim();
+    if (!cleanValue) return '';
+    const valueHtml = isLink
+      ? `<a href="${escapeHtml(cleanValue)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanValue)}</a>`
+      : escapeHtml(cleanValue);
+    return `
+      <div class="activity-details-item">
+        <div class="activity-details-label"><i class="${icon}"></i> ${escapeHtml(label)}</div>
+        <div class="activity-details-value">${valueHtml}</div>
+      </div>`;
+  }
+
+  function openDetailsModal(activityId) {
+    const activity = state.allActivities.find(a => getActivityId(a) === activityId)
+      || state.unsubmitted.find(a => getActivityId(a) === activityId);
+    if (!activity || !detailsModal || !detailsContent) return;
+
+    const submissionStatus = getTrackedSubmissionStatus(activity) || 'NOT SUBMITTED';
+    detailsContent.innerHTML = `
+      <div class="activity-details-grid">
+        ${renderDetailsField('fas fa-id-card', 'Activity ID', activity.activityId)}
+        ${renderDetailsField('fas fa-heading', 'Title', getActivityTitle(activity))}
+        ${renderDetailsField('fas fa-file-lines', 'Description', getActivityDescription(activity) || 'No description provided')}
+        ${renderDetailsField('fas fa-star', 'Max score', activity.maxScore != null ? `${activity.maxScore}` : 'Not set')}
+        ${renderDetailsField('fas fa-calendar-alt', 'Due date', formatDate(activity.dueDate) || 'No due date')}
+        ${renderDetailsField('fas fa-hourglass-half', 'Activity status', getActivityLifecycleStatus(activity) || 'N/A')}
+        ${renderDetailsField('fas fa-flag-checkered', 'Submission status', submissionStatus)}
+        ${renderDetailsField('fas fa-fingerprint', 'Student activity ID', activity.studentActivityId || 'N/A')}
+        ${renderDetailsField('fas fa-code-branch', 'Repository name', activity.repositoryName || 'N/A')}
+        ${renderDetailsField('fab fa-github', 'Repository URL', activity.repositoryUrl || '', true)}
+        ${renderDetailsField('fas fa-sliders', 'Repository mode', activity.repositoryMode || 'N/A')}
+        ${renderDetailsField('fas fa-clock', 'Submitted at', activity.submittedAt ? new Date(activity.submittedAt).toLocaleString() : 'Not submitted')}
+        ${renderDetailsField('fas fa-chart-line', 'Score', activity.score != null ? `${activity.score}` : 'Not graded')}
+        ${renderDetailsField('fas fa-comment-dots', 'Feedback', activity.feedback || 'No feedback yet')}
+      </div>`;
+
+    detailsModal.style.display = 'block';
+  }
+
+  function closeDetailsModal() {
+    if (!detailsModal) return;
+    detailsModal.style.opacity = '0';
+    setTimeout(() => {
+      detailsModal.style.display = 'none';
+      detailsModal.style.opacity = '';
+    }, 180);
   }
 
   async function submitPendingActivity(activityId, buttonEl) {
@@ -437,7 +497,16 @@
 
     document.getElementById('closeModal')?.addEventListener('click', closeSubmissionModal);
     document.getElementById('cancelSubmitBtn')?.addEventListener('click', closeSubmissionModal);
-    window.addEventListener('click', e => { if (e.target === submissionModal) closeSubmissionModal(); });
+    document.getElementById('closeActivityDetailsModal')?.addEventListener('click', closeDetailsModal);
+    window.addEventListener('click', e => {
+      if (e.target === submissionModal) closeSubmissionModal();
+      if (e.target === detailsModal) closeDetailsModal();
+    });
+    window.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      closeSubmissionModal();
+      closeDetailsModal();
+    });
 
     document.getElementById('backDashboardBtn')?.addEventListener('click', e => {
       e.preventDefault(); window.location.href = '/dashboard/';
@@ -463,6 +532,12 @@
           pendingBtn.getAttribute('data-submit-pending-activity-id'),
           pendingBtn
         );
+        return;
+      }
+
+      const detailsBtn = e.target.closest('[data-view-activity-id]');
+      if (detailsBtn) {
+        openDetailsModal(detailsBtn.getAttribute('data-view-activity-id'));
       }
     });
 
