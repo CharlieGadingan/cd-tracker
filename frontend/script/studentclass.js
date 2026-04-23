@@ -134,6 +134,18 @@
       ? ''
       : `<div class="assignment-status ${badgeClass}"><i class="${statusIcon}"></i> ${statusLabel}</div>`;
 
+    const leftMetaItems = `
+      <span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${urgentClass}">${daysStr}</span></span>
+      ${points}
+    `;
+
+    const rightMetaItems = `
+      ${submittedPill}
+      ${submitRepoBtn}
+      ${submitActivityBtn}
+      ${viewDetailsBtn}
+    `;
+
     return `
       <div class="assignment ${needsRepo ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(id)}">
         <div class="assignment-header">
@@ -148,12 +160,8 @@
         </div>
         ${desc ? `<div class="assignment-desc">${escapeHtml(desc)}</div>` : ''}
         <div class="assignment-meta">
-          <span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${urgentClass}">${daysStr}</span></span>
-          ${points}
-          ${submitRepoBtn}
-          ${submitActivityBtn}
-          ${submittedPill}
-          ${viewDetailsBtn}
+          <div class="assignment-meta-primary">${leftMetaItems}</div>
+          <div class="assignment-meta-actions">${rightMetaItems}</div>
         </div>
       </div>`;
   }
