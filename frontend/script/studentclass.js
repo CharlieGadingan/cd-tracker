@@ -122,6 +122,11 @@
       ? `<button type="button" class="submit-activity-btn" data-submit-pending-activity-id="${escapeHtml(id)}"><i class="fas fa-check"></i> Submit activity</button>`
       : '';
 
+    const hideActiveStatusPill = !needsRepo && statusLabel.trim().toUpperCase() === 'ACTIVE';
+    const assignmentStatus = hideActiveStatusPill
+      ? ''
+      : `<div class="assignment-status ${badgeClass}"><i class="${statusIcon}"></i> ${statusLabel}</div>`;
+
     return `
       <div class="assignment ${needsRepo ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(id)}">
         <div class="assignment-header">
@@ -129,7 +134,7 @@
             <div class="assignment-title"><i class="fas fa-project-diagram"></i> ${title}</div>
             <div class="assignment-subtitle">${repoBadge}</div>
           </div>
-          <div class="assignment-status ${badgeClass}"><i class="${statusIcon}"></i> ${statusLabel}</div>
+          ${assignmentStatus}
         </div>
         ${desc ? `<div class="assignment-desc">${escapeHtml(desc)}</div>` : ''}
         <div class="assignment-meta">
@@ -142,10 +147,24 @@
       </div>`;
   }
 
-  async function submitPendingActivity(activityId) {
+  async function submitPendingActivity(activityId, buttonEl) {
     if (!activityId) return;
     const activity = state.allActivities.find(a => getActivityId(a) === activityId);
     const activityTitle = getActivityTitle(activity);
+    const approved = await window.AppDialog?.confirm(
+      `Submit "${activityTitle}" now? You can still view its status in tracked activities.`,
+      {
+        title: 'Confirm Submission',
+        confirmText: 'Submit Activity',
+        cancelText: 'Cancel'
+      }
+    );
+    if (!approved) return;
+
+    if (buttonEl) {
+      buttonEl.disabled = true;
+      buttonEl.classList.add('is-disabled');
+    }
 
     try {
       await apiClient.request(
@@ -314,6 +333,16 @@
       repositoryUrl = name;
     }
 
+    const approved = await window.AppDialog?.confirm(
+      `Are you sure you want to submit "${getActivityTitle(activity)}"?`,
+      {
+        title: 'Confirm Assignment Submission',
+        confirmText: 'Submit Assignment',
+        cancelText: 'Review'
+      }
+    );
+    if (!approved) return;
+
     setSubmitButtonState('loading');
     try {
       const body = mode === 'new' ? { repositoryName: repositoryUrl } : { repositoryUrl };
@@ -430,9 +459,10 @@
 
       const pendingBtn = e.target.closest('[data-submit-pending-activity-id]');
       if (pendingBtn) {
-        pendingBtn.disabled = true;
-        pendingBtn.classList.add('is-disabled');
-        await submitPendingActivity(pendingBtn.getAttribute('data-submit-pending-activity-id'));
+        await submitPendingActivity(
+          pendingBtn.getAttribute('data-submit-pending-activity-id'),
+          pendingBtn
+        );
       }
     });
 
