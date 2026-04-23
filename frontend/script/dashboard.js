@@ -608,7 +608,10 @@ function setupEventListeners() {
         const target = document.getElementById('deleteConfirmTarget');
         const classroom = classroomsData.created.find(c => String(resolveClassroomId(c)) === String(currentManageClassId));
         if (target) target.textContent = classroom?.className || classroom?.name || 'the classroom name';
-        if (input)  input.value = '';
+        if (input)  {
+            input.value = '';
+            input.classList.remove('match', 'drop-target');
+        }
         document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'true');
         if (box) box.classList.add('visible');
         setTimeout(() => input?.focus(), 50);
@@ -618,17 +621,41 @@ function setupEventListeners() {
         const box = document.getElementById('deleteConfirmBox');
         const input = document.getElementById('deleteConfirmInput');
         if (box)   box.classList.remove('visible');
-        if (input) input.value = '';
+        if (input) {
+            input.value = '';
+            input.classList.remove('match', 'drop-target');
+        }
         document.getElementById('confirmDeleteBtn')?.setAttribute('disabled', 'true');
     });
 
     document.getElementById('deleteConfirmInput')?.addEventListener('input', (e) => {
-        const classroom = classroomsData.created.find(c => String(resolveClassroomId(c)) === String(currentManageClassId));
-        const expected  = classroom?.className || classroom?.name || '';
-        const matches   = e.target.value === expected;
-        const btn = document.getElementById('confirmDeleteBtn');
-        e.target.classList.toggle('match', matches);
-        if (btn) matches ? btn.removeAttribute('disabled') : btn.setAttribute('disabled', 'true');
+        validateDeleteConfirmationValue(e.target);
+    });
+
+    const deleteConfirmTarget = document.getElementById('deleteConfirmTarget');
+    const deleteConfirmInput = document.getElementById('deleteConfirmInput');
+    deleteConfirmTarget?.addEventListener('dragstart', (event) => {
+        const dragName = (deleteConfirmTarget.textContent || '').trim();
+        event.dataTransfer?.setData('text/plain', dragName);
+        event.dataTransfer.effectAllowed = 'copy';
+    });
+
+    deleteConfirmInput?.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        deleteConfirmInput.classList.add('drop-target');
+    });
+
+    deleteConfirmInput?.addEventListener('dragleave', () => {
+        deleteConfirmInput.classList.remove('drop-target');
+    });
+
+    deleteConfirmInput?.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const droppedText = event.dataTransfer?.getData('text/plain') || '';
+        deleteConfirmInput.value = droppedText;
+        deleteConfirmInput.classList.remove('drop-target');
+        validateDeleteConfirmationValue(deleteConfirmInput);
     });
 
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', handleDeleteClassroom);
@@ -656,6 +683,15 @@ function setupEventListeners() {
             closeProfileDropdown();
         }
     });
+}
+
+function validateDeleteConfirmationValue(inputEl) {
+    const classroom = classroomsData.created.find(c => String(resolveClassroomId(c)) === String(currentManageClassId));
+    const expected = classroom?.className || classroom?.name || '';
+    const matches = inputEl.value === expected;
+    const btn = document.getElementById('confirmDeleteBtn');
+    inputEl.classList.toggle('match', matches);
+    if (btn) matches ? btn.removeAttribute('disabled') : btn.setAttribute('disabled', 'true');
 }
 
     document.getElementById("gitTutorialCard").onclick = function () {

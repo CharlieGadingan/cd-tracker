@@ -1273,6 +1273,14 @@ html {
         padding: 1px 6px;
         border-radius: 4px;
     }
+    .delete-confirm-prompt strong[draggable="true"] {
+        cursor: grab;
+        user-select: none;
+        border: 1px dashed rgba(248,81,73,0.45);
+    }
+    .delete-confirm-prompt strong[draggable="true"]:active {
+        cursor: grabbing;
+    }
 
     .delete-confirm-box input[type="text"] {
         width: 100%;
@@ -1292,6 +1300,10 @@ html {
     .delete-confirm-box input[type="text"].match {
         border-color: #f85149;
         background: rgba(248,81,73,0.06);
+    }
+    .delete-confirm-box input[type="text"].drop-target {
+        border-color: #ff7b72;
+        box-shadow: 0 0 0 2px rgba(248,81,73,0.16);
     }
 
     .delete-confirm-actions {

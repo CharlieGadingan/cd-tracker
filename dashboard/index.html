@@ -339,7 +339,11 @@
 
                     <!-- Typed confirmation (hidden until Delete is clicked) -->
                     <div class="delete-confirm-box" id="deleteConfirmBox">
-                        <p class="delete-confirm-prompt">Type <strong id="deleteConfirmTarget"></strong> to confirm deletion:</p>
+                        <p class="delete-confirm-prompt">
+                            Type or drag
+                            <strong id="deleteConfirmTarget" draggable="true" title="Drag this classroom name into the input below"></strong>
+                            into the field to confirm deletion:
+                        </p>
                         <input type="text" id="deleteConfirmInput" placeholder="Type classroom name here" autocomplete="off">
                         <div class="delete-confirm-actions">
                             <button class="btn cancel" id="cancelDeleteBtn">Cancel</button>
