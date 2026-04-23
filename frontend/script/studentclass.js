@@ -2,7 +2,7 @@
   const apiClient = window.ApiClient;
 
   // ── DOM refs ──────────────────────────────────────────────────
-  const submissionModal     = document.getElementById('submissionModal');
+  const submissionModal       = document.getElementById('submissionModal');
   const modalAssignmentDetail = document.getElementById('modalAssignmentDetail');
   const submissionModeSelect  = document.getElementById('submissionMode');
   const assignmentsList       = document.getElementById('assignmentsList');
@@ -14,16 +14,14 @@
   const params      = new URLSearchParams(window.location.search);
   const classroomId = params.get('classroomId') || params.get('id') || '';
   const studentId   = params.get('studentId') || '';
-  const storageKey  = `studentclass.submissions.${classroomId || 'default'}.${studentId || 'all'}`;
 
   // ── App state ─────────────────────────────────────────────────
   const state = {
     activities: [],
-    submissions: loadSavedSubmissions(),
     currentStudentId: String(studentId || '').trim(),
     currentStudentUsername: '',
-    needsSubmissionByActivityId: {},
-    needsSubmissionLoaded: false,
+    unsubmittedActivityIds: new Set(),
+    unsubmittedLoaded: false,
     currentActivity: null,
     filters: { trackedSubmission: 'ALL' },
     currentActivityTab: 'needs-submission',
@@ -73,27 +71,20 @@
 
   function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-  function getActivityId(activity)          { return activity?.activityId || activity?.id || activity?.activityID || ''; }
+  function getActivityId(activity)          { return activity?.activityId || ''; }
   function getActivityTitle(activity)       { return activity?.title || activity?.name || 'Untitled activity'; }
   function getActivityDescription(activity) { return activity?.description || activity?.details || ''; }
   function getActivityStatus(activity)      { return String(activity?.status || '').trim().toUpperCase(); }
 
   // ── Submission state helpers ──────────────────────────────────
   function isNeedsRepositorySubmission(activityId) {
-    const nid = String(activityId || '');
-    if (state.needsSubmissionLoaded && Object.prototype.hasOwnProperty.call(state.needsSubmissionByActivityId, nid)) {
-      return !!state.needsSubmissionByActivityId[nid];
-    }
-    return !state.submissions.find(s => String(s.activityId || '') === nid && s.repositoryUrl);
-  }
-
-  function getActivitySubmissionState(activityId) {
-    return isNeedsRepositorySubmission(activityId) ? 'NOT_SUBMITTED' : 'SUBMITTED';
+    if (!state.unsubmittedLoaded) return false;
+    return state.unsubmittedActivityIds.has(String(activityId || ''));
   }
 
   function getTrackedSubmissionStatus(activity) {
-    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
-    return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED' ? status : '';
+    const s = String(activity?.submissionStatus ?? '').trim().toUpperCase();
+    return (s === 'SUBMITTED' || s === 'PENDING' || s === 'GRADED') ? s : '';
   }
 
   function isActivitySubmittedToInstructor(activityId) {
@@ -103,7 +94,7 @@
   }
 
   function getPendingActivities() {
-    return state.activities.filter(a => getActivitySubmissionState(getActivityId(a)) === 'NOT_SUBMITTED');
+    return state.activities.filter(a => isNeedsRepositorySubmission(getActivityId(a)));
   }
 
   // ── Badge helpers ─────────────────────────────────────────────
@@ -123,19 +114,6 @@
     if (daysLeft === null) return 'Active';
     if (daysLeft < 0) return 'Overdue';
     return dueDate ? `Due ${dueDate}` : 'Active';
-  }
-
-  // ── Local storage ─────────────────────────────────────────────
-  function loadSavedSubmissions() {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
-  }
-
-  function saveSubmissions() {
-    try { localStorage.setItem(storageKey, JSON.stringify(state.submissions)); } catch {}
   }
 
   // ── GitHub repos ──────────────────────────────────────────────
@@ -162,11 +140,9 @@
         }).join('');
     } catch (error) {
       const msg = String(error?.message || '');
-      if (msg.includes('500')) {
-        repoSelect.innerHTML = '<option value="">GitHub repositories are temporarily unavailable</option>';
-      } else {
-        repoSelect.innerHTML = '<option value="">Failed to load repositories</option>';
-      }
+      repoSelect.innerHTML = msg.includes('500')
+        ? '<option value="">GitHub repositories are temporarily unavailable</option>'
+        : '<option value="">Failed to load repositories</option>';
     } finally {
       repoSelect.disabled = false;
     }
@@ -186,58 +162,40 @@
   // ── Fetch unsubmitted from API ────────────────────────────────
   async function refreshNeedsRepositorySubmission() {
     if (!apiClient?.request || !classroomId || state.activities.length === 0) {
-      state.needsSubmissionByActivityId = {};
-      state.needsSubmissionLoaded = false;
+      state.unsubmittedActivityIds = new Set();
+      state.unsubmittedLoaded = false;
       return;
     }
-    const activityIds = state.activities
-      .map(a => String(getActivityId(a) || '').trim())
-      .filter(Boolean);
-    if (activityIds.length === 0) {
-      state.needsSubmissionByActivityId = {};
-      state.needsSubmissionLoaded = false;
-      return;
-    }
+
     try {
       const response = await apiClient.request(
         `/classrooms/${encodeURIComponent(classroomId)}/activities/unsubmitted`,
         {
           method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache'
-          }
+          headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
         },
         { redirectOnUnauthorized: false }
       );
-      const unsubmittedList = normalizeUnsubmittedActivities(response);
-      const unsubmittedIds = new Set(
-        unsubmittedList
-          .map(a => extractActivityId(a))
-          .filter(Boolean)
+
+      const list =
+        Array.isArray(response?.data)             ? response.data
+        : Array.isArray(response?.data?.activities) ? response.data.activities
+        : Array.isArray(response?.activities)      ? response.activities
+        : Array.isArray(response)                  ? response
+        : [];
+
+      state.unsubmittedActivityIds = new Set(
+        list.map(entry => String(entry?.activityId ?? '').trim()).filter(Boolean)
       );
-      const map = {};
-      activityIds.forEach(id => { map[id] = unsubmittedIds.has(id); });
-      state.needsSubmissionByActivityId = map;
-      state.needsSubmissionLoaded = true;
-    } catch {
-      state.needsSubmissionByActivityId = {};
-      state.needsSubmissionLoaded = false;
+      state.unsubmittedLoaded = true;
+
+      console.log('[unsubmitted ids]', [...state.unsubmittedActivityIds]);
+    } catch (err) {
+      console.error('[refreshNeedsRepositorySubmission error]', err);
+      state.unsubmittedActivityIds = new Set();
+      state.unsubmittedLoaded = false;
     }
   }
-
-  function normalizeUnsubmittedActivities(response) {
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response?.data?.activities)) return response.data.activities;
-    if (Array.isArray(response?.activities)) return response.activities;
-    if (Array.isArray(response)) return response;
-    return [];
-  }
-
-// Fix 1
-function extractActivityId(entry) {
-  return String(entry?.activityId ?? '').trim();
-}
 
   // ── Render ────────────────────────────────────────────────────
   function renderEmptyState(message, description, iconClass = 'fas fa-inbox') {
@@ -291,23 +249,20 @@ function extractActivityId(entry) {
       submittedCountEl.textContent = String(count);
     }
 
-    // Split into tabs — submissionStatus is source of truth when present
-    const unsubmitted = [];
-    state.activities.forEach(a => {
-      if (isNeedsRepositorySubmission(getActivityId(a))) unsubmitted.push(a);
-    });
+    // Needs repo tab — driven purely by /unsubmitted API
+    const unsubmitted = state.activities
+      .filter(a => isNeedsRepositorySubmission(getActivityId(a)))
+      .sort((a, b) => {
+        const at = parseApiDate(a.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+        const bt = parseApiDate(b.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
+        return at - bt;
+      });
 
-    unsubmitted.sort((a, b) => {
-      const at = parseApiDate(a.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
-      const bt = parseApiDate(b.dueDate)?.getTime() ?? Number.POSITIVE_INFINITY;
-      return at - bt;
+    // Tracked tab — activities with submissionStatus PENDING, SUBMITTED, or GRADED
+    const trackedBySubmissionStatus = state.activities.filter(activity => {
+      const status = getTrackedSubmissionStatus(activity);
+      return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED';
     });
-
-// Fix 2 — in renderActivities(), trackedBySubmissionStatus population
-const trackedBySubmissionStatus = state.activities.filter(activity => {
-  const status = getTrackedSubmissionStatus(activity);
-  return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED';
-});
 
     // Update tab badges
     const needsBadge   = document.getElementById('tabNeedsCount');
@@ -320,19 +275,26 @@ const trackedBySubmissionStatus = state.activities.filter(activity => {
 
     // Render active tab
     if (state.currentActivityTab === 'needs-submission') {
+      if (!state.unsubmittedLoaded) {
+        activitiesContainer.innerHTML = renderEmptyState(
+          'Loading…',
+          'Checking which activities still need a repository.',
+          'fas fa-spinner fa-spin'
+        );
+        return;
+      }
       activitiesContainer.innerHTML = unsubmitted.length === 0
         ? renderEmptyState('All caught up!', 'Every assignment already has a repository attached.', 'fas fa-check-double')
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
       const trackedSubmissionFilter = state.filters.trackedSubmission;
-     // Fix 2 — the inner filter
-const trackedActivities = trackedBySubmissionStatus.filter(activity => {
-  const status = getTrackedSubmissionStatus(activity);
-  if (trackedSubmissionFilter === 'SUBMITTED')     return status === 'SUBMITTED';
-  if (trackedSubmissionFilter === 'NOT_SUBMITTED')  return status === 'PENDING';
-  if (trackedSubmissionFilter === 'GRADED')         return status === 'GRADED';
-  return true;
-});
+      const trackedActivities = trackedBySubmissionStatus.filter(activity => {
+        const status = getTrackedSubmissionStatus(activity);
+        if (trackedSubmissionFilter === 'SUBMITTED')     return status === 'SUBMITTED';
+        if (trackedSubmissionFilter === 'NOT_SUBMITTED')  return status === 'PENDING';
+        if (trackedSubmissionFilter === 'GRADED')         return status === 'GRADED';
+        return true;
+      });
       activitiesContainer.innerHTML = trackedActivities.length === 0
         ? renderEmptyState('No tracked activities yet', 'Activities will appear here once you submit them.', 'fas fa-tasks')
         : trackedActivities.map(renderAssignmentCard).join('');
@@ -340,14 +302,14 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
   }
 
   function renderAssignmentCard(activity) {
-    const activityId    = getActivityId(activity);
-    const title         = escapeHtml(getActivityTitle(activity));
-    const description   = getActivityDescription(activity);
-    const dueDate       = formatDate(activity?.dueDate);
-    const daysLeft      = getDaysLeft(activity?.dueDate);
-    const badgeClass    = getStatusBadgeClass(activity);
-    const statusLabel   = escapeHtml(getStatusLabel(activity));
-    const statusIcon    = badgeClass === 'expired' ? 'fas fa-hourglass-end' : 'fas fa-clock';
+    const activityId      = getActivityId(activity);
+    const title           = escapeHtml(getActivityTitle(activity));
+    const description     = getActivityDescription(activity);
+    const dueDate         = formatDate(activity?.dueDate);
+    const daysLeft        = getDaysLeft(activity?.dueDate);
+    const badgeClass      = getStatusBadgeClass(activity);
+    const statusLabel     = escapeHtml(getStatusLabel(activity));
+    const statusIcon      = badgeClass === 'expired' ? 'fas fa-hourglass-end' : 'fas fa-clock';
     const needsSubmission = isNeedsRepositorySubmission(activityId);
 
     const points = activity?.maxScore != null
@@ -363,7 +325,6 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
       : (dueDate || 'No due date');
 
     const urgentClass = daysLeft != null && daysLeft <= 7 ? 'urgent' : 'normal';
-
     const dueLabel = `<span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${urgentClass}">${daysStr}</span></span>`;
 
     const submissionAction = needsSubmission
@@ -508,31 +469,16 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
   function applySubmissionMode(mode) {
     const isNew      = mode === 'new';
     const isExisting = mode === 'existing';
-    const existingGroup  = document.getElementById('existingRepoGroup');
-    const newGroup       = document.getElementById('newRepoGroup');
-    const repoNameInput  = document.getElementById('repositoryName');
-    const repoSelect     = document.getElementById('repoSelect');
+    const existingGroup = document.getElementById('existingRepoGroup');
+    const newGroup      = document.getElementById('newRepoGroup');
+    const repoNameInput = document.getElementById('repositoryName');
+    const repoSelect    = document.getElementById('repoSelect');
 
     if (existingGroup) existingGroup.style.display = isExisting ? 'block' : 'none';
     if (newGroup)      newGroup.style.display      = isNew ? 'block' : 'none';
     if (repoSelect)    repoSelect.required         = isExisting;
     if (repoNameInput) { repoNameInput.required = isNew; if (!isNew) repoNameInput.value = ''; }
     if (isExisting)    loadGithubRepos();
-  }
-
-  // ── Build local submission record ─────────────────────────────
-  function buildLocalSubmission(payload, activity, repositoryUrl, mode) {
-    return {
-      id:            payload?.submissionId || payload?.id || `${getActivityId(activity)}-${Date.now()}`,
-      activityId:    getActivityId(activity),
-      title:         getActivityTitle(activity),
-      repositoryUrl,
-      mode,
-      modeLabel:     mode === 'new' ? 'New repository' : 'Existing repository',
-      result:        'passed',
-      resultLabel:   'Submitted',
-      submittedAt:   new Date().toISOString()
-    };
   }
 
   // ── API calls ─────────────────────────────────────────────────
@@ -546,8 +492,6 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
       state.currentStudentId       = String(data?.userId || data?.id || data?.studentId || state.currentStudentId || '').trim();
       state.currentStudentUsername = String(data?.username || data?.githubUsername || data?.login || '').trim();
       setStudentProfile(data);
-      await refreshNeedsRepositorySubmission();
-      renderActivities();
     } catch {
       setStudentProfile({});
     } finally {
@@ -572,14 +516,20 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
       );
 
       state.activities = Array.isArray(activitiesResult?.data) ? activitiesResult.data
-        : Array.isArray(activitiesResult) ? activitiesResult : [];
+        : Array.isArray(activitiesResult) ? activitiesResult
+        : [];
 
+      console.log('[activities]', state.activities.map(a => ({ id: a.activityId, status: a.submissionStatus })));
+
+      // /unsubmitted is called only after activities are populated
       await refreshNeedsRepositorySubmission();
+
       renderActivities();
-    } catch {
+    } catch (err) {
+      console.error('[loadActivities error]', err);
       state.activities = [];
-      state.needsSubmissionByActivityId = {};
-      state.needsSubmissionLoaded = false;
+      state.unsubmittedActivityIds = new Set();
+      state.unsubmittedLoaded = false;
     } finally {
       state.loading.activities = false;
       renderActivities();
@@ -627,20 +577,16 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
 
     try {
       const requestBody = submissionMode === 'new' ? { repositoryName: repositoryUrl } : { repositoryUrl };
-      const response    = await apiClient.request(endpoint, {
+      await apiClient.request(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       }, { redirectOnUnauthorized: false });
 
-      const submitted = response?.data ?? response;
-      const record    = buildLocalSubmission(submitted, activity, repositoryUrl, submissionMode);
-      if (submissionNote) record.note = submissionNote;
-
-      state.submissions = [record, ...state.submissions];
-      saveSubmissions();
+      // Always re-fetch from API after submission — no local patching
       await refreshNeedsRepositorySubmission();
       renderActivities();
+
       setSubmitButtonState('success');
       await sleep(700);
       closeSubmissionModal();
@@ -658,41 +604,37 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
   function attachEventHandlers() {
     setSubmitButtonState('idle');
 
-    // Tab switching
     document.querySelectorAll('[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => switchActivityTab(btn.dataset.tab));
     });
 
-    // Modal open/close
     document.getElementById('closeModal')?.addEventListener('click', closeSubmissionModal);
     document.getElementById('cancelSubmitBtn')?.addEventListener('click', closeSubmissionModal);
     window.addEventListener('click', e => { if (e.target === submissionModal) closeSubmissionModal(); });
 
-    // Back button
     document.getElementById('backDashboardBtn')?.addEventListener('click', e => {
       e.preventDefault();
       window.location.href = '/dashboard/';
     });
 
-    // Submission mode select
     if (submissionModeSelect) {
       submissionModeSelect.addEventListener('change', e => {
         applySubmissionMode(e.target.value === 'new' ? 'new' : 'existing');
       });
-      applySubmissionMode(submissionModeSelect.value === 'new' ? 'new' : submissionModeSelect.value === 'existing' ? 'existing' : '');
+      applySubmissionMode(
+        submissionModeSelect.value === 'new' ? 'new'
+        : submissionModeSelect.value === 'existing' ? 'existing'
+        : ''
+      );
     }
 
-    // Submit button
     submitAssignmentBtn?.addEventListener('click', submitAssignment);
 
-    // Card action buttons (event delegation)
     assignmentsList?.addEventListener('click', e => {
       const repoBtn = e.target.closest('[data-submit-activity-id]');
       if (repoBtn) { openSubmissionModal(String(repoBtn.getAttribute('data-submit-activity-id'))); return; }
-
     });
 
-    // ── Tracked filter buttons ──────────────────────────────────
     document.querySelectorAll('[data-tracked-filter]').forEach(filterBtn => {
       filterBtn.addEventListener('click', () => {
         const value = String(filterBtn.getAttribute('data-tracked-filter') || 'ALL');
@@ -709,15 +651,12 @@ const trackedActivities = trackedBySubmissionStatus.filter(activity => {
   function init() {
     renderLoadingSkeleton();
     attachEventHandlers();
-    renderActivities();
   }
 
   async function initializeAsync() {
     await loadStudentProfile();
     await loadActivities();
     loadClassroomInfo();
-    await new Promise(r => setTimeout(r, 100));
-    renderActivities();
   }
 
   init();
