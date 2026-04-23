@@ -107,6 +107,10 @@
   }
 
   function isActivitySubmittedToInstructor(activityId) {
+    const activity = state.activities.find(a => getActivityId(a) === String(activityId || ''));
+    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
+    // Also fall back to localStorage for optimistic updates right after submission
+    if (status === 'SUBMITTED' || status === 'GRADED') return true;
     const nid = String(activityId || '');
     return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
   }
@@ -281,8 +285,8 @@
     }
 
     // Split into tabs
-    // submissionStatus from API is the source of truth when present;
-    // otherwise fall back to the unsubmitted-endpoint map.
+    // submissionStatus from the API is the source of truth when present.
+    // Only fall back to the /unsubmitted map when there is no submissionStatus.
     const unsubmitted = [];
     const submitted   = [];
     state.activities.forEach(a => {
@@ -371,6 +375,24 @@
         ? `<button type="button" class="submit-repo-btn is-disabled" disabled title="Only published activities can be submitted."><i class="fas fa-ban"></i> Submit activity</button>`
       : '';
 
+    const submissionStatus = String(activity?.submissionStatus || '').trim().toUpperCase();
+
+    // Status pill shown next to repo badge on tracked cards
+    const submissionStatusPill = !needsSubmission && submissionStatus
+      ? submissionStatus === 'GRADED'
+        ? `<span class="submission-status-pill graded"><i class="fas fa-star"></i> Graded${activity?.score != null ? ` &middot; ${escapeHtml(String(activity.score))}/${escapeHtml(String(activity.maxScore ?? '?'))} pts` : ''}</span>`
+        : submissionStatus === 'SUBMITTED'
+          ? '<span class="submission-status-pill awaiting"><i class="fas fa-hourglass-half"></i> Awaiting grade</span>'
+          : submissionStatus === 'PENDING'
+            ? '<span class="submission-status-pill pending"><i class="fas fa-upload"></i> Not submitted</span>'
+            : ''
+      : '';
+
+    // Feedback block for graded activities
+    const feedbackBlock = submissionStatus === 'GRADED' && String(activity?.feedback || '').trim()
+      ? `<div class="assignment-feedback"><i class="fas fa-comment-dots"></i> ${escapeHtml(String(activity.feedback))}</div>`
+      : '';
+
     const activitySubmittedPill = (!needsSubmission && isActivitySubmittedToInstructor(activityId))
       ? '<span class="repo-submitted-pill"><i class="fas fa-check-circle"></i> Activity submitted</span>'
       : '';
@@ -383,7 +405,7 @@
               <i class="fas fa-project-diagram"></i>
               ${title}
             </div>
-            <div class="assignment-subtitle">${submissionBadge}</div>
+            <div class="assignment-subtitle">${submissionBadge}${submissionStatusPill}</div>
           </div>
           <div class="assignment-status ${badgeClass}">
             <i class="${statusIcon}"></i>
@@ -391,6 +413,7 @@
           </div>
         </div>
         ${description ? `<div class="assignment-desc">${escapeHtml(description)}</div>` : ''}
+        ${feedbackBlock}
         <div class="assignment-meta">
           ${dueLabel}
           ${points}
@@ -638,8 +661,7 @@
 
       state.submissions = [record, ...state.submissions];
       saveSubmissions();
-      await refreshNeedsRepositorySubmission();
-      renderActivities();
+      await loadActivities();   // reload from API to get fresh submissionStatus
       setSubmitButtonState('success');
       await sleep(700);
       closeSubmissionModal();
@@ -683,8 +705,7 @@
       };
       state.submissions = [record, ...state.submissions];
       saveSubmissions();
-      await refreshNeedsRepositorySubmission();
-      renderActivities();
+      await loadActivities();   // reload from API to get fresh submissionStatus
       setSubmitButtonState('success');
       await sleep(700);
       await window.AppDialog?.alert('Activity submitted successfully.', { title: 'Success' });
