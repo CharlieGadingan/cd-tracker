@@ -91,6 +91,17 @@
     return isNeedsRepositorySubmission(activityId) ? 'NOT_SUBMITTED' : 'SUBMITTED';
   }
 
+  function getActivitySubmissionStatus(activity) {
+    const rawStatus = String(activity?.submissionStatus || '').trim().toUpperCase();
+    if (rawStatus === 'SUBMITTED' || rawStatus === 'PENDING' || rawStatus === 'GRADED') return rawStatus;
+
+    if (activity?.score != null || String(activity?.feedback || '').trim()) return 'GRADED';
+
+    return getActivitySubmissionState(getActivityId(activity)) === 'NOT_SUBMITTED'
+      ? 'PENDING'
+      : 'SUBMITTED';
+  }
+
   function isActivitySubmittedToInstructor(activityId) {
     const nid = String(activityId || '');
     return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
@@ -258,7 +269,10 @@
 
     const submittedCountEl = document.getElementById('submittedCount');
     if (submittedCountEl) {
-      const count = state.activities.filter(a => getActivitySubmissionState(getActivityId(a)) === 'SUBMITTED').length;
+      const count = state.activities.filter(a => {
+        const status = getActivitySubmissionStatus(a);
+        return status === 'SUBMITTED' || status === 'GRADED';
+      }).length;
       submittedCountEl.textContent = String(count);
     }
 
@@ -292,10 +306,11 @@
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
       const trackedSubmissionFilter = state.filters.trackedSubmission;
-      const trackedActivities = submitted.filter(activity => {
-        const isSubmitted = isActivitySubmittedToInstructor(getActivityId(activity));
-        if (trackedSubmissionFilter === 'SUBMITTED') return isSubmitted;
-        if (trackedSubmissionFilter === 'NOT_SUBMITTED') return !isSubmitted;
+      const trackedActivities = state.activities.filter(activity => {
+        const status = getActivitySubmissionStatus(activity);
+        if (trackedSubmissionFilter === 'SUBMITTED') return status === 'SUBMITTED';
+        if (trackedSubmissionFilter === 'NOT_SUBMITTED') return status === 'PENDING';
+        if (trackedSubmissionFilter === 'GRADED') return status === 'GRADED';
         return true;
       });
       activitiesContainer.innerHTML = trackedActivities.length === 0
