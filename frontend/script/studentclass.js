@@ -102,6 +102,10 @@
       : 'SUBMITTED';
   }
 
+  function getTrackedSubmissionStatus(activity) {
+    return String(activity?.submissionStatus || '').trim().toUpperCase();
+  }
+
   function isActivitySubmittedToInstructor(activityId) {
     const nid = String(activityId || '');
     return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
@@ -278,10 +282,8 @@
 
     // Split into tabs
     const unsubmitted = [];
-    const submitted   = [];
     state.activities.forEach(a => {
       if (isNeedsRepositorySubmission(getActivityId(a))) unsubmitted.push(a);
-      else submitted.push(a);
     });
 
     unsubmitted.sort((a, b) => {
@@ -290,11 +292,16 @@
       return at - bt;
     });
 
+    const trackedBySubmissionStatus = state.activities.filter(activity => {
+      const status = getTrackedSubmissionStatus(activity);
+      return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED';
+    });
+
     // Update tab badges
     const needsBadge   = document.getElementById('tabNeedsCount');
     const trackedBadge = document.getElementById('tabTrackedCount');
     if (needsBadge)   needsBadge.textContent   = unsubmitted.length;
-    if (trackedBadge) trackedBadge.textContent = submitted.length;
+    if (trackedBadge) trackedBadge.textContent = trackedBySubmissionStatus.length;
 
     const trackedFilterGroup = document.getElementById('trackedFilterGroup');
     if (trackedFilterGroup) trackedFilterGroup.style.display = state.currentActivityTab === 'tracked' ? 'flex' : 'none';
@@ -306,8 +313,8 @@
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
       const trackedSubmissionFilter = state.filters.trackedSubmission;
-      const trackedActivities = state.activities.filter(activity => {
-        const status = getActivitySubmissionStatus(activity);
+      const trackedActivities = trackedBySubmissionStatus.filter(activity => {
+        const status = getTrackedSubmissionStatus(activity);
         if (trackedSubmissionFilter === 'SUBMITTED') return status === 'SUBMITTED';
         if (trackedSubmissionFilter === 'NOT_SUBMITTED') return status === 'PENDING';
         if (trackedSubmissionFilter === 'GRADED') return status === 'GRADED';
