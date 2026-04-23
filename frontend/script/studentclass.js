@@ -102,6 +102,10 @@
       : 'SUBMITTED';
   }
 
+  function getTrackedSubmissionStatus(activity) {
+    return String(activity?.submissionStatus || '').trim().toUpperCase();
+  }
+
   function isActivitySubmittedToInstructor(activityId) {
     const nid = String(activityId || '');
     return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
@@ -306,8 +310,8 @@
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
       const trackedSubmissionFilter = state.filters.trackedSubmission;
-      const trackedActivities = state.activities.filter(activity => {
-        const status = getActivitySubmissionStatus(activity);
+      const trackedActivities = submitted.filter(activity => {
+        const status = getTrackedSubmissionStatus(activity);
         if (trackedSubmissionFilter === 'SUBMITTED') return status === 'SUBMITTED';
         if (trackedSubmissionFilter === 'NOT_SUBMITTED') return status === 'PENDING';
         if (trackedSubmissionFilter === 'GRADED') return status === 'GRADED';
