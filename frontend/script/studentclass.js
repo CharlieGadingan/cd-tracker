@@ -98,16 +98,13 @@
 
     const repoBadge = needsRepo
       ? '<span class="assignment-repo-badge"><i class="fas fa-code-branch"></i> Needs repository</span>'
-      : '<span class="assignment-repo-badge submitted"><i class="fas fa-check-circle"></i> Repository submitted</span>';
+      : '';
 
     const submitBtn = needsRepo
       ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(id)}"><i class="fas fa-paper-plane"></i> Submit repo</button>`
       : '';
 
-    const trackedStatus = getTrackedSubmissionStatus(activity);
-    const submittedPill = (!needsRepo && (trackedStatus === 'SUBMITTED' || trackedStatus === 'GRADED'))
-      ? '<span class="repo-submitted-pill"><i class="fas fa-check-circle"></i> Activity submitted</span>'
-      : '';
+    const submittedPill = '';
 
     return `
       <div class="assignment ${needsRepo ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(id)}">
