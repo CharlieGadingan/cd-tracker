@@ -996,3 +996,49 @@ textarea:focus-visible {
     padding-bottom: max(48px, env(safe-area-inset-bottom));
   }
 }
+
+/* ── Submission Status Pills (Tracked cards) ──────────────────── */
+.submission-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  margin-left: 6px;
+}
+.submission-status-pill.graded {
+  background: rgba(88, 166, 255, 0.12);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  color: var(--accent);
+}
+.submission-status-pill.awaiting {
+  background: var(--warning-dim);
+  border: 1px solid rgba(210, 153, 34, 0.3);
+  color: var(--warning);
+}
+.submission-status-pill.pending {
+  background: var(--danger-dim);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+}
+
+/* ── Feedback block on graded cards ──────────────────────────── */
+.assignment-feedback {
+  margin: 6px 0 4px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent-border);
+  background: var(--accent-dim);
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  color: var(--fg-muted);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.assignment-feedback i {
+  margin-top: 2px;
+  color: var(--accent);
+  flex-shrink: 0;
+}

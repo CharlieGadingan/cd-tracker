@@ -107,8 +107,9 @@
   }
 
   function isActivitySubmittedToInstructor(activityId) {
-    const nid = String(activityId || '');
-    return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
+    const activity = state.activities.find(a => getActivityId(a) === String(activityId || ''));
+    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
+    return status === 'SUBMITTED' || status === 'GRADED';
   }
 
   function getPendingActivities() {
@@ -280,7 +281,7 @@
       submittedCountEl.textContent = String(count);
     }
 
-    // Split into tabs
+    // Split into tabs — submissionStatus is source of truth when present
     const unsubmitted = [];
     state.activities.forEach(a => {
       if (isNeedsRepositorySubmission(getActivityId(a))) unsubmitted.push(a);
@@ -562,12 +563,48 @@
       return;
     }
     try {
-      const result = await apiClient.request(
-        `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
-        { method: 'GET' },
-        { redirectOnUnauthorized: false }
-      );
-      state.activities = Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+      const [activitiesResult, submittedResult] = await Promise.allSettled([
+        apiClient.request(
+          `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
+          { method: 'GET' },
+          { redirectOnUnauthorized: false }
+        ),
+        apiClient.request(
+          `/classrooms/${encodeURIComponent(classroomId)}/activities/submitted`,
+          { method: 'GET' },
+          { redirectOnUnauthorized: false }
+        )
+      ]);
+
+      const activities = activitiesResult.status === 'fulfilled'
+        ? (Array.isArray(activitiesResult.value?.data) ? activitiesResult.value.data
+          : Array.isArray(activitiesResult.value) ? activitiesResult.value : [])
+        : [];
+
+      // /submitted returns Map<String, StudentActivityInfoUserData> keyed by activityId
+      const submittedMap = submittedResult.status === 'fulfilled'
+        ? (submittedResult.value?.data ?? submittedResult.value ?? {})
+        : {};
+
+      // Merge submission info onto each activity
+      state.activities = activities.map(a => {
+        const id = String(a?.activityId || a?.id || '');
+        const info = submittedMap[id] ?? null;
+        if (!info) return a;
+        return {
+          ...a,
+          submissionStatus:        info.submissionStatus        ?? a.submissionStatus,
+          repositoryId:            info.repositoryId            ?? a.repositoryId,
+          repositoryName:          info.repositoryName          ?? a.repositoryName,
+          repositoryUrl:           info.repositoryUrl           ?? a.repositoryUrl,
+          repositoryOwnerUsername: info.repositoryOwnerUsername ?? a.repositoryOwnerUsername,
+          repositoryMode:          info.repositoryMode          ?? a.repositoryMode,
+          submittedAt:             info.submittedAt             ?? a.submittedAt,
+          score:                   info.score                   ?? a.score,
+          feedback:                info.feedback                ?? a.feedback,
+        };
+      });
+
       await refreshNeedsRepositorySubmission();
       renderActivities();
     } catch {
