@@ -20,6 +20,7 @@
     currentActivity: null,
     filters: { trackedSubmission: 'ALL' },
     currentActivityTab: 'needs-submission',
+    isLoading: true,
   };
 
   function escapeHtml(value) {
@@ -87,6 +88,16 @@
   function renderLoadingSkeleton() {
     const c = document.getElementById('activitiesContainer');
     if (!c) return;
+
+    if (state.currentActivityTab === 'tracked') {
+      c.innerHTML = `
+        <div class="studentclass-loading" aria-live="polite" aria-label="Loading tracked activities">
+          <span class="studentclass-loading-spinner" aria-hidden="true"></span>
+          <span>Loading tracked activities…</span>
+        </div>`;
+      return;
+    }
+
     c.innerHTML = Array(3).fill(`
       <div class="assignment">
         <div style="height:16px;width:55%;margin-bottom:10px;" class="skeleton"></div>
@@ -272,6 +283,11 @@
     const trackedFilterGroup = document.getElementById('trackedFilterGroup');
     if (trackedFilterGroup) trackedFilterGroup.style.display = state.currentActivityTab === 'tracked' ? 'flex' : 'none';
 
+    if (state.isLoading) {
+      renderLoadingSkeleton();
+      return;
+    }
+
     if (state.currentActivityTab === 'needs-submission') {
       container.innerHTML = state.unsubmitted.length === 0
         ? renderEmptyState('All caught up!', 'Every assignment already has a repository attached.', 'fas fa-check-double')
@@ -292,7 +308,8 @@
   }
 
   async function loadAll() {
-    renderLoadingSkeleton();
+    state.isLoading = true;
+    renderActivities();
     try {
       const profile = await apiClient.request('/users/profile', { method: 'GET' }, { redirectOnUnauthorized: false });
       setStudentProfile(profile);
@@ -315,9 +332,11 @@
       console.log('[unsubmitted]', state.unsubmitted);
     } catch (err) {
       console.error('[loadAll error]', err);
+    } finally {
+      state.isLoading = false;
+      renderActivities();
+      loadClassroomInfo();
     }
-    renderActivities();
-    loadClassroomInfo();
   }
 
   function setStudentProfile(data) {
