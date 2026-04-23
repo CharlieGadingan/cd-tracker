@@ -234,18 +234,10 @@
     return [];
   }
 
-  function extractActivityId(entry) {
-    return String(
-      entry?.activityId ??
-      entry?.activityID ??
-      entry?.id ??
-      entry?.activity?.activityId ??
-      entry?.activity?.activityID ??
-      entry?.activity?.id ??
-      entry?.assignmentId ??
-      ''
-    ).trim();
-  }
+// Fix 1
+function extractActivityId(entry) {
+  return String(entry?.activityId ?? '').trim();
+}
 
   // ── Render ────────────────────────────────────────────────────
   function renderEmptyState(message, description, iconClass = 'fas fa-inbox') {
@@ -311,10 +303,11 @@
       return at - bt;
     });
 
-    const trackedBySubmissionStatus = state.activities.filter(activity => {
-      const status = getTrackedSubmissionStatus(activity);
-      return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED';
-    });
+// Fix 2 — in renderActivities(), trackedBySubmissionStatus population
+const trackedBySubmissionStatus = state.activities.filter(activity => {
+  const status = getTrackedSubmissionStatus(activity);
+  return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED';
+});
 
     // Update tab badges
     const needsBadge   = document.getElementById('tabNeedsCount');
@@ -332,13 +325,14 @@
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
       const trackedSubmissionFilter = state.filters.trackedSubmission;
-      const trackedActivities = trackedBySubmissionStatus.filter(activity => {
-        const status = getTrackedSubmissionStatus(activity);
-        if (trackedSubmissionFilter === 'SUBMITTED') return status === 'SUBMITTED';
-        if (trackedSubmissionFilter === 'NOT_SUBMITTED') return status === 'PENDING';
-        if (trackedSubmissionFilter === 'GRADED') return status === 'GRADED';
-        return true;
-      });
+     // Fix 2 — the inner filter
+const trackedActivities = trackedBySubmissionStatus.filter(activity => {
+  const status = getTrackedSubmissionStatus(activity);
+  if (trackedSubmissionFilter === 'SUBMITTED')     return status === 'SUBMITTED';
+  if (trackedSubmissionFilter === 'NOT_SUBMITTED')  return status === 'PENDING';
+  if (trackedSubmissionFilter === 'GRADED')         return status === 'GRADED';
+  return true;
+});
       activitiesContainer.innerHTML = trackedActivities.length === 0
         ? renderEmptyState('No tracked activities yet', 'Activities will appear here once you submit them.', 'fas fa-tasks')
         : trackedActivities.map(renderAssignmentCard).join('');
