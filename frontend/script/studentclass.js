@@ -157,15 +157,21 @@
       ${viewDetailsBtn}
     `;
 
+    const subtitleItems = [];
+    if (repoBadge) subtitleItems.push(repoBadge);
+    if (needsRepo && lifecycleStatus) {
+      subtitleItems.push(`<span class="assignment-lifecycle-pill">${escapeHtml(lifecycleStatus)}</span>`);
+    }
+    const subtitleHtml = subtitleItems.length
+      ? `<div class="assignment-subtitle">${subtitleItems.join('')}</div>`
+      : '';
+
     return `
       <div class="assignment ${needsRepo ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(id)}">
         <div class="assignment-header">
           <div class="assignment-title-wrap">
             <div class="assignment-title"><i class="fas fa-project-diagram"></i> ${title}</div>
-            <div class="assignment-subtitle">
-              ${repoBadge}
-              ${lifecycleStatus ? `<span class="assignment-lifecycle-pill">${escapeHtml(lifecycleStatus)}</span>` : ''}
-            </div>
+            ${subtitleHtml}
           </div>
           ${assignmentStatus}
         </div>

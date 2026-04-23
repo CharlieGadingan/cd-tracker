@@ -575,6 +575,7 @@ body {
 
 .assignment-meta-actions {
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .assignment-due {
@@ -626,38 +627,35 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 32px;
-  border: 1px solid rgba(46, 160, 67, 0.42);
+  gap: 6px;
+  min-height: 30px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: linear-gradient(180deg, rgba(63, 185, 80, 0.2) 0%, rgba(46, 160, 67, 0.14) 100%);
-  color: #7ee787;
+  background: var(--bg-overlay);
+  color: var(--fg);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  padding: 6px 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: 5px 10px;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.28);
-  transition: background 0.16s, border-color 0.16s, box-shadow 0.16s, transform 0.16s;
+  box-shadow: none;
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
 }
 .submit-activity-btn:hover {
-  background: linear-gradient(180deg, rgba(63, 185, 80, 0.26) 0%, rgba(46, 160, 67, 0.2) 100%);
-  border-color: rgba(46, 160, 67, 0.6);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), 0 4px 12px rgba(46, 160, 67, 0.2);
-  transform: translateY(-1px);
+  background: rgba(88, 166, 255, 0.1);
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
 .submit-activity-btn:active {
-  transform: translateY(0);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 6px rgba(46, 160, 67, 0.2);
+  background: rgba(88, 166, 255, 0.14);
 }
 .submit-activity-btn.is-disabled,
 .submit-activity-btn:disabled {
-  opacity: 0.52;
-  transform: none;
-  background: rgba(46, 160, 67, 0.12);
-  border-color: rgba(46, 160, 67, 0.28);
+  opacity: 0.5;
+  background: var(--bg-overlay);
+  border-color: var(--border);
+  color: var(--fg-muted);
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 .assignment-detail-btn {
