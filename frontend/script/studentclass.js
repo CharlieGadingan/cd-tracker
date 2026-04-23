@@ -281,11 +281,19 @@
     }
 
     // Split into tabs
+    // Use submissionStatus as source of truth if present;
+    // fall back to repo-existence check only when status is absent.
     const unsubmitted = [];
     const submitted   = [];
     state.activities.forEach(a => {
-      if (isNeedsRepositorySubmission(getActivityId(a))) unsubmitted.push(a);
-      else submitted.push(a);
+      const status = String(a?.submissionStatus || '').trim().toUpperCase();
+      if (status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED') {
+        submitted.push(a);
+      } else if (isNeedsRepositorySubmission(getActivityId(a))) {
+        unsubmitted.push(a);
+      } else {
+        submitted.push(a);
+      }
     });
 
     unsubmitted.sort((a, b) => {
