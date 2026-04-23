@@ -283,16 +283,8 @@
 
     // Split into tabs — submissionStatus is source of truth when present
     const unsubmitted = [];
-    const submitted   = [];
     state.activities.forEach(a => {
-      const status = String(a?.submissionStatus || '').trim().toUpperCase();
-      if (status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED') {
-        submitted.push(a);
-      } else if (isNeedsRepositorySubmission(getActivityId(a))) {
-        unsubmitted.push(a);
-      } else {
-        submitted.push(a);
-      }
+      if (isNeedsRepositorySubmission(getActivityId(a))) unsubmitted.push(a);
     });
 
     unsubmitted.sort((a, b) => {
@@ -301,11 +293,16 @@
       return at - bt;
     });
 
+    const trackedBySubmissionStatus = state.activities.filter(activity => {
+      const status = getTrackedSubmissionStatus(activity);
+      return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED';
+    });
+
     // Update tab badges
     const needsBadge   = document.getElementById('tabNeedsCount');
     const trackedBadge = document.getElementById('tabTrackedCount');
     if (needsBadge)   needsBadge.textContent   = unsubmitted.length;
-    if (trackedBadge) trackedBadge.textContent = submitted.length;
+    if (trackedBadge) trackedBadge.textContent = trackedBySubmissionStatus.length;
 
     const trackedFilterGroup = document.getElementById('trackedFilterGroup');
     if (trackedFilterGroup) trackedFilterGroup.style.display = state.currentActivityTab === 'tracked' ? 'flex' : 'none';
@@ -317,7 +314,7 @@
         : unsubmitted.map(renderAssignmentCard).join('');
     } else {
       const trackedSubmissionFilter = state.filters.trackedSubmission;
-      const trackedActivities = submitted.filter(activity => {
+      const trackedActivities = trackedBySubmissionStatus.filter(activity => {
         const status = getTrackedSubmissionStatus(activity);
         if (trackedSubmissionFilter === 'SUBMITTED') return status === 'SUBMITTED';
         if (trackedSubmissionFilter === 'NOT_SUBMITTED') return status === 'PENDING';
