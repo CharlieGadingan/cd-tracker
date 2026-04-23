@@ -119,12 +119,21 @@ function setupEventListeners() {
       const repoUrl = gradeAnalyzeBtn.getAttribute("data-repo-url");
       const activityTitle = gradeAnalyzeBtn.getAttribute("data-activity-title");
       const studentName = gradeAnalyzeBtn.getAttribute("data-student-name");
+      const submissionStatus = asString(
+        gradeAnalyzeBtn.getAttribute("data-submission-status"),
+      ).toUpperCase();
+      const fromGradingProcess =
+        gradeAnalyzeBtn.getAttribute("data-from-grading-process") === "true";
 
       if (repoUrl) {
         await validateAndNavigateToAnalyzer(
           repoUrl,
           activityTitle,
           studentName,
+          {
+            submissionStatus,
+            fromGradingProcess,
+          },
         );
       } else {
         showNotification("No repository URL available for analysis.", "error");
@@ -221,23 +230,10 @@ function setupEventListeners() {
       // Handle analyze action (doesn't need activityId or studentId)
       // In the submissions list event listener, update the analyze button handler
       if (action === "analyze-code") {
-        const repoUrl = actionButton.getAttribute("data-repo-url");
-        const activityTitle = actionButton.getAttribute("data-activity-title");
-        const studentName = actionButton.getAttribute("data-student-name");
-
-        if (repoUrl) {
-          // Use validation before navigating
-          await validateAndNavigateToAnalyzer(
-            repoUrl,
-            activityTitle,
-            studentName,
-          );
-        } else {
-          showNotification(
-            "No repository URL available for analysis.",
-            "error",
-          );
-        }
+        showNotification(
+          "Analyzer is only available inside the grading process.",
+          "warning",
+        );
         return;
       }
 
@@ -1073,16 +1069,6 @@ function renderSubmissionRows() {
                 <i class="fas fa-file-circle-check"></i>
                 View Details
             </button>
-            ${
-              row.repositoryUrl
-                ? `
-                <button class="btn btn-secondary btn-small analyze-btn" data-action="analyze-code" data-repo-url="${escapeHtml(row.repositoryUrl)}" data-activity-title="${escapeHtml(row.title || "Activity")}" data-student-name="${escapeHtml(row.displayName)}">
-                    <i class="fas fa-code"></i>
-                    Analyze
-                </button>
-            `
-                : ""
-            }
         </div>
     `;
       }
@@ -1323,11 +1309,15 @@ function openGradeModal(activityId, studentUserId) {
         row.title || "Activity",
       );
       gradeAnalyzeBtn.setAttribute("data-student-name", row.displayName);
+      gradeAnalyzeBtn.setAttribute("data-submission-status", row.status);
+      gradeAnalyzeBtn.setAttribute("data-from-grading-process", "true");
     } else {
       gradeAnalyzeBtn.style.display = "none";
       gradeAnalyzeBtn.removeAttribute("data-repo-url");
       gradeAnalyzeBtn.removeAttribute("data-activity-title");
       gradeAnalyzeBtn.removeAttribute("data-student-name");
+      gradeAnalyzeBtn.removeAttribute("data-submission-status");
+      gradeAnalyzeBtn.removeAttribute("data-from-grading-process");
     }
   }
 
@@ -1974,7 +1964,35 @@ async function validateAndNavigateToAnalyzer(
   repoUrl,
   activityTitle,
   studentName,
+  context = {},
 ) {
+  const submissionStatus = asString(context?.submissionStatus).toUpperCase();
+  const fromGradingProcess = Boolean(context?.fromGradingProcess);
+
+  if (!fromGradingProcess) {
+    showNotification(
+      "Analyzer can only be opened from the grading process.",
+      "warning",
+    );
+    return false;
+  }
+
+  if (submissionStatus === "GRADED") {
+    showNotification(
+      "Analyzer is locked because this submission is already graded.",
+      "warning",
+    );
+    return false;
+  }
+
+  if (submissionStatus && submissionStatus !== "SUBMITTED") {
+    showNotification(
+      "Analyzer is only available for submissions awaiting grading.",
+      "warning",
+    );
+    return false;
+  }
+
   if (!repoUrl) {
     showNotification("No repository URL available for analysis.", "error");
     return false;
