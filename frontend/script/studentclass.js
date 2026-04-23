@@ -201,13 +201,20 @@
     try {
       const response = await apiClient.request(
         `/classrooms/${encodeURIComponent(classroomId)}/activities/unsubmitted`,
-        { method: 'GET' },
+        {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache'
+          }
+        },
         { redirectOnUnauthorized: false }
       );
-      const unsubmittedList = Array.isArray(response?.data) ? response.data
-        : Array.isArray(response) ? response : [];
+      const unsubmittedList = normalizeUnsubmittedActivities(response);
       const unsubmittedIds = new Set(
-        unsubmittedList.map(a => String(a?.activityId || a?.id || '').trim()).filter(Boolean)
+        unsubmittedList
+          .map(a => extractActivityId(a))
+          .filter(Boolean)
       );
       const map = {};
       activityIds.forEach(id => { map[id] = unsubmittedIds.has(id); });
@@ -217,6 +224,27 @@
       state.needsSubmissionByActivityId = {};
       state.needsSubmissionLoaded = false;
     }
+  }
+
+  function normalizeUnsubmittedActivities(response) {
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.data?.activities)) return response.data.activities;
+    if (Array.isArray(response?.activities)) return response.activities;
+    if (Array.isArray(response)) return response;
+    return [];
+  }
+
+  function extractActivityId(entry) {
+    return String(
+      entry?.activityId ??
+      entry?.activityID ??
+      entry?.id ??
+      entry?.activity?.activityId ??
+      entry?.activity?.activityID ??
+      entry?.activity?.id ??
+      entry?.assignmentId ??
+      ''
+    ).trim();
   }
 
   // ── Render ────────────────────────────────────────────────────
