@@ -68,6 +68,13 @@
     return (s === 'SUBMITTED' || s === 'PENDING' || s === 'GRADED') ? s : '';
   }
 
+  function getSubmissionStatusMeta(status) {
+    if (status === 'SUBMITTED') return { label: 'SUBMITTED', cls: 'submitted', icon: 'fas fa-paper-plane' };
+    if (status === 'GRADED') return { label: 'GRADED', cls: 'graded', icon: 'fas fa-square-check' };
+    if (status === 'PENDING') return { label: 'PENDING', cls: 'pending', icon: 'fas fa-hourglass-half' };
+    return null;
+  }
+
   function renderEmptyState(msg, desc, icon = 'fas fa-inbox') {
     return `<div class="empty-state"><i class="${icon}"></i><h4>${escapeHtml(msg)}</h4><p>${escapeHtml(desc)}</p></div>`;
   }
@@ -100,11 +107,20 @@
       ? '<span class="assignment-repo-badge"><i class="fas fa-code-branch"></i> Needs repository</span>'
       : '';
 
-    const submitBtn = needsRepo
+    const trackedSubmissionStatus = getTrackedSubmissionStatus(activity);
+    const submissionMeta = getSubmissionStatusMeta(trackedSubmissionStatus);
+
+    const submitRepoBtn = needsRepo
       ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(id)}"><i class="fas fa-paper-plane"></i> Submit repo</button>`
       : '';
 
-    const submittedPill = '';
+    const submittedPill = submissionMeta
+      ? `<span class="submission-status-pill ${submissionMeta.cls}"><i class="${submissionMeta.icon}"></i> ${submissionMeta.label}</span>`
+      : '';
+
+    const submitActivityBtn = trackedSubmissionStatus === 'PENDING' && !needsRepo
+      ? `<button type="button" class="submit-activity-btn" data-submit-pending-activity-id="${escapeHtml(id)}"><i class="fas fa-check"></i> Submit activity</button>`
+      : '';
 
     return `
       <div class="assignment ${needsRepo ? 'needs-submission' : ''}" data-assignment-id="${escapeHtml(id)}">
@@ -119,10 +135,29 @@
         <div class="assignment-meta">
           <span class="assignment-due"><i class="fas fa-calendar-alt"></i><span class="days-left ${urgentClass}">${daysStr}</span></span>
           ${points}
-          ${submitBtn}
+          ${submitRepoBtn}
+          ${submitActivityBtn}
           ${submittedPill}
         </div>
       </div>`;
+  }
+
+  async function submitPendingActivity(activityId) {
+    if (!activityId) return;
+    const activity = state.allActivities.find(a => getActivityId(a) === activityId);
+    const activityTitle = getActivityTitle(activity);
+
+    try {
+      await apiClient.request(
+        `/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(activityId)}/submit`,
+        { method: 'POST' },
+        { redirectOnUnauthorized: false }
+      );
+      await window.AppDialog?.alert(`${activityTitle} submitted successfully.`, { title: 'Activity Submitted' });
+      await loadAll();
+    } catch (err) {
+      await window.AppDialog?.alert(err?.message || 'Failed to submit activity.', { title: 'Submission Failed' });
+    }
   }
 
   function renderActivities() {
@@ -386,9 +421,19 @@
 
     submitAssignmentBtn?.addEventListener('click', submitAssignment);
 
-    assignmentsList?.addEventListener('click', e => {
-      const btn = e.target.closest('[data-submit-activity-id]');
-      if (btn) openSubmissionModal(btn.getAttribute('data-submit-activity-id'));
+    assignmentsList?.addEventListener('click', async e => {
+      const repoBtn = e.target.closest('[data-submit-activity-id]');
+      if (repoBtn) {
+        openSubmissionModal(repoBtn.getAttribute('data-submit-activity-id'));
+        return;
+      }
+
+      const pendingBtn = e.target.closest('[data-submit-pending-activity-id]');
+      if (pendingBtn) {
+        pendingBtn.disabled = true;
+        pendingBtn.classList.add('is-disabled');
+        await submitPendingActivity(pendingBtn.getAttribute('data-submit-pending-activity-id'));
+      }
     });
 
     document.querySelectorAll('[data-tracked-filter]').forEach(btn => btn.addEventListener('click', () => {
