@@ -91,19 +91,9 @@
     return isNeedsRepositorySubmission(activityId) ? 'NOT_SUBMITTED' : 'SUBMITTED';
   }
 
-  function getActivitySubmissionStatus(activity) {
-    const rawStatus = String(activity?.submissionStatus || '').trim().toUpperCase();
-    if (rawStatus === 'SUBMITTED' || rawStatus === 'PENDING' || rawStatus === 'GRADED') return rawStatus;
-
-    if (activity?.score != null || String(activity?.feedback || '').trim()) return 'GRADED';
-
-    return getActivitySubmissionState(getActivityId(activity)) === 'NOT_SUBMITTED'
-      ? 'PENDING'
-      : 'SUBMITTED';
-  }
-
   function getTrackedSubmissionStatus(activity) {
-    return String(activity?.submissionStatus || '').trim().toUpperCase();
+    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
+    return status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED' ? status : '';
   }
 
   function isActivitySubmittedToInstructor(activityId) {
@@ -275,7 +265,7 @@
     const submittedCountEl = document.getElementById('submittedCount');
     if (submittedCountEl) {
       const count = state.activities.filter(a => {
-        const status = getActivitySubmissionStatus(a);
+        const status = getTrackedSubmissionStatus(a);
         return status === 'SUBMITTED' || status === 'GRADED';
       }).length;
       submittedCountEl.textContent = String(count);
@@ -358,15 +348,6 @@
       ? `<button type="button" class="submit-repo-btn" data-submit-activity-id="${escapeHtml(activityId)}"><i class="fas fa-paper-plane"></i> Submit repo</button>`
       : '';
 
-    const isPublished = getActivityStatus(activity) === 'PUBLISHED';
-    const canSubmitActivity = !needsSubmission && !isActivitySubmittedToInstructor(activityId) && isPublished;
-    const isSubmitBlockedByStatus = !needsSubmission && !isActivitySubmittedToInstructor(activityId) && !isPublished;
-    const activitySubmitAction = canSubmitActivity
-      ? `<button type="button" class="submit-repo-btn" data-submit-activity-only-id="${escapeHtml(activityId)}"><i class="fas fa-upload"></i> Submit activity</button>`
-      : isSubmitBlockedByStatus
-        ? `<button type="button" class="submit-repo-btn is-disabled" disabled title="Only published activities can be submitted."><i class="fas fa-ban"></i> Submit activity</button>`
-      : '';
-
     const activitySubmittedPill = (!needsSubmission && isActivitySubmittedToInstructor(activityId))
       ? '<span class="repo-submitted-pill"><i class="fas fa-check-circle"></i> Activity submitted</span>'
       : '';
@@ -391,7 +372,6 @@
           ${dueLabel}
           ${points}
           ${submissionAction}
-          ${activitySubmitAction}
           ${activitySubmittedPill}
         </div>
       </div>`;
@@ -563,47 +543,14 @@
       return;
     }
     try {
-      const [activitiesResult, submittedResult] = await Promise.allSettled([
-        apiClient.request(
-          `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
-          { method: 'GET' },
-          { redirectOnUnauthorized: false }
-        ),
-        apiClient.request(
-          `/classrooms/${encodeURIComponent(classroomId)}/activities/submitted`,
-          { method: 'GET' },
-          { redirectOnUnauthorized: false }
-        )
-      ]);
+      const activitiesResult = await apiClient.request(
+        `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
+        { method: 'GET' },
+        { redirectOnUnauthorized: false }
+      );
 
-      const activities = activitiesResult.status === 'fulfilled'
-        ? (Array.isArray(activitiesResult.value?.data) ? activitiesResult.value.data
-          : Array.isArray(activitiesResult.value) ? activitiesResult.value : [])
-        : [];
-
-      // /submitted returns Map<String, StudentActivityInfoUserData> keyed by activityId
-      const submittedMap = submittedResult.status === 'fulfilled'
-        ? (submittedResult.value?.data ?? submittedResult.value ?? {})
-        : {};
-
-      // Merge submission info onto each activity
-      state.activities = activities.map(a => {
-        const id = String(a?.activityId || a?.id || '');
-        const info = submittedMap[id] ?? null;
-        if (!info) return a;
-        return {
-          ...a,
-          submissionStatus:        info.submissionStatus        ?? a.submissionStatus,
-          repositoryId:            info.repositoryId            ?? a.repositoryId,
-          repositoryName:          info.repositoryName          ?? a.repositoryName,
-          repositoryUrl:           info.repositoryUrl           ?? a.repositoryUrl,
-          repositoryOwnerUsername: info.repositoryOwnerUsername ?? a.repositoryOwnerUsername,
-          repositoryMode:          info.repositoryMode          ?? a.repositoryMode,
-          submittedAt:             info.submittedAt             ?? a.submittedAt,
-          score:                   info.score                   ?? a.score,
-          feedback:                info.feedback                ?? a.feedback,
-        };
-      });
+      state.activities = Array.isArray(activitiesResult?.data) ? activitiesResult.data
+        : Array.isArray(activitiesResult) ? activitiesResult : [];
 
       await refreshNeedsRepositorySubmission();
       renderActivities();
@@ -685,52 +632,6 @@
     }
   }
 
-  async function submitActivityGeneral(activityId) {
-    const activity = state.activities.find(a => getActivityId(a) === activityId);
-    if (!activity) { await window.AppDialog?.alert('Activity not found.', { title: 'Missing Activity' }); return; }
-    if (!classroomId) { await window.AppDialog?.alert('Missing classroom id.', { title: 'Missing Classroom' }); return; }
-
-    const confirmed = await window.AppDialog?.confirm('Mark this activity as submitted?', {
-      title: 'Confirm Submission', confirmText: 'Submit'
-    });
-    if (!confirmed) return;
-
-    const endpoint = `/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(getActivityId(activity))}/submit`;
-    try {
-      setSubmitButtonState('loading');
-      await apiClient.request(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      }, { redirectOnUnauthorized: false });
-
-      const record = {
-        id:          `${getActivityId(activity)}-${Date.now()}`,
-        activityId:  getActivityId(activity),
-        title:       getActivityTitle(activity),
-        mode:        'general',
-        modeLabel:   'Submitted',
-        result:      'passed',
-        resultLabel: 'Submitted',
-        submittedAt: new Date().toISOString()
-      };
-      state.submissions = [record, ...state.submissions];
-      saveSubmissions();
-      await refreshNeedsRepositorySubmission();
-      renderActivities();
-      setSubmitButtonState('success');
-      await sleep(700);
-      await window.AppDialog?.alert('Activity submitted successfully.', { title: 'Success' });
-      setSubmitButtonState('idle');
-    } catch (error) {
-      setSubmitButtonState('error');
-      await window.AppDialog?.alert(error.message || 'Failed to submit activity.', { title: 'Submission Failed' });
-      await sleep(1200);
-      setSubmitButtonState('idle');
-    }
-  }
-
-  window.submitActivityGeneral = submitActivityGeneral;
-
   // ── Event wiring ──────────────────────────────────────────────
   function attachEventHandlers() {
     setSubmitButtonState('idle');
@@ -767,8 +668,6 @@
       const repoBtn = e.target.closest('[data-submit-activity-id]');
       if (repoBtn) { openSubmissionModal(String(repoBtn.getAttribute('data-submit-activity-id'))); return; }
 
-      const actBtn = e.target.closest('[data-submit-activity-only-id]');
-      if (actBtn) { submitActivityGeneral(String(actBtn.getAttribute('data-submit-activity-only-id'))); }
     });
 
     // ── Tracked filter buttons ──────────────────────────────────
