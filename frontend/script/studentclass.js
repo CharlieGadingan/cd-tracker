@@ -107,8 +107,9 @@
   }
 
   function isActivitySubmittedToInstructor(activityId) {
-    const nid = String(activityId || '');
-    return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
+    const activity = state.activities.find(a => getActivityId(a) === String(activityId || ''));
+    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
+    return status === 'SUBMITTED' || status === 'GRADED';
   }
 
   function getPendingActivities() {
@@ -280,12 +281,18 @@
       submittedCountEl.textContent = String(count);
     }
 
-    // Split into tabs
+    // Split into tabs — submissionStatus is source of truth when present
     const unsubmitted = [];
     const submitted   = [];
     state.activities.forEach(a => {
-      if (isNeedsRepositorySubmission(getActivityId(a))) unsubmitted.push(a);
-      else submitted.push(a);
+      const status = String(a?.submissionStatus || '').trim().toUpperCase();
+      if (status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED') {
+        submitted.push(a);
+      } else if (isNeedsRepositorySubmission(getActivityId(a))) {
+        unsubmitted.push(a);
+      } else {
+        submitted.push(a);
+      }
     });
 
     unsubmitted.sort((a, b) => {
@@ -559,7 +566,6 @@
       return;
     }
     try {
-      // Fetch both endpoints in parallel
       const [activitiesResult, submittedResult] = await Promise.allSettled([
         apiClient.request(
           `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
