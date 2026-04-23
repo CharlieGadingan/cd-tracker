@@ -566,47 +566,17 @@
       return;
     }
     try {
-      const [activitiesResult, submittedResult] = await Promise.allSettled([
-        apiClient.request(
-          `/classrooms/${encodeURIComponent(classroomId)}/activities/student`,
-          { method: 'GET' },
-          { redirectOnUnauthorized: false }
-        ),
-        apiClient.request(
-          `/classrooms/${encodeURIComponent(classroomId)}/activities/submitted`,
-          { method: 'GET' },
-          { redirectOnUnauthorized: false }
-        )
-      ]);
+      const result = await apiClient.request(
+        `/classrooms/${encodeURIComponent(classroomId)}/activities/submitted`,
+        { method: 'GET' },
+        { redirectOnUnauthorized: false }
+      );
 
-      const activities = activitiesResult.status === 'fulfilled'
-        ? (Array.isArray(activitiesResult.value?.data) ? activitiesResult.value.data
-          : Array.isArray(activitiesResult.value) ? activitiesResult.value : [])
-        : [];
-
-      // /submitted returns Map<String, StudentActivityInfoUserData> keyed by activityId
-      const submittedMap = submittedResult.status === 'fulfilled'
-        ? (submittedResult.value?.data ?? submittedResult.value ?? {})
-        : {};
-
-      // Merge submission info onto each activity
-      state.activities = activities.map(a => {
-        const id = String(a?.activityId || a?.id || '');
-        const info = submittedMap[id] ?? null;
-        if (!info) return a;
-        return {
-          ...a,
-          submissionStatus:        info.submissionStatus        ?? a.submissionStatus,
-          repositoryId:            info.repositoryId            ?? a.repositoryId,
-          repositoryName:          info.repositoryName          ?? a.repositoryName,
-          repositoryUrl:           info.repositoryUrl           ?? a.repositoryUrl,
-          repositoryOwnerUsername: info.repositoryOwnerUsername ?? a.repositoryOwnerUsername,
-          repositoryMode:          info.repositoryMode          ?? a.repositoryMode,
-          submittedAt:             info.submittedAt             ?? a.submittedAt,
-          score:                   info.score                   ?? a.score,
-          feedback:                info.feedback                ?? a.feedback,
-        };
-      });
+      // /submitted returns either an array or a map keyed by activityId
+      const raw = result?.data ?? result ?? [];
+      state.activities = Array.isArray(raw)
+        ? raw
+        : Object.values(raw);
 
       await refreshNeedsRepositorySubmission();
       renderActivities();
