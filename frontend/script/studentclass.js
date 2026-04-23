@@ -14,12 +14,12 @@
   const params      = new URLSearchParams(window.location.search);
   const classroomId = params.get('classroomId') || params.get('id') || '';
   const studentId   = params.get('studentId') || '';
-
+  const storageKey  = `studentclass.submissions.${classroomId || 'default'}.${studentId || 'all'}`;
 
   // ── App state ─────────────────────────────────────────────────
   const state = {
     activities: [],
-    submissions: [],
+    submissions: loadSavedSubmissions(),
     currentStudentId: String(studentId || '').trim(),
     currentStudentUsername: '',
     needsSubmissionByActivityId: {},
@@ -80,11 +80,11 @@
 
   // ── Submission state helpers ──────────────────────────────────
   function isNeedsRepositorySubmission(activityId) {
-    const activity = state.activities.find(a => getActivityId(a) === String(activityId || ''));
-    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
-    if (status === 'SUBMITTED' || status === 'PENDING' || status === 'GRADED') return false;
-    // No submissionStatus from API — fall back to repo field
-    return !activity?.repositoryUrl;
+    const nid = String(activityId || '');
+    if (state.needsSubmissionLoaded && Object.prototype.hasOwnProperty.call(state.needsSubmissionByActivityId, nid)) {
+      return !!state.needsSubmissionByActivityId[nid];
+    }
+    return !state.submissions.find(s => String(s.activityId || '') === nid && s.repositoryUrl);
   }
 
   function getActivitySubmissionState(activityId) {
@@ -107,9 +107,8 @@
   }
 
   function isActivitySubmittedToInstructor(activityId) {
-    const activity = state.activities.find(a => getActivityId(a) === String(activityId || ''));
-    const status = String(activity?.submissionStatus || '').trim().toUpperCase();
-    return status === 'SUBMITTED' || status === 'GRADED';
+    const nid = String(activityId || '');
+    return state.submissions.some(s => String(s.activityId || '') === nid && String(s.mode || '').toLowerCase() === 'general');
   }
 
   function getPendingActivities() {
@@ -133,6 +132,19 @@
     if (daysLeft === null) return 'Active';
     if (daysLeft < 0) return 'Overdue';
     return dueDate ? `Due ${dueDate}` : 'Active';
+  }
+
+  // ── Local storage ─────────────────────────────────────────────
+  function loadSavedSubmissions() {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+
+  function saveSubmissions() {
+    try { localStorage.setItem(storageKey, JSON.stringify(state.submissions)); } catch {}
   }
 
   // ── GitHub repos ──────────────────────────────────────────────
@@ -268,7 +280,9 @@
       submittedCountEl.textContent = String(count);
     }
 
-    // Split into tabs — submissionStatus is the source of truth
+    // Split into tabs
+    // submissionStatus from API is the source of truth when present;
+    // otherwise fall back to the unsubmitted-endpoint map.
     const unsubmitted = [];
     const submitted   = [];
     state.activities.forEach(a => {
@@ -508,6 +522,21 @@
     if (isExisting)    loadGithubRepos();
   }
 
+  // ── Build local submission record ─────────────────────────────
+  function buildLocalSubmission(payload, activity, repositoryUrl, mode) {
+    return {
+      id:            payload?.submissionId || payload?.id || `${getActivityId(activity)}-${Date.now()}`,
+      activityId:    getActivityId(activity),
+      title:         getActivityTitle(activity),
+      repositoryUrl,
+      mode,
+      modeLabel:     mode === 'new' ? 'New repository' : 'Existing repository',
+      result:        'passed',
+      resultLabel:   'Submitted',
+      submittedAt:   new Date().toISOString()
+    };
+  }
+
   // ── API calls ─────────────────────────────────────────────────
   async function loadStudentProfile() {
     state.loading.profile = true;
@@ -603,6 +632,12 @@
         body: JSON.stringify(requestBody)
       }, { redirectOnUnauthorized: false });
 
+      const submitted = response?.data ?? response;
+      const record    = buildLocalSubmission(submitted, activity, repositoryUrl, submissionMode);
+      if (submissionNote) record.note = submissionNote;
+
+      state.submissions = [record, ...state.submissions];
+      saveSubmissions();
       await refreshNeedsRepositorySubmission();
       renderActivities();
       setSubmitButtonState('success');
@@ -636,6 +671,18 @@
         headers: { 'Content-Type': 'application/json' }
       }, { redirectOnUnauthorized: false });
 
+      const record = {
+        id:          `${getActivityId(activity)}-${Date.now()}`,
+        activityId:  getActivityId(activity),
+        title:       getActivityTitle(activity),
+        mode:        'general',
+        modeLabel:   'Submitted',
+        result:      'passed',
+        resultLabel: 'Submitted',
+        submittedAt: new Date().toISOString()
+      };
+      state.submissions = [record, ...state.submissions];
+      saveSubmissions();
       await refreshNeedsRepositorySubmission();
       renderActivities();
       setSubmitButtonState('success');
