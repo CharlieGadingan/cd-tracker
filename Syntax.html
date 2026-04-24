@@ -24,24 +24,28 @@
     }
 
     :root {
-      --bg-dark: #0d1117;
-      --bg-card: #161b22;
-      --bg-input: #0d1117;
-      --border: #30363d;
-      --text-primary: #c9d1d9;
-      --text-secondary: #8b949e;
-      --accent-blue: #58a6ff;
-      --accent-green: #3fb950;
-      --accent-red: #f85149;
-      --accent-yellow: #d29922;
-      --accent-purple: #bc8cff;
-      --line-height: 1.5;
+      --bg-dark: #020406;
+      --bg-card: #090d12;
+      --bg-input: #05080c;
+      --bg-elevated: #0c1117;
+      --border: #18202b;
+      --border-strong: #243041;
+      --text-primary: #d6deeb;
+      --text-secondary: #7f8da3;
+      --accent-blue: #5cb8ff;
+      --accent-green: #35d07f;
+      --accent-red: #ff6b6b;
+      --accent-yellow: #f5b83d;
+      --accent-purple: #91a7ff;
+      --line-height: 1.65;
       --font-size: 14px;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg-dark);
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(92, 184, 255, 0.08), transparent 28%),
+        linear-gradient(180deg, #04070a 0%, #020406 100%);
       color: var(--text-primary);
       min-height: 100vh;
     }
@@ -197,40 +201,58 @@
 
     /* Results section */
     .results-section {
-      background: var(--bg-card);
+      background: linear-gradient(180deg, rgba(9, 13, 18, 0.98), rgba(4, 7, 10, 0.98));
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 18px;
       overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     }
 
     .results-header {
-      background: var(--bg-input);
-      padding: 20px;
-      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 16px;
+      background:
+        linear-gradient(90deg, rgba(92, 184, 255, 0.12), rgba(145, 167, 255, 0.04)),
+        var(--bg-input);
+      border-bottom: 1px solid var(--border-strong);
     }
 
     .results-header h3 {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-      font-size: 1.2rem;
+      gap: 8px;
+      margin-bottom: 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #eef6ff;
+      padding: 6px 10px;
+      border: 1px solid rgba(92, 184, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(5, 8, 12, 0.72);
     }
 
     .summary-stats {
       display: flex;
-      gap: 16px;
+      gap: 10px;
       flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .stat {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: var(--bg-card);
-      font-size: 0.85rem;
+      gap: 7px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(12, 17, 23, 0.96);
+      border: 1px solid rgba(36, 48, 65, 0.95);
+      font-size: 0.76rem;
+      line-height: 1.2;
     }
 
     .stat.errors { color: var(--accent-red); }
@@ -243,13 +265,14 @@
       display: flex;
       height: 70vh;
       min-height: 500px;
+      background: #030507;
     }
 
     /* Sidebar - files */
     .file-sidebar {
       width: 300px;
-      background: var(--bg-input);
-      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, #06090d 0%, #04070a 100%);
+      border-right: 1px solid var(--border-strong);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
@@ -320,13 +343,13 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: #1e1e1e;
+      background: #010203;
       min-width: 0;
     }
 
     .code-toolbar {
-      background: var(--bg-input);
-      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #070b10 0%, #05080c 100%);
+      border-bottom: 1px solid var(--border-strong);
       padding: 12px 16px;
       display: flex;
       justify-content: space-between;
@@ -352,61 +375,66 @@
 
     .code-viewer {
       flex: 1;
-      display: flex;
       overflow: auto;
-      background: #1e1e1e;
-    }
-
-    .line-numbers {
-      flex-shrink: 0;
-      width: 60px;
-      background: #1e1e1e;
-      color: #6e7681;
-      text-align: right;
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-      font-size: var(--font-size);
-      line-height: var(--line-height);
-      padding: 16px 8px 16px 0;
-      border-right: 1px solid #2d2d2d;
-      user-select: none;
-      white-space: pre;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 20%),
+        #000000;
     }
 
     .code-content {
-      flex: 1;
+      min-width: 100%;
       font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
       font-size: var(--font-size);
       line-height: var(--line-height);
       color: #d4d4d4;
-      padding: 16px 0 16px 16px;
-      white-space: pre;
-      overflow-x: auto;
+      padding: 12px 0;
+      white-space: normal;
     }
 
     .code-line {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr);
+      align-items: stretch;
+      min-width: max-content;
+      white-space: nowrap;
+      border-left: 3px solid transparent;
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .code-line:hover {
+      background: rgba(92, 184, 255, 0.08);
+    }
+
+    .line-number {
+      color: #5f6f85;
+      text-align: right;
+      padding: 0 14px 0 0;
+      user-select: none;
+      background: rgba(255, 255, 255, 0.01);
+      border-right: 1px solid #121923;
+    }
+
+    .line-text {
       display: block;
+      padding: 0 20px 0 16px;
       white-space: pre;
     }
 
     .code-line.error-line {
-      background: rgba(248, 81, 73, 0.2);
-      border-left: 3px solid var(--accent-red);
-      margin-left: -16px;
-      padding-left: 13px;
+      background: rgba(255, 107, 107, 0.16);
+      border-left-color: var(--accent-red);
     }
 
     .code-line.warning-line {
-      background: rgba(210, 153, 34, 0.2);
-      border-left: 3px solid var(--accent-yellow);
-      margin-left: -16px;
-      padding-left: 13px;
+      background: rgba(245, 184, 61, 0.16);
+      border-left-color: var(--accent-yellow);
     }
 
     /* Error panel */
     .error-panel {
       width: 350px;
-      background: var(--bg-input);
-      border-left: 1px solid var(--border);
+      background: linear-gradient(180deg, #06090d 0%, #04070a 100%);
+      border-left: 1px solid var(--border-strong);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
@@ -550,11 +578,14 @@
       }
 
       .results-header {
-        padding: 14px;
+        align-items: flex-start;
+        padding: 12px;
+        flex-direction: column;
       }
 
       .summary-stats {
         gap: 8px;
+        justify-content: flex-start;
       }
 
       .stat {
@@ -566,15 +597,21 @@
         padding: 8px 12px;
       }
 
-      .line-numbers {
-        width: 45px;
-        font-size: 11px;
-        padding: 12px 6px 12px 0;
-      }
-
       .code-content {
         font-size: 11px;
-        padding: 12px 0 12px 12px;
+        padding: 10px 0;
+      }
+
+      .code-line {
+        grid-template-columns: 48px minmax(0, 1fr);
+      }
+
+      .line-number {
+        padding-right: 10px;
+      }
+
+      .line-text {
+        padding: 0 12px 0 10px;
       }
 
       .back-btn {
@@ -638,7 +675,6 @@
             </div>
           </div>
           <div class="code-viewer" id="codeViewer">
-            <div class="line-numbers" id="lineNumbers"></div>
             <div class="code-content" id="codeContent"></div>
           </div>
         </div>
@@ -859,23 +895,27 @@
 
     function displayCode(code) {
       const lines = code.split("\n");
-      const lineNumbersEl = document.getElementById("lineNumbers");
       const codeContentEl = document.getElementById("codeContent");
-      lineNumbersEl.innerHTML = "";
       codeContentEl.innerHTML = "";
       
       for (let i = 0; i < lines.length; i++) {
-        const lineNum = document.createElement("div");
-        lineNum.textContent = i + 1;
-        lineNumbersEl.appendChild(lineNum);
-        
         const lineContent = document.createElement("div");
         lineContent.className = "code-line";
         const hasError = currentErrors.some(e => e.line === i + 1);
         const hasWarning = currentWarnings.some(w => w.line === i + 1);
         if (hasError) lineContent.classList.add("error-line");
         else if (hasWarning) lineContent.classList.add("warning-line");
-        lineContent.textContent = lines[i] || " ";
+
+        const lineNumber = document.createElement("span");
+        lineNumber.className = "line-number";
+        lineNumber.textContent = i + 1;
+
+        const lineText = document.createElement("span");
+        lineText.className = "line-text";
+        lineText.textContent = lines[i] || " ";
+
+        lineContent.appendChild(lineNumber);
+        lineContent.appendChild(lineText);
         codeContentEl.appendChild(lineContent);
       }
     }
