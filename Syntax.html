@@ -220,11 +220,47 @@
     }
 
     .supported-badge {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
-      color: var(--text-secondary);
-      font-size: 0.8rem;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(92, 184, 255, 0.28);
+      background: linear-gradient(135deg, rgba(92, 184, 255, 0.16), rgba(145, 167, 255, 0.08));
+      color: #dcecff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .supported-badge:hover {
+      transform: translateY(-1px);
+      border-color: rgba(92, 184, 255, 0.5);
+      box-shadow: 0 8px 20px rgba(92, 184, 255, 0.16);
+    }
+
+    .supported-badge:focus-visible {
+      outline: 2px solid rgba(92, 184, 255, 0.55);
+      outline-offset: 2px;
+    }
+
+    .supported-badge i {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(92, 184, 255, 0.22);
+      color: #ffffff;
+      font-size: 0.88rem;
+      box-shadow: 0 0 0 4px rgba(92, 184, 255, 0.08);
+      flex-shrink: 0;
+    }
+
+    .supported-badge .badge-text {
+      letter-spacing: 0.01em;
     }
 
     /* Results section */
@@ -679,9 +715,10 @@
         <span class="repo-status waiting" id="repoStatus">
           <i class="fas fa-clock"></i> Ready
         </span>
-        <span class="supported-badge">
-          <i class="fas fa-info-circle"></i> .c .cpp .cc .cxx .h .hpp
-        </span>
+        <button type="button" class="supported-badge" id="supportedBadge" title="View supported language information">
+          <i class="fas fa-circle-info"></i>
+          <span class="badge-text">Supported: .c .cpp .cc .cxx .h .hpp</span>
+        </button>
       </div>
     </div>
 
@@ -994,6 +1031,10 @@
       if (pollingInterval) clearInterval(pollingInterval);
       localStorage.removeItem('pendingAnalysis');
       window.location.href = '../profclass/index.html';
+    });
+
+    document.getElementById('supportedBadge').addEventListener('click', () => {
+      showToast('At present, analysis is available only for C and C++ source files. Support for additional programming languages will be introduced in a future update.', 'info');
     });
 
     document.getElementById('fileSearch').addEventListener('input', (e) => renderFileList(e.target.value));
