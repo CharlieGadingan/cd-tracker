@@ -70,6 +70,33 @@
       flex-wrap: wrap;
     }
 
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(145deg, rgba(92, 184, 255, 0.24), rgba(145, 167, 255, 0.1)),
+        #09111b;
+      border: 1px solid rgba(92, 184, 255, 0.2);
+      color: var(--accent-blue);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .brand-icon i {
+      font-size: 1.1rem;
+    }
+
     .back-btn {
       background: var(--bg-card);
       color: var(--accent-blue);
@@ -92,12 +119,13 @@
     }
 
     .header h1 {
-      font-size: 1.8rem;
+      font-size: 1.7rem;
       background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       white-space: nowrap;
+      letter-spacing: 0.02em;
     }
 
     .header p {
@@ -631,7 +659,12 @@
       <button class="back-btn" id="backToClassBtn">
         <i class="fas fa-arrow-left"></i> Back to Class
       </button>
-      <h1><i class="fas fa-code"></i> C/C++ Analyzer</h1>
+      <div class="brand-mark" aria-label="CodeTracker">
+        <span class="brand-icon" aria-hidden="true">
+          <i class="fas fa-code-branch"></i>
+        </span>
+        <h1>CodeTracker</h1>
+      </div>
     </div>
     <p id="headerSubtitle"><i class="fas fa-chalkboard-user"></i> Student code review system</p>
   </div>
