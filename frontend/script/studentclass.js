@@ -499,9 +499,7 @@
 
   function clearSubmissionForm() {
     const r = document.getElementById('repositoryName');
-    const n = document.getElementById('submissionNote');
     if (r) r.value = '';
-    if (n) n.value = '';
     if (submissionModeSelect) submissionModeSelect.value = 'existing';
     applySubmissionMode('existing');
   }
