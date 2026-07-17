@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>C/C++ Code Analyzer | Student Review</title>
+  <title>C/C++/Java/C#/JavaScript Code Analyzer | Student Review</title>
   <link rel="icon" type="image/png" href="https://github.githubassets.com/favicons/favicon.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
@@ -717,7 +717,7 @@
         </span>
         <button type="button" class="supported-badge" id="supportedBadge" title="View supported language information">
           <i class="fas fa-circle-info"></i>
-          <span class="badge-text">Supported: .c .cpp .cc .cxx .h .hpp</span>
+          <span class="badge-text">Supported: C, C++, Java, C#, JavaScript</span>
         </button>
       </div>
     </div>
@@ -902,7 +902,7 @@
       fileList = data.files || [];
       
       if (fileList.length === 0) {
-        document.getElementById("summaryStats").innerHTML = `<div class="stat"><i class="fas fa-info-circle"></i> No C/C++ files found</div>`;
+        document.getElementById("summaryStats").innerHTML = `<div class="stat"><i class="fas fa-info-circle"></i> No supported files found</div>`;
         document.getElementById("fileList").innerHTML = `<div style="padding: 20px; text-align: center;">No source files found</div>`;
         return;
       }
@@ -955,7 +955,7 @@
       currentFileIndex = index;
       const file = fileList[index];
       document.getElementById("currentFileName").textContent = file.file_name;
-      document.getElementById("languageBadge").textContent = file.language || "C/C++";
+      document.getElementById("languageBadge").textContent = file.language || "Code";
       currentErrors = file.errors || [];
       currentWarnings = file.warnings || [];
       updateErrorPanel();
@@ -1034,7 +1034,7 @@
     });
 
     document.getElementById('supportedBadge').addEventListener('click', () => {
-      showToast('At present, analysis is available only for C and C++ source files. Support for additional programming languages will be introduced in a future update.', 'info');
+      showToast('Analysis is available for C, C++, Java, C#, and JavaScript source files.', 'info');
     });
 
     document.getElementById('fileSearch').addEventListener('input', (e) => renderFileList(e.target.value));

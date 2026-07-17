@@ -1954,7 +1954,7 @@ function navigateToSyntaxAnalyzer(repoUrl, activityTitle, studentName) {
   window.location.href = `/Syntax.html?classroomId=${encodeURIComponent(classroomId)}&student=${encodeURIComponent(studentName)}&activity=${encodeURIComponent(activityTitle)}`;
 }
 /**
- * Validate if repository contains C/C++ files before navigating to analyzer
+ * Validate if repository contains supported files before navigating to analyzer
  * @param {string} repoUrl - GitHub repository URL
  * @param {string} activityTitle - Activity title
  * @param {string} studentName - Student name
@@ -2036,60 +2036,61 @@ async function validateAndNavigateToAnalyzer(
 
     const languages = await response.json();
 
-    // Define C/C++ language keywords
-    const cppLanguages = ["C", "C++", "C#", "Objective-C", "Objective-C++"];
-    const cppExtensions = [
+    // Define the supported language keywords and file extensions
+    const supportedLanguages = ["C", "C++", "Java", "JavaScript", "C#"];
+    const supportedExtensions = [
       ".c",
       ".cpp",
       ".cc",
       ".cxx",
       ".h",
       ".hpp",
-      ".hxx",
-      ".ino",
+      ".java",
+      ".js",
+      ".cs",
     ];
 
-    // Check if any C/C++ language is present
-    let hasCpp = false;
+    // Check if any supported language is present
+    let hasSupportedLanguage = false;
     let detectedLanguages = [];
 
     for (const [lang, bytes] of Object.entries(languages)) {
       detectedLanguages.push(lang);
-      if (cppLanguages.includes(lang)) {
-        hasCpp = true;
+      if (supportedLanguages.includes(lang)) {
+        hasSupportedLanguage = true;
         break;
       }
     }
 
-    // If no C/C++ detected by language name, we need to check file extensions via contents API
-    if (!hasCpp) {
-      showNotification("Checking file extensions...", "info");
+    // If no supported language is detected by name, scan the full repository tree recursively
+    if (!hasSupportedLanguage) {
+      showNotification("Checking repository files recursively...", "info");
 
-      // Get repository contents to check file extensions
+      // Get repository contents so nested folders are included in the scan
       const contentsResponse = await fetch(
         `https://api.github.com/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`,
       );
 
       if (contentsResponse.ok) {
         const contents = await contentsResponse.json();
-        const hasCppFiles = contents.tree?.some((item) => {
+        const hasSupportedFiles = contents.tree?.some((item) => {
           const fileName = item.path.toLowerCase();
-          return cppExtensions.some((ext) => fileName.endsWith(ext));
+          return supportedExtensions.some((ext) => fileName.endsWith(ext));
         });
 
-        if (hasCppFiles) {
-          hasCpp = true;
+        if (hasSupportedFiles) {
+          hasSupportedLanguage = true;
         }
       }
     }
 
-    if (!hasCpp) {
+    if (!hasSupportedLanguage) {
       // Show detailed warning modal
-      showNoCppWarning(repoUrl, activityTitle, studentName, detectedLanguages);
+      showNoSupportedCodeWarning(repoUrl, activityTitle, studentName, detectedLanguages);
       return false;
     }
 
-    // If C/C++ found, proceed to analyzer
+    // If a supported language is found, proceed to analyzer
     proceedToAnalyzer(repoUrl, activityTitle, studentName);
     return true;
   } catch (error) {
@@ -2103,9 +2104,9 @@ async function validateAndNavigateToAnalyzer(
 }
 
 /**
- * Show warning modal when no C/C++ files are found
+ * Show warning modal when no supported files are found
  */
-function showNoCppWarning(
+function showNoSupportedCodeWarning(
   repoUrl,
   activityTitle,
   studentName,
@@ -2122,7 +2123,7 @@ function showNoCppWarning(
             <div class="modal-content warning-modal">
                 <div class="modal-header">
                     <i class="fas fa-exclamation-triangle" style="color: var(--accent-yellow);"></i>
-                    <h3>No C/C++ Code Detected</h3>
+                    <h3>No Supported Code Detected</h3>
                 </div>
                 <div class="modal-body">
                     <div class="warning-icon-large">
@@ -2131,7 +2132,7 @@ function showNoCppWarning(
                         <i class="fas fa-plus"></i>
                     </div>
                     <p class="warning-message">
-                        <strong>This repository does not appear to contain C or C++ code.</strong>
+                        <strong>This repository does not appear to contain supported source code.</strong>
                     </p>
                     <div class="repo-info-box">
                         <p><i class="fab fa-github"></i> <strong>Repository:</strong></p>
@@ -2154,7 +2155,7 @@ function showNoCppWarning(
                     <div class="warning-suggestions">
                         <p><i class="fas fa-lightbulb"></i> <strong>Possible reasons:</strong></p>
                         <ul>
-                            <li>The student submitted a repository without C/C++ files</li>
+                            <li>The student submitted a repository without supported source files</li>
                             <li>The repository might be empty or contain only other languages</li>
                             <li>The repository URL might be incorrect</li>
                             <li>The student may have submitted the wrong repository</li>
@@ -2162,7 +2163,7 @@ function showNoCppWarning(
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" id="closeCppWarningBtn">
+                    <button class="btn btn-secondary" id="closeSupportedWarningBtn">
                         <i class="fas fa-times"></i> Close
                     </button>
                 </div>
@@ -2313,7 +2314,7 @@ function showNoCppWarning(
   }
 
   // Setup event listeners
-  const closeBtn = document.getElementById("closeCppWarningBtn");
+  const closeBtn = document.getElementById("closeSupportedWarningBtn");
 
   // Remove old listeners and add new ones
   const newCloseBtn = closeBtn.cloneNode(true);
