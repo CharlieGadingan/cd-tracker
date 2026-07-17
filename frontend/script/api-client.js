@@ -1,6 +1,6 @@
 
 (function attachApiClient(globalScope) {
-  const DEFAULT_API_BASE_URL = "https://codetracker-main-production-98f3.up.railway.app/api";
+  const DEFAULT_API_BASE_URL = "http://localhost:8080/api";
 
   function safeReadStorage(key) {
     try {
