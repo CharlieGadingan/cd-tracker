@@ -38,7 +38,7 @@
       --accent-yellow: #f5b83d;
       --accent-purple: #91a7ff;
       --line-height: 1.65;
-      --font-size: 14px;
+      --font-size: 15px;
     }
 
     body {
@@ -494,6 +494,46 @@
       border-left-color: var(--accent-yellow);
     }
 
+    .error-tooltip {
+      position: fixed;
+      z-index: 3000;
+      max-width: min(360px, calc(100vw - 24px));
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(6, 10, 15, 0.98);
+      border: 1px solid rgba(92, 184, 255, 0.22);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.14s ease, transform 0.14s ease;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    .error-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .error-tooltip .tooltip-title {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 700;
+      color: var(--accent-red);
+    }
+
+    .error-tooltip.warning .tooltip-title {
+      color: var(--accent-yellow);
+    }
+
+    .error-tooltip .tooltip-body {
+      color: #dfe8f5;
+    }
+
     /* Error panel */
     .error-panel {
       width: 350px;
@@ -662,7 +702,7 @@
       }
 
       .code-content {
-        font-size: 11px;
+        font-size: 12px;
         padding: 10px 0;
       }
 
@@ -717,7 +757,7 @@
         </span>
         <button type="button" class="supported-badge" id="supportedBadge" title="View supported language information">
           <i class="fas fa-circle-info"></i>
-          <span class="badge-text">Supported: C, C++, Java, C#, JavaScript</span>
+          <span class="badge-text">Supported: C, C++, Java, C#, Python</span>
         </button>
       </div>
     </div>
@@ -764,7 +804,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = "https://anayzer-production-bc65.up.railway.app";
+    const API_BASE_URL = "https://syntaxanalyzer-production.up.railway.app";
     
     let currentAnalysisId = null;
     let pollingInterval = null;
@@ -773,6 +813,7 @@
     let currentErrors = [];
     let currentWarnings = [];
     let analysisCompleted = false;
+    let activeTooltip = null;
 
     // ========== PERSISTENCE ==========
     function getStoredAnalysisData() {
@@ -952,6 +993,7 @@
 
     window.loadFile = function(index) {
       if (index < 0 || index >= fileList.length) return;
+      hideTooltip();
       currentFileIndex = index;
       const file = fileList[index];
       document.getElementById("currentFileName").textContent = file.file_name;
@@ -964,6 +1006,7 @@
     };
 
     function displayCode(code) {
+      hideTooltip();
       const lines = code.split("\n");
       const codeContentEl = document.getElementById("codeContent");
       codeContentEl.innerHTML = "";
@@ -971,14 +1014,30 @@
       for (let i = 0; i < lines.length; i++) {
         const lineContent = document.createElement("div");
         lineContent.className = "code-line";
-        const hasError = currentErrors.some(e => e.line === i + 1);
-        const hasWarning = currentWarnings.some(w => w.line === i + 1);
+        const lineNumberValue = i + 1;
+        const lineErrors = currentErrors.filter(e => Number(e.line) === lineNumberValue);
+        const lineWarnings = currentWarnings.filter(w => Number(w.line) === lineNumberValue);
+        const hasError = lineErrors.length > 0;
+        const hasWarning = lineWarnings.length > 0;
         if (hasError) lineContent.classList.add("error-line");
         else if (hasWarning) lineContent.classList.add("warning-line");
 
+        const tooltipMessages = [];
+        if (lineErrors.length > 0) {
+          tooltipMessages.push(...lineErrors.map(err => `Error: ${err.message || "Syntax issue detected."}`));
+        }
+        if (lineWarnings.length > 0) {
+          tooltipMessages.push(...lineWarnings.map(warn => `Warning: ${warn.message || "Review this line."}`));
+        }
+        if (tooltipMessages.length > 0) {
+          lineContent.dataset.tooltipTitle = hasError ? "Why this is an error" : "Why this is flagged";
+          lineContent.dataset.tooltipBody = tooltipMessages.join("\n");
+          lineContent.tabIndex = 0;
+        }
+
         const lineNumber = document.createElement("span");
         lineNumber.className = "line-number";
-        lineNumber.textContent = i + 1;
+        lineNumber.textContent = lineNumberValue;
 
         const lineText = document.createElement("span");
         lineText.className = "line-text";
@@ -989,6 +1048,94 @@
         codeContentEl.appendChild(lineContent);
       }
     }
+
+    function hideTooltip() {
+      if (activeTooltip) {
+        activeTooltip.remove();
+        activeTooltip = null;
+      }
+    }
+
+    function showTooltip(target, event) {
+      const title = target.dataset.tooltipTitle;
+      const body = target.dataset.tooltipBody;
+      if (!title || !body) return;
+
+      hideTooltip();
+
+      const tooltip = document.createElement("div");
+      tooltip.className = "error-tooltip";
+      if (target.classList.contains("warning-line")) tooltip.classList.add("warning");
+      tooltip.innerHTML = `
+        <span class="tooltip-title">${escapeHtml(title)}</span>
+        <div class="tooltip-body">${escapeHtml(body).replace(/\n/g, "<br>")}</div>
+      `;
+      document.body.appendChild(tooltip);
+      activeTooltip = tooltip;
+
+      const offset = 14;
+      const rect = target.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      let left = event ? event.clientX + offset : rect.left + offset;
+      let top = event ? event.clientY + offset : rect.bottom + offset;
+
+      if (left + tooltipRect.width > window.innerWidth - 12) {
+        left = window.innerWidth - tooltipRect.width - 12;
+      }
+      if (top + tooltipRect.height > window.innerHeight - 12) {
+        top = rect.top - tooltipRect.height - offset;
+      }
+      left = Math.max(12, left);
+      top = Math.max(12, top);
+
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+
+      requestAnimationFrame(() => tooltip.classList.add("visible"));
+    }
+
+    document.getElementById("codeViewer").addEventListener("mouseover", (e) => {
+      const line = e.target.closest(".code-line");
+      if (!line || !line.dataset.tooltipBody) return;
+      showTooltip(line, e);
+    });
+
+    document.getElementById("codeViewer").addEventListener("mousemove", (e) => {
+      const line = e.target.closest(".code-line");
+      if (!line || !activeTooltip || !line.dataset.tooltipBody) return;
+
+      const offset = 14;
+      const tooltipRect = activeTooltip.getBoundingClientRect();
+      let left = e.clientX + offset;
+      let top = e.clientY + offset;
+
+      if (left + tooltipRect.width > window.innerWidth - 12) {
+        left = window.innerWidth - tooltipRect.width - 12;
+      }
+      if (top + tooltipRect.height > window.innerHeight - 12) {
+        top = e.clientY - tooltipRect.height - offset;
+      }
+      left = Math.max(12, left);
+      top = Math.max(12, top);
+
+      activeTooltip.style.left = `${left}px`;
+      activeTooltip.style.top = `${top}px`;
+    });
+
+    document.getElementById("codeViewer").addEventListener("mouseleave", hideTooltip);
+
+    document.getElementById("codeViewer").addEventListener("focusin", (e) => {
+      const line = e.target.closest(".code-line");
+      if (!line || !line.dataset.tooltipBody) return;
+      showTooltip(line);
+    });
+
+    document.getElementById("codeViewer").addEventListener("focusout", () => {
+      hideTooltip();
+    });
+
+    window.addEventListener("scroll", hideTooltip, true);
+    window.addEventListener("resize", hideTooltip);
 
     function updateErrorPanel() {
       const errorListEl = document.getElementById("errorList");
@@ -1034,7 +1181,7 @@
     });
 
     document.getElementById('supportedBadge').addEventListener('click', () => {
-      showToast('Analysis is available for C, C++, Java, C#, and JavaScript source files.', 'info');
+      showToast('Analysis is available for C, C++, Java, C#, and Python source files.', 'info');
     });
 
     document.getElementById('fileSearch').addEventListener('input', (e) => renderFileList(e.target.value));

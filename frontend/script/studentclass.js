@@ -35,11 +35,36 @@
     return isNaN(d) ? '' : new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(d);
   }
 
+  function parseApiDate(value) {
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+
+    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? `${raw}T23:59:59` : raw.replace(/\[[^\]]+\]$/, '');
+    const parsed = new Date(normalized);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function getLateSubmissionFlag(activity, submittedAt = activity?.submittedAt) {
+    const backendFlag = activity?.lateSubmission ?? activity?.isLate ?? activity?.late;
+    if (typeof backendFlag === 'boolean') return backendFlag;
+    if (String(backendFlag).toLowerCase() === 'true') return true;
+    if (String(backendFlag).toLowerCase() === 'false') return false;
+
+    const due = parseApiDate(activity?.dueDate);
+    const submitted = parseApiDate(submittedAt);
+    return Boolean(due && submitted && submitted.getTime() > due.getTime());
+  }
+
+  function buildSubmissionMetadata(activity) {
+    const submittedAt = new Date().toISOString();
+    const lateSubmission = getLateSubmissionFlag(activity, submittedAt);
+    return { submittedAt, lateSubmission, isLate: lateSubmission };
+  }
+
   function getDaysLeft(value) {
     if (!value) return null;
-    const d = new Date(value);
-    if (isNaN(d)) return null;
-    d.setHours(23, 59, 59, 999);
+    const d = parseApiDate(value);
+    if (!d) return null;
     return Math.ceil((d.getTime() - Date.now()) / 86400000);
   }
 
@@ -125,6 +150,7 @@
 
     const trackedSubmissionStatus = getTrackedSubmissionStatus(activity);
     const submissionMeta = getSubmissionStatusMeta(trackedSubmissionStatus);
+    const lateSubmission = getLateSubmissionFlag(activity);
     const lifecycleStatus = getActivityLifecycleStatus(activity);
 
     const submitRepoBtn = needsRepo
@@ -133,6 +159,10 @@
 
     const submittedPill = submissionMeta
       ? `<span class="submission-status-pill ${submissionMeta.cls}"><i class="${submissionMeta.icon}"></i> ${submissionMeta.label}</span>`
+      : '';
+
+    const latePill = lateSubmission
+      ? '<span class="submission-status-pill late"><i class="fas fa-triangle-exclamation"></i> LATE SUBMISSION</span>'
       : '';
 
     const submitActivityBtn = trackedSubmissionStatus === 'PENDING' && !needsRepo
@@ -152,6 +182,7 @@
 
     const rightMetaItems = `
       ${submittedPill}
+      ${latePill}
       ${submitRepoBtn}
       ${submitActivityBtn}
       ${viewDetailsBtn}
@@ -202,6 +233,7 @@
     if (!activity || !detailsModal || !detailsContent) return;
 
     const submissionStatus = getTrackedSubmissionStatus(activity) || 'NOT SUBMITTED';
+    const lateSubmission = getLateSubmissionFlag(activity);
     detailsContent.innerHTML = `
       <div class="activity-details-grid">
         ${renderDetailsField('fas fa-id-card', 'Activity ID', activity.activityId)}
@@ -211,6 +243,7 @@
         ${renderDetailsField('fas fa-calendar-alt', 'Due date', formatDate(activity.dueDate) || 'No due date')}
         ${renderDetailsField('fas fa-hourglass-half', 'Activity status', getActivityLifecycleStatus(activity) || 'N/A')}
         ${renderDetailsField('fas fa-flag-checkered', 'Submission status', submissionStatus)}
+        ${renderDetailsField('fas fa-triangle-exclamation', 'Late submission', lateSubmission ? 'Yes' : 'No')}
         ${renderDetailsField('fas fa-fingerprint', 'Student activity ID', activity.studentActivityId || 'N/A')}
         ${renderDetailsField('fas fa-code-branch', 'Repository name', activity.repositoryName || 'N/A')}
         ${renderDetailsField('fab fa-github', 'Repository URL', activity.repositoryUrl || '', true)}
@@ -254,7 +287,11 @@
     try {
       await apiClient.request(
         `/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(activityId)}/submit`,
-        { method: 'POST' },
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildSubmissionMetadata(activity))
+        },
         { redirectOnUnauthorized: false }
       );
       await window.AppDialog?.alert(`${activityTitle} submitted successfully.`, { title: 'Activity Submitted' });
@@ -438,7 +475,9 @@
 
     setSubmitButtonState('loading');
     try {
-      const body = mode === 'new' ? { repositoryName: repositoryUrl } : { repositoryUrl };
+      const body = mode === 'new'
+        ? { repositoryName: repositoryUrl, ...buildSubmissionMetadata(activity) }
+        : { repositoryUrl, ...buildSubmissionMetadata(activity) };
       await apiClient.request(
         `/classrooms/${encodeURIComponent(classroomId)}/activities/${encodeURIComponent(getActivityId(activity))}/submit/${mode}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },

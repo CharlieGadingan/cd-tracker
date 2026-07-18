@@ -23,6 +23,18 @@
 
         <div class="header-right">
             <div class="action-buttons">
+                <div class="class-search-wrap">
+                    <button class="btn btn-compact class-search-trigger" id="classSearchBtn" type="button" aria-label="Search classrooms" aria-expanded="false">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </button>
+                    <div class="class-search-popover" id="classSearchPopover" aria-hidden="true">
+                        <div class="class-search-input-row">
+                            <i class="fas fa-magnifying-glass"></i>
+                            <input type="text" id="classSearchInput" placeholder="Search classroom name..." autocomplete="off">
+                        </div>
+                        <div class="class-search-results" id="classSearchResults"></div>
+                    </div>
+                </div>
                 <button class="btn btn-compact create-class" id="createClassBtn">
                     <i class="fas fa-plus"></i> <span class="btn-label">New Class</span>
                 </button>

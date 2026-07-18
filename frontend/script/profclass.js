@@ -585,6 +585,10 @@ function normalizeSubmittedEntry(entry, fallback) {
     repositoryMode: asString(entry?.repositoryMode),
     repositoryUrl: asString(entry?.repositoryUrl),
     submissionStatus: asString(entry?.submissionStatus).toUpperCase(),
+    dueDate: asString(entry?.dueDate),
+    lateSubmission: entry?.lateSubmission,
+    isLate: entry?.isLate,
+    late: entry?.late,
     feedback: asString(entry?.feedback),
     score: Number.isFinite(parsedScore) ? parsedScore : null,
     maxScore: Number.isFinite(parsedMaxScore) ? parsedMaxScore : null,
@@ -855,6 +859,13 @@ function buildRecentActivityItems() {
         asString(entry?.repositoryName) ||
         trimProtocol(asString(entry?.repositoryUrl)) ||
         "Repository linked";
+      const activity = state.activities.find(
+        (item) => getActivityId(item) === asString(entry?.activityId),
+      );
+      const lateSubmission = getLateSubmissionFlag(
+        entry,
+        asString(entry?.dueDate) || asString(activity?.dueDate),
+      );
 
       items.push({
         type: "submissions",
@@ -864,8 +875,10 @@ function buildRecentActivityItems() {
         badgeLabel: "Submission",
         badgeClass: "badge-submitted",
         text: `submitted "${activityTitle}"`,
-        details: repositoryLabel,
-        detailsIcon: "fab fa-github",
+        details: lateSubmission
+          ? `${repositoryLabel} - Late submission`
+          : repositoryLabel,
+        detailsIcon: lateSubmission ? "fas fa-triangle-exclamation" : "fab fa-github",
         avatarClass: "",
         timestamp: submissionDate.getTime(),
         timeLabel: timeAgo(submissionDateRaw),
@@ -894,6 +907,7 @@ function computeActivityStats(activityId) {
 
 function buildSubmissionRows(activityId) {
   const perActivity = state.submittedByActivity[activityId] || {};
+  const activity = state.activities.find((item) => getActivityId(item) === activityId);
   const rows = [];
   Object.values(perActivity).forEach((entry) => {
     const userId = asString(entry?.userId);
@@ -913,6 +927,8 @@ function buildSubmissionRows(activityId) {
       repositoryOwnerUsername: entry?.repositoryOwnerUsername || "",
       repositoryMode: entry?.repositoryMode || "",
       submittedAt: entry?.submittedAt || "",
+      dueDate: entry?.dueDate || activity?.dueDate || "",
+      lateSubmission: getLateSubmissionFlag(entry, entry?.dueDate || activity?.dueDate),
       createdAt: entry?.createdAt || "",
       updatedAt: entry?.updatedAt || "",
       studentActivityId: entry?.studentActivityId || "",
@@ -939,6 +955,19 @@ function buildSubmissionRows(activityId) {
   });
 
   return rows;
+}
+
+function getLateSubmissionFlag(entry, dueDateOverride) {
+  const backendFlag = entry?.lateSubmission ?? entry?.isLate ?? entry?.late;
+  if (typeof backendFlag === "boolean") return backendFlag;
+  if (asString(backendFlag).toLowerCase() === "true") return true;
+  if (asString(backendFlag).toLowerCase() === "false") return false;
+
+  const due = parseApiDate(dueDateOverride || entry?.dueDate);
+  const submitted = parseApiDate(
+    entry?.submittedAt || entry?.updatedAt || entry?.createdAt,
+  );
+  return Boolean(due && submitted && submitted.getTime() > due.getTime());
 }
 
 function deriveSubmissionStatus(entry) {
@@ -1031,6 +1060,10 @@ function renderSubmissionRows() {
         ? `<a href="${escapeHtml(row.repositoryUrl)}" target="_blank" rel="noopener noreferrer" class="repo-link"><i class="fa-brands fa-github"></i> ${escapeHtml(row.repositoryName || trimProtocol(row.repositoryUrl))}</a>`
         : '<span class="repo-missing">No repository linked</span>';
 
+      const lateBadge = row.lateSubmission
+        ? '<span class="status-pill late"><i class="fas fa-triangle-exclamation"></i> LATE SUBMISSION</span>'
+        : '<span class="status-pill on-time"><i class="fas fa-check"></i> ON TIME</span>';
+
       const gradedMeta =
         row.status === "GRADED"
           ? `
@@ -1089,6 +1122,10 @@ function renderSubmissionRows() {
                         <span class="status-pill ${statusClass(row.status)}">${escapeHtml(row.status)}</span>
                     </div>
                     <div>
+                        <span class="field-label">Deadline Flag</span>
+                        ${lateBadge}
+                    </div>
+                    <div>
                         <span class="field-label">Repository</span>
                         ${repoLink}
                     </div>
@@ -1122,6 +1159,8 @@ function openSubmissionDetailModal(activityId, studentUserId) {
       ? formatDateTime(row.updatedAt)
       : "N/A";
   const status = row.status || "UNKNOWN";
+  const deadlineFlag = row.lateSubmission ? "Late Submission" : "On time";
+  const deadlineFlagClass = row.lateSubmission ? "late" : "on-time";
 
   const title = row.title || getActivityTitle(activity);
   const repositoryLabel = row.repositoryUrl
@@ -1152,7 +1191,13 @@ function openSubmissionDetailModal(activityId, studentUserId) {
                         <div class="detail-name">${escapeHtml(row.displayName)}</div>
                     </div>
                 </div>
-                <span class="status-pill ${statusClass(status)}">${escapeHtml(status)}</span>
+                <div class="detail-head-status">
+                    <span class="status-pill ${statusClass(status)}">${escapeHtml(status)}</span>
+                    <span class="status-pill ${deadlineFlagClass}">
+                        <i class="${row.lateSubmission ? "fas fa-triangle-exclamation" : "fas fa-check"}"></i>
+                        ${escapeHtml(deadlineFlag)}
+                    </span>
+                </div>
             </header>
 
             <section class="detail-section">
@@ -1175,6 +1220,10 @@ function openSubmissionDetailModal(activityId, studentUserId) {
                     <div>
                         <span class="field-label">Submission Status</span>
                         <span>${escapeHtml(status)}</span>
+                    </div>
+                    <div>
+                        <span class="field-label">Deadline Flag</span>
+                        <span>${escapeHtml(deadlineFlag)}</span>
                     </div>
                     ${
                       row.score != null
@@ -1283,12 +1332,14 @@ function openGradeModal(activityId, studentUserId) {
       : row.updatedAt
         ? formatDate(row.updatedAt)
         : "N/A";
+    const deadlineFlag = row.lateSubmission ? "Late Submission" : "On time";
 
     info.innerHTML = `
             <strong>${escapeHtml(row.displayName)}</strong>
             <div class="grade-info-grid">
                 <span><strong>Activity:</strong> ${escapeHtml(row.title || getActivityTitle(activity))}</span>
                 <span><strong>Status:</strong> <span class="status-pill submitted">SUBMITTED</span></span>
+                <span><strong>Deadline Flag:</strong> <span class="status-pill ${row.lateSubmission ? "late" : "on-time"}">${escapeHtml(deadlineFlag)}</span></span>
                 ${row.studentActivityId ? `<span><strong>Submission ID:</strong> ${escapeHtml(row.studentActivityId)}</span>` : ""}
                 <span><strong>Repository:</strong> ${repoLink}</span>
                 ${row.repositoryOwnerUsername ? `<span><strong>Owner:</strong> ${escapeHtml(row.repositoryOwnerUsername)}</span>` : ""}

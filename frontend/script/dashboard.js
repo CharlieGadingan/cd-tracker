@@ -9,6 +9,10 @@ const classroomApi = window.ApiClient?.classrooms;
 // ── DOM Elements ────────────────────────────────────────────────────────────
 const createClassBtn       = document.getElementById('createClassBtn');
 const joinClassBtn         = document.getElementById('joinClassBtn');
+const classSearchBtn       = document.getElementById('classSearchBtn');
+const classSearchPopover   = document.getElementById('classSearchPopover');
+const classSearchInput     = document.getElementById('classSearchInput');
+const classSearchResults   = document.getElementById('classSearchResults');
 const createModal          = document.getElementById('createModal');
 const joinModal            = document.getElementById('joinModal');
 const profileModal         = document.getElementById('profileModal');
@@ -493,6 +497,89 @@ function isPasscodeRequiredError(message) {
         normalized.includes('passcode is required');
 }
 
+function getClassroomName(classroom) {
+    return classroom?.className || classroom?.name || classroom?.title || 'Unnamed Class';
+}
+
+function normalizeSearchText(value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function getSearchableClassrooms() {
+    return [
+        ...classroomsData.created.map(classroom => ({ classroom, role: 'prof', roleLabel: 'Owner' })),
+        ...classroomsData.joined.map(classroom => ({ classroom, role: 'student', roleLabel: 'Member' }))
+    ];
+}
+
+function classroomMatchesSearch(classroom, query) {
+    const words = normalizeSearchText(query).split(' ').filter(Boolean);
+    if (words.length === 0) return true;
+
+    const className = normalizeSearchText(getClassroomName(classroom));
+    return words.every(word => className.includes(word));
+}
+
+function renderClassSearchResults() {
+    if (!classSearchResults) return;
+
+    const query = classSearchInput?.value || '';
+    if (!normalizeSearchText(query)) {
+        classSearchResults.innerHTML = '';
+        return;
+    }
+
+    const matches = getSearchableClassrooms()
+        .filter(({ classroom }) => classroomMatchesSearch(classroom, query));
+
+    if (matches.length === 0) {
+        classSearchResults.innerHTML = '<div class="class-search-empty">No classrooms found</div>';
+        return;
+    }
+
+    classSearchResults.innerHTML = matches.map(({ classroom, role, roleLabel }) => {
+        const classId = resolveClassroomId(classroom) || 'unknown';
+        const className = getClassroomName(classroom);
+        const classCode = classroom.classCode || classroom.code || classroom.inviteCode || classroom.id || 'N/A';
+        const description = classroom.description || classroom.desc || 'No description provided';
+
+        return `
+            <button type="button" class="class-search-result" data-class-id="${escapeHtml(classId)}" data-role="${escapeHtml(role)}" data-class-name="${escapeHtml(className)}" data-class-code="${escapeHtml(String(classCode))}">
+                <span class="class-search-result-main">
+                    <strong>${escapeHtml(className)}</strong>
+                    <small>${escapeHtml(description)}</small>
+                </span>
+                <span class="class-search-role ${role === 'prof' ? 'owner' : 'member'}">${escapeHtml(roleLabel)}</span>
+            </button>
+        `;
+    }).join('');
+}
+
+function openClassSearch() {
+    if (!classSearchPopover || !classSearchBtn) return;
+    classSearchPopover.classList.add('show');
+    classSearchPopover.setAttribute('aria-hidden', 'false');
+    classSearchBtn.setAttribute('aria-expanded', 'true');
+    if (classSearchInput) classSearchInput.value = '';
+    if (classSearchResults) classSearchResults.innerHTML = '';
+    setTimeout(() => classSearchInput?.focus(), 40);
+}
+
+function closeClassSearch() {
+    if (!classSearchPopover || !classSearchBtn) return;
+    classSearchPopover.classList.remove('show');
+    classSearchPopover.setAttribute('aria-hidden', 'true');
+    classSearchBtn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleClassSearch() {
+    if (classSearchPopover?.classList.contains('show')) {
+        closeClassSearch();
+    } else {
+        openClassSearch();
+    }
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MODAL HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -546,6 +633,22 @@ function setupEventListeners() {
     // Modal triggers
     createClassBtn?.addEventListener('click', () => openModal(createModal));
     joinClassBtn?.addEventListener('click', () => openModal(joinModal));
+    classSearchBtn?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleClassSearch();
+    });
+    classSearchInput?.addEventListener('input', renderClassSearchResults);
+    classSearchResults?.addEventListener('click', (event) => {
+        const result = event.target.closest('.class-search-result');
+        if (!result) return;
+        closeClassSearch();
+        viewClassroom(
+            result.dataset.classId,
+            result.dataset.role,
+            result.dataset.className,
+            result.dataset.classCode
+        );
+    });
     cancelCreate?.addEventListener('click', () => closeModal(createModal));
     cancelJoin?.addEventListener('click', () => closeModal(joinModal));
 
@@ -674,8 +777,15 @@ function setupEventListeners() {
         }
     });
 
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeClassSearch();
+    });
+
     // Profile dropdown close on outside click
     document.addEventListener('click', (e) => {
+        const isSearchClick = classSearchPopover?.contains(e.target) || classSearchBtn?.contains(e.target);
+        if (!isSearchClick) closeClassSearch();
+
         const isUserIconClick = userIcon && userIcon.contains(e.target);
         const isDropdownClick = profileDropdown && profileDropdown.contains(e.target);
         
@@ -1174,6 +1284,7 @@ async function loadClasses() {
             classLoadState.created = false;
             updateTabCounts();
             renderClasses();
+            renderClassSearchResults();
         });
 
     const joinedRequest = apiRequest('/classrooms/join', { method: 'GET' }, { redirectOnUnauthorized: false })
@@ -1226,6 +1337,7 @@ async function loadClasses() {
             classLoadState.joined = false;
             updateTabCounts();
             renderClasses();
+            renderClassSearchResults();
         });
 
     await Promise.allSettled([createdRequest, joinedRequest]);
@@ -1275,6 +1387,7 @@ function renderClasses() {
 
     container.innerHTML = classes.map(c => createClassCard(c, isCreated)).join('');
     attachClassCardHandlers();
+    renderClassSearchResults();
 }
 
 function createClassCard(classroom, isCreated) {
